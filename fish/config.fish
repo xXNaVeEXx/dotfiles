@@ -1,4 +1,10 @@
 # PATH configuration for WSL
+
+# Homebrew for macOS
+if test -d /opt/homebrew/bin
+    fish_add_path /opt/homebrew/bin
+end
+
 # Add Flutter if installed
 if test -d ~/development/flutter/bin
     fish_add_path ~/development/flutter/bin
@@ -42,4 +48,19 @@ set -gx OPENAI_MODEL "qwen/qwen3-coder:free"
 
 if status is-interactive
     # Commands to run in interactive sessions can go here
+
+    # Initialize zoxide if installed
+    if type -q zoxide
+        zoxide init fish --cmd cd | source
+    end
+
+    # Set up fzf key bindings
+    if type -q fzf
+        fzf --fish | source
+    end
+
+    # Use eza instead of ls
+    if type -q eza
+        alias ls='eza --icons'
+    end
 end
