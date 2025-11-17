@@ -30,14 +30,14 @@ vim.keymap.set('n', '<leader><Tab>', function()
   -- Check if NeoTree is open
   local manager = require("neo-tree.sources.manager")
   local state = manager.get_state("filesystem")
-  
+
   if state and state.winid and vim.api.nvim_win_is_valid(state.winid) then
     -- If open, close it
     vim.cmd("Neotree close")
   else
     -- If closed, open it and set up auto-close
     vim.cmd("Neotree filesystem float")
-    
+
     -- Set up auto-close when leaving NeoTree window
     --autocmd is listener that execute on event BufLeave
     vim.api.nvim_create_autocmd("BufLeave", {
@@ -59,3 +59,10 @@ end)
 vim.keymap.set('n', '<Tab>', 'gt')
 vim.keymap.set('n', '<S-Tab>', 'gT')
 
+-- Obsidian search
+vim.keymap.set('n', '<leader>os', ':ObsidianSearch<CR>')
+
+-- formating keymap
+vim.keymap.set("n", "<leader>fo", function()
+  require("conform").format({ async = true, lsp_fallback = true })
+end, { desc = "Format buffer" })

@@ -22,6 +22,9 @@ require("core.plugin_config.ident_line")
 -- guess ident
 require("core.plugin_config.guess_ident")
 
+-- obsidian
+require("core.plugin_config.obsidian")
+
 -- tiny-inline-diagnostic
 require("core.plugin_config.tiny_inline_diagnostic")
 

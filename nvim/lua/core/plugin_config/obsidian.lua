@@ -2,9 +2,14 @@ require("obsidian").setup({
 
     workspaces = {
       {
-        name = "pers_vault",
-        path = "~/Google Drive/Meine Ablage/DriveSyncFiles/Obsidian/pers_vault",
+        name = "vault",
+        path = "~/projects/vault",
       },
+      {
+        name = "pers_vault",
+        path = "~/projects/pers_vault/notes/pers_vault",
+      },
+
     },
 
     -- Optional, completion of wiki links, local markdown links, and tags using nvim-cmp.

@@ -21,8 +21,8 @@ require("lazy").setup({
     "mason-org/mason-lspconfig.nvim",
     opts = {},
     dependencies = {
-        { "mason-org/mason.nvim", opts = {} },
-        "neovim/nvim-lspconfig",
+      { "mason-org/mason.nvim", opts = {} },
+      "neovim/nvim-lspconfig",
     },
   },
 
@@ -42,11 +42,12 @@ require("lazy").setup({
   "rafamadriz/friendly-snippets",
 
   -- telescope -> like macos spotlight
-    {
-    'nvim-telescope/telescope.nvim', tag = '0.1.8',
--- or                              , branch = '0.1.x',
-      dependencies = { 'nvim-lua/plenary.nvim' }
-    },
+  {
+    'nvim-telescope/telescope.nvim',
+    tag = '0.1.8',
+    -- or                              , branch = '0.1.x',
+    dependencies = { 'nvim-lua/plenary.nvim' }
+  },
 
   -- UI Theme
   { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
@@ -54,20 +55,20 @@ require("lazy").setup({
 
   -- Tree View to see file structure
   {
-   "nvim-neo-tree/neo-tree.nvim",
-   branch = "v3.x",
-   dependencies = {
-     "nvim-lua/plenary.nvim",
-     "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-     "MunifTanjim/nui.nvim",
-     -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
-   },
-   lazy = false, -- neo-tree will lazily load itself
-   ---@module "neo-tree"
-   ---@type neotree.Config?
-   opts = {
-     -- fill any relevant options here
-   },
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+      "MunifTanjim/nui.nvim",
+      -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
+    },
+    lazy = false, -- neo-tree will lazily load itself
+    ---@module "neo-tree"
+    ---@type neotree.Config?
+    opts = {
+      -- fill any relevant options here
+    },
   },
 
 
@@ -81,105 +82,184 @@ require("lazy").setup({
     ---@module "ibl"
     ---@type ibl.config
     opts = {},
-},
+  },
 
   -- Guess ident -> fixes identation
   'nmac427/guess-indent.nvim',
 
   -- Whichkey -> to show keymaps
   {
-  "folke/which-key.nvim",
-  event = "VeryLazy",
-  opts = {
-    -- your configuration comes here
-    -- or leave it empty to use the default settings
-    -- refer to the configuration section below
-  },
-  keys = {
-    {
-      "<leader>?",
-      function()
-        require("which-key").show({ global = false })
-      end,
-      desc = "Buffer Local Keymaps (which-key)",
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    },
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show({ global = false })
+        end,
+        desc = "Buffer Local Keymaps (which-key)",
+      },
     },
   },
-},
 
   -- trouble -> jump to errors
   {
-  "folke/trouble.nvim",
-  opts = {}, -- for default options, refer to the configuration section for custom setup.
-  cmd = "Trouble",
-  keys = {
-    {
-      "<leader>xx",
-      "<cmd>Trouble diagnostics toggle<cr>",
-      desc = "Diagnostics (Trouble)",
-    },
-    {
-      "<leader>xX",
-      "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
-      desc = "Buffer Diagnostics (Trouble)",
-    },
-    {
-      "<leader>cs",
-      "<cmd>Trouble symbols toggle focus=false<cr>",
-      desc = "Symbols (Trouble)",
-    },
-    {
-      "<leader>cl",
-      "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
-      desc = "LSP Definitions / references / ... (Trouble)",
-    },
-    {
-      "<leader>xL",
-      "<cmd>Trouble loclist toggle<cr>",
-      desc = "Location List (Trouble)",
-    },
-    {
-      "<leader>xQ",
-      "<cmd>Trouble qflist toggle<cr>",
-      desc = "Quickfix List (Trouble)",
+    "folke/trouble.nvim",
+    opts = {}, -- for default options, refer to the configuration section for custom setup.
+    cmd = "Trouble",
+    keys = {
+      {
+        "<leader>xx",
+        "<cmd>Trouble diagnostics toggle<cr>",
+        desc = "Diagnostics (Trouble)",
+      },
+      {
+        "<leader>xX",
+        "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+        desc = "Buffer Diagnostics (Trouble)",
+      },
+      {
+        "<leader>cs",
+        "<cmd>Trouble symbols toggle focus=false<cr>",
+        desc = "Symbols (Trouble)",
+      },
+      {
+        "<leader>cl",
+        "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+        desc = "LSP Definitions / references / ... (Trouble)",
+      },
+      {
+        "<leader>xL",
+        "<cmd>Trouble loclist toggle<cr>",
+        desc = "Location List (Trouble)",
+      },
+      {
+        "<leader>xQ",
+        "<cmd>Trouble qflist toggle<cr>",
+        desc = "Quickfix List (Trouble)",
+      },
     },
   },
-},
 
   -- Obsidian
   {
-  "epwalsh/obsidian.nvim",
-  version = "*",  -- recommended, use latest release instead of latest commit
-  lazy = true,
-  ft = "markdown",
-  -- Replace the above line with this if you only want to load obsidian.nvim for markdown files in your vault:
-  -- event = {
-  --   -- If you want to use the home shortcut '~' here you need to call 'vim.fn.expand'.
-  --   -- E.g. "BufReadPre " .. vim.fn.expand "~" .. "/my-vault/*.md"
-  --   -- refer to `:h file-pattern` for more examples
-  --   "BufReadPre path/to/my-vault/*.md",
-  --   "BufNewFile path/to/my-vault/*.md",
-  -- },
-  dependencies = {
-    -- Required.
-    "nvim-lua/plenary.nvim",
+    "epwalsh/obsidian.nvim",
+    version = "*", -- recommended, use latest release instead of latest commit
+    lazy = true,
+    ft = "markdown",
+    -- Replace the above line with this if you only want to load obsidian.nvim for markdown files in your vault:
+    -- event = {
+    --   -- If you want to use the home shortcut '~' here you need to call 'vim.fn.expand'.
+    --   -- E.g. "BufReadPre " .. vim.fn.expand "~" .. "/my-vault/*.md"
+    --   -- refer to `:h file-pattern` for more examples
+    --   "BufReadPre path/to/my-vault/*.md",
+    --   "BufNewFile path/to/my-vault/*.md",
+    -- },
+    dependencies = {
+      -- Required.
+      "nvim-lua/plenary.nvim",
 
-    -- see below for full list of optional dependencies 👇
+      -- see below for full list of optional dependencies 👇
+    },
   },
-},
 
-
--- tiny-inline-diagnostic.nvim > better inline errors
-{
+  -- tiny-inline-diagnostic.nvim > better inline errors
+  {
     "rachartier/tiny-inline-diagnostic.nvim",
     event = "VeryLazy", -- Or `LspAttach`
-    priority = 1000, -- needs to be loaded in first
+    priority = 1000,    -- needs to be loaded in first
     config = function()
-        require('tiny-inline-diagnostic').setup()
+      require('tiny-inline-diagnostic').setup()
     end
-},
+  },
+
+
+
+  -- Open in browser
+  -- https://github.com/dhruvasagar/vim-open-url
+  {
+    "dhruvasagar/vim-open-url",
+    config = function()
+      vim.keymap.set("n", "<leader>bb", "<Plug>(open-url-browser)", { silent = true })
+
+      vim.keymap.set("n", "<leader>bg", function()
+        vim.fn["open_url#open"]("https://google.com")
+      end, { desc = "Open Google", silent = true })
+
+      vim.keymap.set("n", "<leader>bc", function()
+        vim.fn["open_url#open"]("https://chat.openai.com")
+      end, { desc = "Open ChatGPT", silent = true })
+
+      vim.keymap.set("n", "<leader>by", function()
+        vim.fn["open_url#open"]("https://youtube.com")
+      end, { desc = "Open YouTube", silent = true })
+
+      vim.keymap.set("n", "<leader>bv", function()
+        vim.fn["open_url#open"]("https://v0.dev")
+      end, { desc = "Open v0.dev", silent = true })
+
+      vim.keymap.set("v", "<leader>bg", function()
+        -- Save current unnamed register
+        local old_reg = vim.fn.getreg("\"")
+
+        -- Yank the selected text into "v
+        vim.cmd("normal! \"vy")
+        local query = vim.fn.getreg("v")
+
+        -- Restore the unnamed register
+        vim.fn.setreg("\"", old_reg)
+
+        if query and #query > 0 then
+          vim.fn["open_url#engines#search"]("google", query)
+        else
+          print("No text selected to search")
+        end
+      end, { desc = "Google selected text", silent = true })
+    end,
+  },
+
+
+  -- LSP diagnostics, code actions, etc.
+  -- https://github.com/nvimtools/none-ls.nvim
+  {
+    "nvimtools/none-ls.nvim",
+    event = "VeryLazy",
+    opts = function()
+      return require "null-ls"
+    end,
+  },
+
+
+  -- conform.nvim for prettier
+  {
+    'stevearc/conform.nvim',
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          javascript = { "prettier" },
+          typescript = { "prettier" },
+          javascriptreact = { "prettier" },
+          typescriptreact = { "prettier" },
+          css = { "prettier" },
+          html = { "prettier" },
+          json = { "prettier" },
+          yaml = { "prettier" },
+          markdown = { "prettier" },
+        },
+        format_on_save = {
+          timeout_ms = 500,
+          lsp_fallback = true,
+        },
+      })
+    end,
+  }
+
 
 
 
 })
-
-

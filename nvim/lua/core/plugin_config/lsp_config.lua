@@ -2,8 +2,23 @@ local lspconfig = require("lspconfig")
 
 
 -- Set up lspconfig.
-  local capabilities = require('cmp_nvim_lsp').default_capabilities()
-  -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
+
+-- Format on save autocmd (global, works for all buffers with LSP)
+vim.api.nvim_create_autocmd("BufWritePre", {
+  callback = function(args)
+    vim.lsp.buf.format({
+      bufnr = args.buf,
+      timeout_ms = 2000,
+    })
+  end,
+})
+
+-- Common on_attach function for all LSP servers
+local on_attach = function(client, bufnr)
+  -- Enable completion triggered by <c-x><c-o>
+  vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+end
 
 
 lspconfig.lua_ls.setup({
@@ -61,51 +76,33 @@ lspconfig.lua_ls.setup({
   },
 
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 
 })
 
 lspconfig.clangd.setup({
- capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  capabilities = capabilities,
+  on_attach = on_attach,
 })
 
 lspconfig.ts_ls.setup({
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
 lspconfig.tailwindcss.setup({
-  cmd = { 'tailwindcss-language-server', '--stdio' },
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
 lspconfig.html.setup({
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
 lspconfig.jsonls.setup({
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
   -- todo configure abl openedge_language_server
@@ -120,41 +117,14 @@ lspconfig.jsonls.setup({
 
 lspconfig.rust_analyzer.setup({
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
 -- Nix Lsp
 lspconfig.nil_ls.setup({
-  autostart=true,
+  autostart = true,
   capabilities = capabilities,
-  on_attach = function(client, bufnr)
-    -- Enable completion triggered by <c-x><c-o>
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-  end,
+  on_attach = on_attach,
 })
 
--- eslint typescript lsp
-lspconfig.eslint.setup({
-  cmd = { 'vscode-eslint-language-server', '--stdio' },
-  capabilities = capabilities,
-  filetypes = { 
-    "javascript", 
-    "javascriptreact", 
-    "typescript", 
-    "typescriptreact", 
-    "vue", 
-    "svelte" 
-  },
-  on_attach = function(client, bufnr)
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
-    
-    -- Auto-fix on save
-    vim.api.nvim_create_autocmd("BufWritePre", {
-      buffer = bufnr,
-      command = "EslintFixAll",
-    })
-  end,
-})
+
