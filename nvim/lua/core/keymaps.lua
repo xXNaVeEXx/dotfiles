@@ -59,9 +59,6 @@ end)
 vim.keymap.set('n', '<Tab>', 'gt')
 vim.keymap.set('n', '<S-Tab>', 'gT')
 
--- Obsidian search
-vim.keymap.set('n', '<leader>os', ':ObsidianSearch<CR>')
-
 -- formating keymap
 vim.keymap.set("n", "<leader>fo", function()
   require("conform").format({ async = true, lsp_fallback = true })
