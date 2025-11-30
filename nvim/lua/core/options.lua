@@ -20,9 +20,6 @@ vim.opt.wrap = false
 vim.opt.updatetime = 500
 
 
--- conceallevel for obsidian
-vim.opt.conceallevel= 1
-
 vim.cmd [[ set noswapfile ]]
 vim.cmd [[ set termguicolors ]]
 
