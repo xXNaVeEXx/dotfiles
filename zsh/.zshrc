@@ -10,6 +10,51 @@ export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 export PATH="/usr/lib/jvm/default-java/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
+# NVM configuration - Force correct path
+export NVM_DIR="$HOME/.nvm"
+export NVM_MIRROR="https://nodejs.org/dist"
+
+# Auto-install nvm if not present
+if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+    echo "nvm not found. Installing..."
+    # Unset any existing NVM_DIR to avoid conflicts
+    unset NVM_DIR
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    # Reset NVM_DIR after install
+    export NVM_DIR="$HOME/.nvm"
+fi
+
+# Load nvm if it exists
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    source "$NVM_DIR/nvm.sh"
+    
+    # Auto-use node version from .nvmrc if present (only runs if nvm is loaded)
+    autoload -U add-zsh-hook
+    load-nvmrc() {
+      local node_version="$(nvm version)"
+      local nvmrc_path="$(nvm_find_nvmrc)"
+      
+      if [ -n "$nvmrc_path" ]; then
+        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+        
+        if [ "$nvmrc_node_version" = "N/A" ]; then
+          nvm install
+        elif [ "$nvmrc_node_version" != "$node_version" ]; then
+          nvm use --silent
+        fi
+      elif [ "$node_version" != "$(nvm version default)" ]; then
+        nvm use default --silent
+      fi
+    }
+    add-zsh-hook chpwd load-nvmrc
+    load-nvmrc
+fi
+
+# Load nvm bash completion if it exists
+if [ -s "$NVM_DIR/bash_completion" ]; then
+    source "$NVM_DIR/bash_completion"
+fi
+
 # Auto-install fzf if not present
 if ! command -v fzf &> /dev/null; then
     echo "fzf not found. Installing..."
@@ -40,12 +85,10 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 zinit light jeffreytse/zsh-vi-mode
+zinit light Aloxaf/fzf-tab
 
 # Autoload completions
 autoload -U compinit && compinit
-
-# fzf integration
-zinit light Aloxaf/fzf-tab
 
 # fzf configuration
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
@@ -58,23 +101,19 @@ if [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
   source /usr/share/doc/fzf/examples/completion.zsh
 fi
 
-# fzf-tab config (disable sort when completing `git checkout`)
+# fzf-tab config
 zstyle ':completion:*:git-checkout:*' sort false
-# set descriptions format to enable group support
 zstyle ':completion:*:descriptions' format '[%d]'
-# preview directory's content with exa when completing cd
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
-# switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
-
-# zoxide
 
 # zoxide (smarter cd)
 eval "$(zoxide init zsh)"
 
-# zoxide aliases
-alias cd="z"  # replace cd with z
-alias cdi="zi"  # interactive mode with fzf
+# Aliases
+alias cd="z"
+alias cdi="zi"
+alias ls='ls --color'
 
 # Keybindings
 bindkey -e
@@ -88,12 +127,9 @@ SAVEHIST=1000
 setopt SHARE_HISTORY
 setopt HIST_IGNORE_ALL_DUPS
 
-# Complition styling
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-Z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
-
-# Aliases
-alias ls='ls --color'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
