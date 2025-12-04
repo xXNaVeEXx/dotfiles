@@ -1,0 +1,215 @@
+{
+   "checksum": "39f6836c2482b5d50c9f13ca028ec1a0",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "date_added": "13351203440174083",
+            "date_last_used": "13403730699835980",
+            "guid": "e8a177ed-a7b9-4348-89cb-f5adbb9d8b0c",
+            "id": "119",
+            "name": "Posteingang (72) - naveone1@gmail.com - Gmail",
+            "type": "url",
+            "url": "https://mail.google.com/mail/u/0/#inbox"
+         }, {
+            "date_added": "13397689787610317",
+            "date_last_used": "13397697222861559",
+            "guid": "8e5605ad-5447-442a-897a-4d824eebec55",
+            "id": "150",
+            "name": "Faszinierende, kostenlose Bilder und Fotos | Unsplash",
+            "type": "url",
+            "url": "https://unsplash.com/de"
+         }, {
+            "date_added": "13375586411795933",
+            "date_last_used": "0",
+            "guid": "23cb3958-0610-4b2c-9419-00921f838182",
+            "id": "127",
+            "name": "AsahiLinux",
+            "type": "url",
+            "url": "https://www.reddit.com/r/AsahiLinux/"
+         }, {
+            "children": [ {
+               "children": [ {
+                  "date_added": "13375592355087518",
+                  "date_last_used": "0",
+                  "guid": "ddeb3ba5-6d5f-417e-9cbf-fcf4f1f72d9e",
+                  "id": "132",
+                  "name": "ARM Data Types and Registers (Part 2) | Azeria Labs",
+                  "type": "url",
+                  "url": "https://azeria-labs.com/arm-data-types-and-registers-part-2/"
+               }, {
+                  "date_added": "13375592295467196",
+                  "date_last_used": "0",
+                  "guid": "15e59a20-a17f-432a-aa5f-92cc5a8e8111",
+                  "id": "131",
+                  "name": "(214) Assembly Language Programming with ARM – Full Tutorial for Beginners - YouTube",
+                  "type": "url",
+                  "url": "https://www.youtube.com/watch?v=gfmRrPjnEw4"
+               }, {
+                  "date_added": "13375592447462269",
+                  "date_last_used": "0",
+                  "guid": "32dcf6b2-3a03-4848-a560-50d5cc36c281",
+                  "id": "130",
+                  "name": "CPUlator ARMv7 System Simulator",
+                  "type": "url",
+                  "url": "https://cpulator.01xz.net/?sys=arm-de1soc"
+               } ],
+               "date_added": "13375592364075771",
+               "date_last_used": "0",
+               "date_modified": "13375592447462269",
+               "guid": "4169e909-bf53-441c-9aba-bc0ada9d69f2",
+               "id": "129",
+               "name": "assembly",
+               "type": "folder"
+            }, {
+               "date_added": "13355277292077859",
+               "date_last_used": "0",
+               "guid": "e7ae93c4-fbd9-472b-8afb-58d7d3ddb2ed",
+               "id": "122",
+               "name": "Vim Cheat Sheet",
+               "type": "url",
+               "url": "https://vim.rtorr.com/"
+            } ],
+            "date_added": "13375592386364456",
+            "date_last_used": "0",
+            "date_modified": "13376098984839992",
+            "guid": "64a9c572-dd03-47ce-9bcf-e1acfd8b3ece",
+            "id": "128",
+            "name": "dev",
+            "type": "folder"
+         }, {
+            "date_added": "13376084744435797",
+            "date_last_used": "13406169687105106",
+            "guid": "a4b17f6e-e3c8-4ab0-89f5-2d543741d5df",
+            "id": "126",
+            "name": "The Linux Kernel documentation — The Linux Kernel documentation",
+            "type": "url",
+            "url": "https://www.kernel.org/doc/html/latest/"
+         }, {
+            "date_added": "13376093924289213",
+            "date_last_used": "0",
+            "guid": "1084a657-8395-4e87-9201-ed34f230ac1e",
+            "id": "133",
+            "name": "Tmux Cheat Sheet & Quick Reference | Session, window, pane and more",
+            "type": "url",
+            "url": "https://tmuxcheatsheet.com/"
+         }, {
+            "date_added": "13403532694531385",
+            "date_last_used": "0",
+            "guid": "af71eb4c-dd33-4053-8bf6-dbc800070620",
+            "id": "152",
+            "name": "Immomio",
+            "type": "url",
+            "url": "https://tenant.immomio.com/de/auth/login?pathAfterAuth=%2Fproperties%2Fapplications"
+         }, {
+            "date_added": "13377117438553136",
+            "date_last_used": "0",
+            "guid": "ea6a7be0-828f-416c-bc29-c632c9fc53de",
+            "id": "135",
+            "name": "Interactive map of Linux kernel",
+            "type": "url",
+            "url": "https://makelinux.github.io/kernel/map/"
+         }, {
+            "date_added": "13394415012133379",
+            "date_last_used": "0",
+            "guid": "3fc5930b-1f20-4802-816f-b0d7a6629418",
+            "id": "148",
+            "name": "dotfiles/nix-darwin/home.nix at master · omerxx/dotfiles",
+            "type": "url",
+            "url": "https://github.com/omerxx/dotfiles/blob/master/nix-darwin/home.nix"
+         }, {
+            "date_added": "13393902703733430",
+            "date_last_used": "0",
+            "guid": "60382136-a31e-4ea1-b702-20b52bc0d19d",
+            "id": "146",
+            "name": "Tmux Cheat Sheet & Quick Reference | Session, window, pane and more",
+            "type": "url",
+            "url": "https://tmuxcheatsheet.com/"
+         }, {
+            "date_added": "13393253964943952",
+            "date_last_used": "0",
+            "guid": "99e02675-51ea-45ed-a77d-cce0624a20b9",
+            "id": "145",
+            "name": "willcrichton/lia: A high-level language for Rust",
+            "type": "url",
+            "url": "https://github.com/willcrichton/lia"
+         }, {
+            "date_added": "13393112657147091",
+            "date_last_used": "0",
+            "guid": "a55d187b-a1d9-40a7-a79a-9a02aa4a7736",
+            "id": "144",
+            "name": "Vim Cheat Sheet",
+            "type": "url",
+            "url": "https://vim.rtorr.com/"
+         }, {
+            "date_added": "13382387556782755",
+            "date_last_used": "0",
+            "guid": "3e3a6c26-871b-418e-978f-c416edf81a1c",
+            "id": "137",
+            "name": "WhisperSpeech/WhisperSpeech: An Open Source text-to-speech system built by inverting Whisper.",
+            "type": "url",
+            "url": "https://github.com/WhisperSpeech/WhisperSpeech"
+         }, {
+            "date_added": "13382388399862177",
+            "date_last_used": "13382394078027268",
+            "guid": "3af285ad-c774-4888-8679-c8ed1b4a539a",
+            "id": "138",
+            "name": "parler-tts/parler-tts-mini-multilingual-v1.1 · Hugging Face",
+            "type": "url",
+            "url": "https://huggingface.co/parler-tts/parler-tts-mini-multilingual-v1.1"
+         }, {
+            "date_added": "13382578128120212",
+            "date_last_used": "0",
+            "guid": "c76bfbd0-a4dd-4dfd-9d31-d5322dc87bc3",
+            "id": "140",
+            "name": "Interactive map of Linux kernel",
+            "type": "url",
+            "url": "https://makelinux.github.io/kernel/map/"
+         }, {
+            "date_added": "13392944174841518",
+            "date_last_used": "0",
+            "guid": "5a6beaf5-5b34-40f3-8f13-ef6749b0448b",
+            "id": "142",
+            "name": "Spiele 6 nimmt! online im Browser • Board Game Arena",
+            "type": "url",
+            "url": "https://boardgamearena.com/gamepanel?game=sechsnimmt"
+         }, {
+            "date_added": "13392981192973844",
+            "date_last_used": "0",
+            "guid": "10b1c154-d93a-4663-be45-2e750ed1b043",
+            "id": "143",
+            "name": "ProgressAblDojo",
+            "type": "url",
+            "url": "https://abldojo.services.progress.com/"
+         } ],
+         "date_added": "13351189938562053",
+         "date_last_used": "0",
+         "date_modified": "13403532694531386",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Lesezeichen",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13351189938562054",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Andere Lesezeichen",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13351189938562055",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile Lesezeichen",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CooBChAIiIECEgqm1r2BsmYAAAAAEgAaWHNhcEhSVzRKZEN5S2ZaM0JiK2ZSYTJEVHZEZ2pFVEpydlp4QWFqd2pJL0hoYkhHdHFOOFVPbWg3VTBBQTU3ekZuRExLVjF6VlFoVnE5STJROHdXaFNRPT0qGDVUcy9EWCtXUzl0MUI1dE15dXh3NkE9PUgDEqsBCJIBEqUBChxVVjB1WjRtM3J4RTJPaFBCWjFibjRlOEl2NTQ9EiQ2ZmVlNzgyZi01YTBhLTQ5M2UtYWEwNS0xZDUwNWY3ZGE4NzUYACACKAIw5OzmkPUyOPXY5pD1MkD82OaQ9TJKHDErZzFnaGR1cG1CRTBmTTJxTTVYQVFYMTJ4Yz1aISIf///vclNmUkZJMW5GNC9abzYvTjRPUjNkRW1GTHhVPWUdXV36EqsBCIoBEqUBChxJLzdYWmgwTDBEU3pUYWV6bUpncG9zRklpZjQ9EiRlYTQyZjBlOC04N2FjLTRiYjItODkzMy04N2I1NmNlYmZjZGMYACACKAIwg8GtnsoyOPatrZ7KMkD3ra2eyjJKHGpYT1NSaU5Tclk2OU9INE9RU1lPVEV5MjFtcz1aISIf///7ZE9RaDF1cGRCYWZsT0N6WnJSNUZweFg0T1ZrPWWE4XiOEqsBCI4BEqUBChxnZlFYL1I5c2l2K0l5OEFiYkc5OWJybjU2L1E9EiQ2NjlmYmNlOS1lZDA5LTRmMWUtYTA2OC0wZWVjNTI0YjczZGEYACACKAIwmvHex/EyOPnd3sfxMkD63d7H8TJKHHRoQjNtUStyNm1CbFd1RFlxMlhyd0F0MWMzZz1aISIf///+a2tWK0pPYUhTWVVNa1JoYzlTbDkwcldDdzhZPWVL+Z3FEqkBCIMBEqMBChxpdkZHVE02S3BxSWtuMlU2WG5Yb3hsc1lWVUU9EiQ4OTJmZDQ5ZC1jMzBmLTQ1NjItODZmNC1mMzU2MmFhMTc3MmYYACAAKAAwoY/h9bAyOKuI3PWwMkCriNz1sDJKHFA3Q1BIaEgrZDJHQjNJUDViZmZ5MmFhOTlidz1aHyIdqzdMYjBQTjMyRWxHbEtobzZSa093WlJMaDJoUT1l/ZyMShKrAQiJARKlAQocNUdjeFdwUEcvUkJqaWlrRUxjNUthUlpLRzJVPRIkYzQ3ZGU2MDMtYWFhNS00NjVjLTkwNzAtZDUwZTJjYjJiMThlGAAgAygDMLDP08WLMziy8/mdyjJA2bvTxYszShxwMlluUGtqS3ZLNVFhb1QrdmwrMnpta2FBZ2M9WiEiH///90FpdlRvTWJoTFk1WHJhVWVvanhCcHZvMHJLTT1lhWftDxKpAQiCARKjAQocMm9jSzNjd0NyMGZ5eWZCZlVlSWt6VEdwT0dFPRIkOTkyMWJmMzYtNGYzNS00YjViLTliODgtYTY1NDVjNzQ2ZTViGAAgACgAMPq+5fWwMjjmq+X1sDJA5qvl9bAyShxFbTFPMXpPTEVuaVo0R2VIS2hyTDcxdEM3SlE9Wh8iHdV0NlRLUGJEcWx6Y01scnozeHlUMFY1WDIyU289ZQAAAAASqQEIfxKkAQocOUtVR1hNQUUrZ1EvZ2hTblV6ODhENG9yd1hjPRIkZTJhYWY3NDYtOTg4ZS00ZTVhLWIxOWQtMmEyNjRkODczYzlkGAAgASgBMLWbi6WNMziU+vTysDJA+oSLpY0zShwwL09BcGE2ZFpoQlFlYmlyN3FxeU5uNFliOTg9WiAiHv/0VjZ5M1ZlbktuU2hKOU15QURKWVp2QmtmbkQwPWVQgHAdEqgBCHoSowEKHEtOQzM3NWR2TUZlaHIxamRFOEdhaUtPYkVUST0SJDkxZDQwODM0LTVmNGEtNDY2NC1iZWFlLTM4NzIzYjIzOTJkMBgAIAIoAjCEzeL1sDI4rtTinuUxQITN4vWwMkocMGpldE1xbWFxa0g3em9xc3ZMbW9BaG56VGY0PVofIh21SG1QL1JabTNoZlRJNEN5NEVTanVuL1RlWjVJPWWsBiTWEqsBCJABEqUBChx3eHppREE1clNlRDN5UnlmUTlGbitJUTlNM009EiRkNjU0YzFjZi1kMmVlLTQ4MTMtOTlhMy0zYjNlZmNiYWMxNjAYACACKAIwn52KmPIyOPuJipjyMkD+iYqY8jJKHDBISTZqazlSbjVUWWpNQUh6ZlFLc3hNeG85VT1aISIf///ycHBKT3Zld1hWQWRDOEJ1U3l3U3ZMaTBGczNrPWWsBiTWEqsBCIUBEqUBChxrVkZmYm5lWXhYS1pWa2dEK1NWL2dEYkk1enc9EiQwYjU0NjNiNC1kZjNmLTQyYWItYTMzMy1iYjYwNGJlM2VkNjEYACAAKAAwgpr15LIyOMGH9eSyMkDBh/XksjJKHDdIeDJSVVYzZXdaZ2tCZ0Y3OFVjdW81bUlvTT1aISIf///cTmgyd1ZJenJnMHVHSGNUalQ5RXpHL2srcStnPWUdXV36EqgBCIQBEqIBChwvcmk4NmxZQityT2ZxQ2h3bHpZMzFPYy9Ycm89EiRjODhmNzNiMy1jNTlkLTQxOWEtYjllNC04M2VkNmI4NmI3OWIYACAAKAAwu/vg9bAyOI/a3/WwMkCP2t/1sDJKHDFwZ2wxbmFIaHNkUGt6dTdkWXg4NElRMzRrdz1aHiIcV1RQU1hPeXBsQjhpaGhuUzJ6aUxsNEtnVkFZPWVvso+eEqsBCJgBEqUBChxRNjFsc1ZQb0RDWkMwV2lYanFUU3Y1TUFvRm89EiQwNGM3OTJkMy1jMmNlLTQwMGMtODJlNi0zNzg3OWQzM2Q4NDIYACACKAIwk+vegJkzOITY3oCZM0CJ2N6AmTNKHG04bm5Yb3ZSRS9UTmlaWDN1djlnVlZRdFZLWT1aISIf///lV25jYm9oUEFPYWlleVBOSktHODBsUm9wazk0PWX3w14SEqkBCHcSpAEKHEJWUHZFUnhDUVdHbjVyNXZSV1ZhWm9IUmR5Yz0SJGMwMDkxZjdkLTdjNzItNDllYS04MGViLWY2MTk0MTc2Nzc0YRgAIAYoBjDa/fntlzM4r7yaiNYxQM7p+e2XM0ocK2hrOVl0MGs0ZXZBN0x6eVJqcVFKT3ZiaVFFPVogIh7/0m9ZQnBocTRBYmUxU0NlckFmZ0hOS0crMlZVaz1lIjmYNhKDAQgDEn8KHG5qZ0R1ODhlQ3J2WHA4NnBEN2ZIR2NxRnA4OD0SJDVmZTQ1OTE3LWU5YjMtNDhhMi1iYWQ3LWYzNzczNmE1YzMyORgAIAAoADABOO6C8oHWMUDugvKB1jFKHHl6TkIwMWNuNTRBN2NSVTB1VCsvUGdtVHRVbz1aAGUAAAAAEqsBCJQBEqUBChxHS2ZwRlJDMlV2SHAwRUZhcGMrZnNQNzl6VU09EiQyYTU0ZDViMS01NjkyLTQ5MDEtODFmMS02YTIzY2IwNjgwMDEYACADKAMwrM/TxYszOKbCi4X3MkDZu9PFizNKHGh6cUhmdDFFck1xQjhiem9KSVRpZXU5S1JxMD1aISIf///uYURGeFNURWlCdGQ0WU8wTnIzVjZJL3plSTl3PWWFZ+0PEoMBCAISfwocWWNTVG9udkVTUHdxQ3M0TDJjclZodjY4TDk4PRIkNTc2OTRkZjUtY2ZjZS00YjA0LWE2NjgtOGZhYjk1ZjUxM2Y5GAAgACgAMAE47oLygdYxQO6C8oHWMUocb1BWa2h3QlJiVjY1S0NXUjIrSU9OSFdvT3U4PVoAZQAAAAASqgEIgAESpAEKHFVrbXF1c2tEY05Mb3hZcWV1djdldWNvcFQ5QT0SJDdjMDE2ZjdkLWE5YjktNDAxZS1iNTgxLTVlNzZkOGJjZTUyZRgAIAAoADCC3+H1sDI4vM7h9bAyQLzO4fWwMkocb1hkbXFkRWN6aVlsNGN0eHM4U09mc25SNmhvPVogIh7//3Fhemg2djdCRXRwY3MwSE00OFl1MjlWaXNwND1lAAAAABKoAQiBARKiAQocNS8zNHJNMWpVL3J2ZEthMTlkM2tvRW9ydEM0PRIkNmY5ZWYzNjItNzY1Zi00NzM0LWJhOGUtNjMwMzMzOWNlZGQ5GAAgACgAMP7i4fWwMjisoOD1sDJArKDg9bAyShxnTmFCQkNmam1mOU9GYks5MHBsU2g0TGxTdEE9Wh4iHGtWcnNRYm54Q2FNaTY1eTRuaXV0WXgrNW5OQT1lAAAAABKrAQiHARKlAQocRDNocUh6T2YrVW5pbFFXeEkwNTV6YUFJdnNJPRIkOTVjMGEzODgtMGFjZS00YWE3LWE0ZjgtZjAwN2NiN2MzY2Q5GAAgACgAMPK1+8y2MjjZtPvMtjJA2bT7zLYyShxaTWNWR3B6NzFhNHNUZTU1bnc5citudzBrVW89WiEiH///7kk2bVdQU0J0USt3ZVZYMGxiWk9McWtjRUJNND1lAAAAABKrAQiRARKlAQocMWFYT29Fb1ZtNVZ3bnB1ZlJyWGk3dHVSZSswPRIkNGUwYWIwOWQtYTEzZS00ODcxLWFlNjUtMDdjN2RjZDAxMzZlGAAgAygDMKfP08WLMziQ6brb8jJA2bvTxYszShxLbWVLcm8zaTlFWk42d1pyZHBFUmNMeHYwMlk9WiEiH///8E5NRVNSMDhLNzBLbUZySDhIVUxyWGVzYXJYWT1lhWftDxKDAQgBEn8KHHl4Si82ZnZrZWNyN2twNUVRekI0dFdMcGRiRT0SJGRjYTZhODdhLTllMWMtNGU5Yi1iNDg4LTY3ODRlYmFhYmJlNhgAIAAoADABOO6C8oHWMUDugvKB1jFKHGFSQ1dMZ2hGOWI1SW5xS0lEdnVKL2p2UWtGYz1aAGUAAAAAEqoBCH4SpQEKHEVkWDBMVG9FOVJ3QmZYMXRIVGhJSW0yak5udz0SJGQzNzliMTFjLWZmNjUtNGU1YS1iNGIxLWFjY2QzZjA2MGNjZBgAIAAoADCj9MTgsjI49OHE4LIyQPThxOCyMkocSG03RHNYamVGYy9yZmhuYnRHNEoyV25UWExnPVohIh///7hJTS9DdmdtOEZTL3dIT3M0ODcrWnpKUGFSaTA9ZQAAAAASqwEIjwESpQEKHGNkMjVaQnlxT3RuTlZBQ1lWMGhNbjZZbS9Rcz0SJDU0MDIzZTQxLWY2YWYtNDQ1Zi05Y2JhLWJlNWM4NTMyMTdkOBgAIAMoAzD/85jW9zI4jpKy2fEyQN/gmNb3MkocVzJ0aEY0ZGsvMkE5Tm95MitpRVVkUStFSTRVPVohIh////8xT1FtWGpndjlzUDludnRJd3BnYkRwRVBOS2s9ZXckYfsSqwEIjAESpQEKHDhuY3VjUmN0MFh5L2ljUUFJczg3VC9iWlp2ST0SJGExNjY1ZTUwLWZlNDctNGE4Yy1iM2Q2LTRjZmRhMDY3OWUxMxgAIAAoADCszen4yjI4+Lnp+MoyQPi56fjKMkocSmFWalhpTTdQT3J4WnhCcENZS1laSkltdmU4PVohIh////1VandoaXdUY200dmFCZ3NRZ2NXQ01WRUd1Yzg9ZQAAAAASqgEIlgESpAEKHDFhYXYrZm9FNGw4OHI0cDV1blBCbmlNQkFaST0SJDdkMmZjOWFhLWU2OTktNDQyZi05MDBkLTFhMjFjMjRlNzc5YhgAIAIoAjDpjtCegzM42vnPnoMzQOH5z56DM0ocM21UQ0RteGtnTDZqSHp4eXAyR25UQzNpYkJrPVogIh7/40ttUzdUcUoyNmIzeWtucTBXVkZjR1grdWJtOD1lvloO/DABOAA=",
+   "version": 1
+}

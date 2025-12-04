@@ -1,0 +1,823 @@
+{
+   "checksum": "75c7492f52dd7a8a8f7b33a55c19f3cd",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "children": [ {
+               "date_added": "13364320365000000",
+               "date_last_used": "0",
+               "guid": "e346d8c6-21a6-4629-9d4b-63e8f8e72903",
+               "id": "6",
+               "name": "Home — Atlassian Home",
+               "type": "url",
+               "url": "https://team.atlassian.com/your-work?utm_source=identity&startRedirect=true"
+            }, {
+               "children": [ {
+                  "date_added": "13400339820837630",
+                  "date_last_used": "13401377096359879",
+                  "guid": "a72b52fa-41cc-4fac-afaf-85cc23c391e0",
+                  "id": "100",
+                  "name": "[LITK-3094] BDE - Scr 5 RUM Produktion - Fkt. Start/Stop - Jira",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/browse/LITK-3094"
+               }, {
+                  "date_added": "13400339832215448",
+                  "date_last_used": "0",
+                  "guid": "c8370d02-7677-4d99-9d58-2b86715c6d4f",
+                  "id": "99",
+                  "name": "Jira",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/browse/LITK-4186"
+               }, {
+                  "date_added": "13400339850944450",
+                  "date_last_used": "13403872561322992",
+                  "guid": "952ad590-9eb3-43a7-bbd9-de82f1ace4bf",
+                  "id": "101",
+                  "name": "https://lit2.sharepoint.com/sites/LIT-Components/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FLIT%2DComponents%2FShared%20Documents%2Fbuild%2Eone%2F21%5FMock%20Up%20Betriebsdatenerfassung%2FBDE%20Ersatzl%C3%B6sung%20Mock%20Up&p=true&ct=1755860521111&or=Teams%2DHL&ga=1&LOF=1",
+                  "type": "url",
+                  "url": "https://lit2.sharepoint.com/sites/LIT-Components/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FLIT-Components%2FShared%20Documents%2Fbuild%2Eone%2F21_Mock%20Up%20Betriebsdatenerfassung%2FBDE%20Ersatzl%C3%B6sung%20Mock%20Up&p=true&ct=1755860521111&or=Teams-HL&ga=1&LOF=1"
+               } ],
+               "date_added": "13400339808755332",
+               "date_last_used": "0",
+               "date_modified": "13400339850944450",
+               "guid": "f4423c7d-a906-47ba-8031-3403d4050a11",
+               "id": "98",
+               "name": "BuildOne",
+               "type": "folder"
+            }, {
+               "date_added": "13364393576000000",
+               "date_last_used": "13398880459222794",
+               "guid": "dd00e711-37c9-4fd6-b2f7-b987e6816b21",
+               "id": "7",
+               "name": "Mediathek: Podcasts zu ERP-Software | proALPHA",
+               "type": "url",
+               "url": "https://www.proalpha.com/de/mediathek-podcasts"
+            }, {
+               "children": [ {
+                  "date_added": "13298714746000000",
+                  "date_last_used": "13396000430065387",
+                  "guid": "bff4b013-491d-41af-85d9-454840bd3268",
+                  "id": "9",
+                  "name": "JIRA",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/jira"
+               }, {
+                  "date_added": "13298714780000000",
+                  "date_last_used": "13408211232302561",
+                  "guid": "05bf555a-4570-4ee5-817c-89b9ab7dfe69",
+                  "id": "10",
+                  "name": "BCS",
+                  "type": "url",
+                  "url": "https://projekte.lit-beratung.de/bcs/login"
+               }, {
+                  "date_added": "13298714637000000",
+                  "date_last_used": "13395758076202487",
+                  "guid": "dad107f8-5646-4da2-9683-1ef82ef6b5cc",
+                  "id": "11",
+                  "name": "Confluence",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki"
+               }, {
+                  "date_added": "13364282228000000",
+                  "date_last_used": "13396131582809499",
+                  "guid": "4a2c0e05-491a-4cfd-a39a-bc3d82839397",
+                  "id": "12",
+                  "name": "E-Mail – Mukailov, Gamzat – Outlook",
+                  "type": "url",
+                  "url": "https://outlook.office.com/mail/inbox/id/AAQkADRmODBhMDg4LThhMzctNDcwMC05Zjg0LTU4ZjczYmI1ZTY3NwAQAGKTGclbFk4QmyVNqeD1EmU%3D"
+               } ],
+               "date_added": "13364481599340076",
+               "date_last_used": "0",
+               "date_modified": "13364481599340076",
+               "guid": "776bc5e6-4404-4ad1-80be-e9a9faa95265",
+               "id": "8",
+               "name": "Orga",
+               "type": "folder"
+            }, {
+               "children": [ {
+                  "date_added": "13364319920000000",
+                  "date_last_used": "13364577064310766",
+                  "guid": "ebf118f5-1478-4fcb-b362-dda3764de0b2",
+                  "id": "14",
+                  "name": "Bitbucket",
+                  "type": "url",
+                  "url": "https://bitbucket.org/account/workspaces"
+               }, {
+                  "date_added": "13364314772000000",
+                  "date_last_used": "0",
+                  "guid": "429bdd30-e092-46fd-a96e-cd5c35835efc",
+                  "id": "15",
+                  "name": "BeyondTrust: Eigenes Konto > Profil",
+                  "type": "url",
+                  "url": "https://lit-beratung.beyondtrustcloud.com/login/my_account/profile"
+               }, {
+                  "date_added": "13364567211236491",
+                  "date_last_used": "13366105968559361",
+                  "guid": "efd22990-0acf-4849-8280-9ea7dbfa2acf",
+                  "id": "16",
+                  "name": "ServiceNow",
+                  "type": "url",
+                  "url": "https://proalpha.service-now.com/csm"
+               }, {
+                  "date_added": "13365864040518220",
+                  "date_last_used": "13397751791387476",
+                  "guid": "4da592b1-35a7-44b2-bbdc-847aac4c3c24",
+                  "id": "17",
+                  "name": "Resources WebSpeed",
+                  "type": "url",
+                  "url": "http://localhost:9099/resources/resourcegrid.jsp"
+               }, {
+                  "date_added": "13365862344631009",
+                  "date_last_used": "13406042415691792",
+                  "guid": "19fabb9a-5dbf-4faf-b309-37453cd8dead",
+                  "id": "18",
+                  "name": "Resources PASOE",
+                  "type": "url",
+                  "url": "http://localhost:9101/resources/resourcegrid.jsp"
+               }, {
+                  "date_added": "13366304361446497",
+                  "date_last_used": "13387660586831239",
+                  "guid": "ab0c2f25-94d7-491c-824e-7eada969ded2",
+                  "id": "19",
+                  "name": "Kunden Fernwartung",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KUNDEN/pages/327483393/SBO+-+30088+Sennebogen+Maschinenfabrik+GmbH#1.7.-Alternative-Kundenzug%C3%A4nge"
+               }, {
+                  "date_added": "13366294835720944",
+                  "date_last_used": "13375375583492363",
+                  "guid": "98a770a0-c09f-4d6e-86c8-9177dd28223c",
+                  "id": "20",
+                  "name": "Reconcile Dashboard",
+                  "type": "url",
+                  "url": "http://snuevvreco01.lit.local:8080/recostatus/"
+               }, {
+                  "date_added": "13371131791760428",
+                  "date_last_used": "13380814176710878",
+                  "guid": "35d98924-a1b6-48c9-950a-448e06105dfe",
+                  "id": "21",
+                  "name": "PatchDay: Auslieferungsprozess - LIT intern - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/699498506/PatchDay+Auslieferungsprozess"
+               }, {
+                  "date_added": "13397833256248710",
+                  "date_last_used": "0",
+                  "guid": "778dd301-cf77-4d55-ade1-fa5f3224b566",
+                  "id": "93",
+                  "name": "Default Project | Default Organization | Supabase",
+                  "type": "url",
+                  "url": "http://gamzat.proxmox:54323/project/default"
+               }, {
+                  "date_added": "13397842898792552",
+                  "date_last_used": "0",
+                  "guid": "e6525e01-a17b-45fb-b3e6-6262ee114bbf",
+                  "id": "91",
+                  "name": "Commits · staging · LIT Projekte / FOB-BDE · GitLab",
+                  "type": "url",
+                  "url": "https://gitlab.lit-beratung.de/lit-projekte/fob-bde/-/commits/staging?ref_type=heads"
+               }, {
+                  "date_added": "13397834404150742",
+                  "date_last_used": "13397834436824741",
+                  "guid": "f2820e64-a26a-4321-b5be-c76927b7ed21",
+                  "id": "92",
+                  "name": "BUILD.ONE",
+                  "type": "url",
+                  "url": "https://fob.lit-beratung.cloud/"
+               }, {
+                  "date_added": "13397839267133034",
+                  "date_last_used": "0",
+                  "guid": "6e0a67cc-241a-4214-a7ea-c05bfe0b618e",
+                  "id": "95",
+                  "name": "Create Next App",
+                  "type": "url",
+                  "url": "https://fob-bde-staging.lit-beratung.com/"
+               }, {
+                  "date_added": "13399546542436583",
+                  "date_last_used": "13399565215736344",
+                  "guid": "28dd5177-e2f8-411d-ab45-14a6e1d63ea7",
+                  "id": "94",
+                  "name": "Resources 12.8",
+                  "type": "url",
+                  "url": "http://localhost:9102/resources/resourcegrid.jsp"
+               } ],
+               "date_added": "13364481634381938",
+               "date_last_used": "0",
+               "date_modified": "13399546542436583",
+               "guid": "06a4ae4d-bc82-4ac9-b68b-a56e00e93d2a",
+               "id": "13",
+               "name": "Development",
+               "type": "folder"
+            }, {
+               "children": [ {
+                  "date_added": "13364391636000000",
+                  "date_last_used": "0",
+                  "guid": "7230c543-4901-4aeb-a952-12b20913b9ec",
+                  "id": "23",
+                  "name": "Login | Portal | proALPHA",
+                  "type": "url",
+                  "url": "https://academy.proalpha.com/e-ducation/login.php"
+               } ],
+               "date_added": "13364481661957064",
+               "date_last_used": "0",
+               "date_modified": "13364481661957064",
+               "guid": "a4a1768a-c934-4370-a11f-b05a9b9f1bf1",
+               "id": "22",
+               "name": "Learn",
+               "type": "folder"
+            }, {
+               "children": [ {
+                  "date_added": "13364314473000000",
+                  "date_last_used": "0",
+                  "guid": "4d4968e2-7595-4951-ad24-adbadfc87ef4",
+                  "id": "25",
+                  "name": "proALPHA Demo Systeme - LIT intern - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/220889089/proALPHA+Demo+Systeme"
+               }, {
+                  "date_added": "13364392056000000",
+                  "date_last_used": "0",
+                  "guid": "db876ee3-d736-4407-a518-192d57dacb62",
+                  "id": "26",
+                  "name": "Info Seiten von proALPHA zu pA Wissen - LIT intern - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/527007773/Info+Seiten+von+proALPHA+zu+pA+Wissen"
+               }, {
+                  "date_added": "13364315814000000",
+                  "date_last_used": "13387972148727415",
+                  "guid": "d0f02b1a-36be-4efb-a6f2-f3ed7fd9a044",
+                  "id": "27",
+                  "name": "DeMaS",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/418840599/Einstieg+in+proALPHA+9+DeMaS"
+               }, {
+                  "date_added": "13376759159765245",
+                  "date_last_used": "13387556032778512",
+                  "guid": "8c3bbd4f-8393-4a04-b2f8-ec4bd68860bd",
+                  "id": "28",
+                  "name": "B2B-Entwicklung - Knowledge proALPHA - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/905740941/B2B-Entwicklung"
+               }, {
+                  "date_added": "13381579958996317",
+                  "date_last_used": "0",
+                  "guid": "f4d0c05d-0d0e-4d45-83c7-565090544661",
+                  "id": "29",
+                  "name": "VA-IP-001 Zeitenerfassung, Buchen und Abrechnung im BCS - LIT intern - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/309297230/VA-IP-001+Zeitenerfassung+Buchen+und+Abrechnung+im+BCS"
+               }, {
+                  "date_added": "13382097323113815",
+                  "date_last_used": "0",
+                  "guid": "912cc44e-2966-4831-92f7-ba82ed66d0b0",
+                  "id": "30",
+                  "name": "Getting Started - Architektur - Knowledge proALPHA - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/290390149/Getting+Started+-+Architektur"
+               }, {
+                  "date_added": "13382612865797810",
+                  "date_last_used": "13387560488546799",
+                  "guid": "1f7271cb-3f45-4afc-89c6-768d95f33ea0",
+                  "id": "31",
+                  "name": "Datenübernahmen / Synchronisation von Kundensystemen mit Dev 9er VV's - Knowledge proALPHA - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/880771115/Daten+bernahmen+Synchronisation+von+Kundensystemen+mit+Dev+9er+VV+s"
+               }, {
+                  "date_added": "13385724377664076",
+                  "date_last_used": "0",
+                  "guid": "df24543f-88a5-491b-be2b-976f8ea9b28e",
+                  "id": "32",
+                  "name": "Rückmeldungen zu Produktionsaufträgen mobil erfassen",
+                  "type": "url",
+                  "url": "https://docs.proalpha.com/de-DE/bundle/ApplicationGuide/page/topic/w__p_mobile_rueckmeldung_pps.html"
+               }, {
+                  "date_added": "13386695958146325",
+                  "date_last_used": "13387972665104850",
+                  "guid": "85ae9347-c7ac-4192-b64e-780df0088f01",
+                  "id": "33",
+                  "name": "LIT Components in Kunden VV's - Knowledge proALPHA - LITipedia",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/1067778191/Integration+von+LIT+Components+in+Kunden+VV+s?force_transition=3483193c-55ca-4b13-afd4-c46e1172ee76"
+               }, {
+                  "date_added": "13386761990180034",
+                  "date_last_used": "0",
+                  "guid": "c8798060-166e-4dad-9826-c6e34040d6af",
+                  "id": "34",
+                  "name": "https://lit2-my.sharepoint.com/personal/r_gerlinger_lit-beratung_de/_layouts/15/stream.aspx?id=%2Fpersonal%2Fr%5Fgerlinger%5Flit%2Dberatung%5Fde%2FDocuments%2FRecordings%2FELITe%5F%20%C3%9Cbernahme%20der%20LIT%2DKomponente%20in%20ein%20DeMaS%2DKundenprojekt%2D20250317%5F150103%2DBesprechungsaufzeichnung%2Emp4&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2E6bfe1cbb%2D832b%2D4813%2Daca1%2D5b3a3b37cf82",
+                  "type": "url",
+                  "url": "https://lit2-my.sharepoint.com/personal/r_gerlinger_lit-beratung_de/_layouts/15/stream.aspx?id=%2Fpersonal%2Fr_gerlinger_lit-beratung_de%2FDocuments%2FRecordings%2FELITe_%20%C3%9Cbernahme%20der%20LIT-Komponente%20in%20ein%20DeMaS-Kundenprojekt-20250317_150103-Besprechungsaufzeichnung%2Emp4&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2E6bfe1cbb-832b-4813-aca1-5b3a3b37cf82"
+               }, {
+                  "date_added": "13387972464164350",
+                  "date_last_used": "13387972638715414",
+                  "guid": "3a457d0d-460b-4952-92b9-be52f6ef2565",
+                  "id": "35",
+                  "name": "Getting Started - Installation Rest API",
+                  "type": "url",
+                  "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/290521103/Getting+Started+-+Installation"
+               } ],
+               "date_added": "13364481732246504",
+               "date_last_used": "0",
+               "date_modified": "13387972464164350",
+               "guid": "087cd339-9437-4306-8670-75fe35232fa3",
+               "id": "24",
+               "name": "Doku",
+               "type": "folder"
+            }, {
+               "date_added": "13364489322578599",
+               "date_last_used": "13380906932819484",
+               "guid": "d7c19ca0-5c7c-4700-a1bd-180303aab4b8",
+               "id": "36",
+               "name": "proALPHA Demo Systeme - LIT intern - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/220889089/proALPHA+Demo+Systeme"
+            }, {
+               "date_added": "13364489504522918",
+               "date_last_used": "13368282886395596",
+               "guid": "e8d20af9-e807-4d1b-b16e-85d700fec3bc",
+               "id": "37",
+               "name": "BCS (Projektmanagementsoftware) - LIT intern - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/239960075/BCS+Projektmanagementsoftware"
+            }, {
+               "date_added": "13365519735857958",
+               "date_last_used": "0",
+               "guid": "4667bd05-67b8-4b5f-a1d9-d29b349e89a7",
+               "id": "38",
+               "name": "Anleitungen - LCR Installationsanleitung (Neuinstallation) - Knowledge proALPHA - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/355696667/Anleitungen+-+LCR+Installationsanleitung+Neuinstallation"
+            }, {
+               "date_added": "13366456645783779",
+               "date_last_used": "13405518995018085",
+               "guid": "7ad8192c-cf4a-46bb-a395-a9afcbbfe86c",
+               "id": "39",
+               "name": "LIT - Kundenentwickler - Alle Dokumente",
+               "type": "url",
+               "url": "https://lit2.sharepoint.com/sites/LIT/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FLIT%2FShared%20Documents%2FGeneral%2FKampagnen%2FKundenentwickler&p=true&ga=1"
+            }, {
+               "date_added": "13366905118054649",
+               "date_last_used": "13403572324191764",
+               "guid": "84e5ebcf-2682-455a-ad7e-291e0d1d6afd",
+               "id": "40",
+               "name": "Arbeitnehmer online - Dashboard",
+               "type": "url",
+               "url": "https://apps.datev.de/ano/dashboard"
+            }, {
+               "date_added": "13367501403591769",
+               "date_last_used": "0",
+               "guid": "9ecc0e49-616f-4400-99b6-5b76b65c10ed",
+               "id": "41",
+               "name": "lit-beratung / B2B - Bitbucket",
+               "type": "url",
+               "url": "https://bitbucket.org/lit-beratung/workspace/projects/B2B"
+            }, {
+               "date_added": "13368091856419126",
+               "date_last_used": "0",
+               "guid": "5133e655-4d1a-4da8-b011-0b564f9413f7",
+               "id": "42",
+               "name": "Git - git-sparse-checkout Documentation",
+               "type": "url",
+               "url": "https://git-scm.com/docs/git-sparse-checkout"
+            }, {
+               "date_added": "13374167472029932",
+               "date_last_used": "13376757701861190",
+               "guid": "9507acc2-5414-4cd0-b8e0-720c177fe2f0",
+               "id": "43",
+               "name": "B2B-Portale - Knowledge proALPHA - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/525762687/B2B-Portale"
+            }, {
+               "date_added": "13376139831385817",
+               "date_last_used": "13376140293273393",
+               "guid": "9271c895-347d-4860-ba0e-8b16d58f7104",
+               "id": "44",
+               "name": "Bookings mit mir – Mukailov, Gamzat – Outlook",
+               "type": "url",
+               "url": "https://outlook-sdf.office.com/bookwithme/me"
+            }, {
+               "date_added": "13376484195285515",
+               "date_last_used": "0",
+               "guid": "756e4112-e3bd-4895-831d-423d3db38850",
+               "id": "45",
+               "name": "Benutzerverwaltung für Zugang zur FullCloudExperience (FCE) / Business Cloud - Knowledge proALPHA - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/388104256/Benutzerverwaltung+f+r+Zugang+zur+FullCloudExperience+FCE+Business+Cloud"
+            }, {
+               "date_added": "13376756683957838",
+               "date_last_used": "0",
+               "guid": "3e7856ad-7ce0-413b-a194-15d78985aad2",
+               "id": "46",
+               "name": "Code Snippets - LIT intern - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/333479953/Code+Snippets"
+            }, {
+               "date_added": "13377705298650784",
+               "date_last_used": "13387553004533781",
+               "guid": "52754f97-f5bd-42ea-810e-510a7acac92a",
+               "id": "47",
+               "name": "Customer Delivery Management",
+               "type": "url",
+               "url": "https://packages.proalpha.com/external.delivery.management/?dl=outline-24431&i=arbeit"
+            }, {
+               "date_added": "13377705303397202",
+               "date_last_used": "13382546026180384",
+               "guid": "dc9adf04-d9e5-476e-a1aa-b23d41bd1fb8",
+               "id": "48",
+               "name": "Jira proALPHA (Tasks/Issues/Programmänderungen) - LIT intern - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/265388074/Jira+proALPHA+Tasks+Issues+Programm+nderungen#4.-Download-der-Tasks"
+            }, {
+               "date_added": "13378402874421511",
+               "date_last_used": "13378919576241430",
+               "guid": "afb025a1-8935-4ecd-bde0-e0c13bd85be6",
+               "id": "49",
+               "name": "Kompetenzgruppe Mobil - Knowledge proALPHA - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/424608130/Kompetenzgruppe+Mobil#4.-Installation"
+            }, {
+               "date_added": "13390991609564803",
+               "date_last_used": "0",
+               "guid": "0bbabefd-a0ac-45c7-927d-4b89285ed4da",
+               "id": "50",
+               "name": "KI in der Entwicklung.one",
+               "type": "url",
+               "url": "https://lit2-my.sharepoint.com/:o:/r/personal/r_gerlinger_lit-beratung_de/_layouts/15/Doc.aspx?sourcedoc=%7B11b27809-8548-4a00-9a4a-056bb0245436%7D&action=edit&wd=target(Assisted%20Coding%20%E2%80%93%20Produkt%20Codeium%7C4ff2dbd4-2213-4ed8-84a6-161bc1076fdd%2F)&wdorigin=NavigationUrl"
+            }, {
+               "date_added": "13391868130339938",
+               "date_last_used": "0",
+               "guid": "9a1d199e-fb61-4070-97de-b5951b575715",
+               "id": "51",
+               "name": "Code analysis for OpenEdge ABL • Riverside Software",
+               "type": "url",
+               "url": "https://riverside-software.fr/"
+            }, {
+               "date_added": "13394275426543174",
+               "date_last_used": "13396362858735652",
+               "guid": "0d8551e4-dc6d-4ace-a0f8-0b3f2ba645f6",
+               "id": "52",
+               "name": "B2B Builds",
+               "type": "url",
+               "url": "https://lit2.sharepoint.com/sites/LIT/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FLIT%2FShared%20Documents%2FGeneral%2FinterneProjekte%2FKompetenzgruppen%2FB2B%2FPortale&p=true&ga=1"
+            }, {
+               "date_added": "13394283396577599",
+               "date_last_used": "0",
+               "guid": "944103ba-8945-49b9-8ae0-0301de8b3b57",
+               "id": "53",
+               "name": "Kompetenzgruppe Mobil - Knowledge proALPHA - LITipedia",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/424608130/Kompetenzgruppe+Mobil#4.-Installation"
+            }, {
+               "date_added": "13371834916453159",
+               "date_last_used": "13394714634680766",
+               "guid": "53f32257-3048-401b-a98a-2e666b8085a2",
+               "id": "54",
+               "name": "BLP Digital",
+               "type": "url",
+               "url": "https://www.blp-digital.ch/f465dbf2-7ef8-51ae-a95e-a97531e902ff/order-confirmation?columnFilters=%7B%22name%22%3A%22document_Category%22%2C%22value%22%3A%7B%22value%22%3A%22NOT_CHECKED%22%7D%2C%22op%22%3A%22eq%22%7D&start=0&count=25"
+            }, {
+               "date_added": "13375973493330392",
+               "date_last_used": "13394715899472013",
+               "guid": "d27c321b-afc3-4d07-b948-c736e3eb3712",
+               "id": "55",
+               "name": "sontex.proalpha.cloud",
+               "type": "url",
+               "url": "https://sontex.proalpha.cloud/index.html"
+            }, {
+               "date_added": "13398185374223915",
+               "date_last_used": "0",
+               "guid": "6f405d31-3e85-4b26-8fed-52e1752c4332",
+               "id": "97",
+               "name": "[LITK-3990] LITK-SRA-3990 B2B BDE+ Komponente - Jira",
+               "type": "url",
+               "url": "https://lit-beratung.atlassian.net/browse/LITK-3990"
+            }, {
+               "date_added": "13400334143852586",
+               "date_last_used": "13400339844691958",
+               "guid": "ab16544e-202c-401f-9267-ef2eda672cd1",
+               "id": "96",
+               "name": "BuildOne",
+               "type": "url",
+               "url": "https://lit2.sharepoint.com/sites/LIT-Components/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FLIT-Components%2FShared%20Documents%2Fbuild%2Eone%2F21_Mock%20Up%20Betriebsdatenerfassung%2FBDE%20Ersatzl%C3%B6sung%20Mock%20Up&p=true&ct=1755860521111&or=Teams-HL&ga=1&LOF=1"
+            } ],
+            "date_added": "13364481524869213",
+            "date_last_used": "0",
+            "date_modified": "13400334143852586",
+            "guid": "8e570299-9454-4eea-9d12-78a67b508778",
+            "id": "5",
+            "name": "Work",
+            "type": "folder"
+         }, {
+            "children": [ {
+               "date_added": "13365074824517958",
+               "date_last_used": "13402055901265459",
+               "guid": "cd947275-bec1-41a5-875d-fb09ee2d5abe",
+               "id": "57",
+               "name": "Bewerbungen",
+               "type": "url",
+               "url": "https://tenant.immomio.com/de/properties/applications"
+            }, {
+               "date_added": "13365074680891251",
+               "date_last_used": "13401795689401950",
+               "guid": "fa584971-6d17-49e6-b21d-eb041beab094",
+               "id": "58",
+               "name": "Wohnungssuche | Wohnungsbaugenossenschaft Humboldt-Universität eG",
+               "type": "url",
+               "url": "https://www.wbg-hub.de/wohnen/wohnungssuche/"
+            }, {
+               "date_added": "13364897595414090",
+               "date_last_used": "13399550289081518",
+               "guid": "7b5bed01-5645-4b76-ab9c-4de85fd1436a",
+               "id": "59",
+               "name": "(9+) Estimations",
+               "type": "url",
+               "url": "https://www.notion.so/Estimations-42a78609b8424044a1b529297f62b6d1"
+            }, {
+               "date_added": "13364562081811231",
+               "date_last_used": "13381495893932591",
+               "guid": "f71bb7cc-8dbc-4ec2-b321-709b749293a6",
+               "id": "60",
+               "name": "Heute – Todoist",
+               "type": "url",
+               "url": "https://app.todoist.com/app/today"
+            }, {
+               "date_added": "13364562076666366",
+               "date_last_used": "13384602820738278",
+               "guid": "3baa2784-e523-4a0d-aa62-dc86969af346",
+               "id": "61",
+               "name": "Planner | Reclaim",
+               "type": "url",
+               "url": "https://app.reclaim.ai/planner?taskSort=schedule"
+            }, {
+               "date_added": "13371300316040644",
+               "date_last_used": "0",
+               "guid": "cdcb1c77-03aa-4c3f-8684-009b77e1a36a",
+               "id": "62",
+               "name": "Perplexity",
+               "type": "url",
+               "url": "https://www.perplexity.ai/"
+            }, {
+               "date_added": "13371636937747332",
+               "date_last_used": "0",
+               "guid": "c84ce49f-6137-4c0b-bf94-1083135fb2d3",
+               "id": "63",
+               "name": "ChatGPT",
+               "type": "url",
+               "url": "https://chatgpt.com/"
+            }, {
+               "date_added": "13372341974955016",
+               "date_last_used": "0",
+               "guid": "d6723f9d-98c4-49ce-86ac-d24ffebdaa0d",
+               "id": "64",
+               "name": "Postgres online - Test SQL queries",
+               "type": "url",
+               "url": "https://extendsclass.com/postgresql-online.html#"
+            }, {
+               "date_added": "13375284830787162",
+               "date_last_used": "0",
+               "guid": "0949cb1e-5881-49cc-8cd7-8f732480b573",
+               "id": "65",
+               "name": "Choose Your Parts - PCPartPicker",
+               "type": "url",
+               "url": "https://pcpartpicker.com/list/"
+            }, {
+               "date_added": "13377106033266705",
+               "date_last_used": "0",
+               "guid": "0c259a32-a11a-4a05-8cf9-b490e308874c",
+               "id": "66",
+               "name": "Interactive map of Linux kernel",
+               "type": "url",
+               "url": "https://makelinux.github.io/kernel/map/"
+            }, {
+               "date_added": "13380899714247419",
+               "date_last_used": "0",
+               "guid": "9b35fe40-1c16-453b-a72f-67516faabdd8",
+               "id": "67",
+               "name": "Gemüse A-Z - meine-ernte.de",
+               "type": "url",
+               "url": "https://www.meine-ernte.de/pflanzen-a-z/gemuese/"
+            }, {
+               "date_added": "13383907555242240",
+               "date_last_used": "13387984937321650",
+               "guid": "6dd1ce0d-3496-46f1-82b8-8425ec98cce2",
+               "id": "68",
+               "name": "Kundenentwickler",
+               "type": "url",
+               "url": "https://www.notion.so/Kundenentwickler-1983b224a10280a2aa05c664e4e1ea8b"
+            }, {
+               "date_added": "13386443100460975",
+               "date_last_used": "0",
+               "guid": "8a45b414-9bc7-44ca-91af-8b060874f793",
+               "id": "69",
+               "name": "Credit cards generator - credit card numbers and data",
+               "type": "url",
+               "url": "https://neapay.com/online-tools/credit-card-number-generator-validator.html"
+            }, {
+               "date_added": "13392739625128660",
+               "date_last_used": "0",
+               "guid": "0d5444cc-03fa-412e-ac05-3d42e736c7e3",
+               "id": "70",
+               "name": "Learn Git Branching",
+               "type": "url",
+               "url": "https://learngitbranching.js.org/?locale=de_DE"
+            }, {
+               "date_added": "13392818125049447",
+               "date_last_used": "0",
+               "guid": "cb355fd3-83c5-4a8f-806c-27bed6eefb71",
+               "id": "71",
+               "name": "Wayback Machine",
+               "type": "url",
+               "url": "https://web.archive.org/"
+            }, {
+               "date_added": "13394879392061509",
+               "date_last_used": "0",
+               "guid": "9cec4952-c18b-4d1f-9926-2a825b65e756",
+               "id": "72",
+               "name": "ngrok | API Gateway, Kubernetes Ingress, Webhook Gateway",
+               "type": "url",
+               "url": "https://ngrok.com/"
+            }, {
+               "date_added": "13395743337655820",
+               "date_last_used": "0",
+               "guid": "97ca1cc9-a18b-4bd3-9271-6e124cfa2b44",
+               "id": "87",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "YouTube",
+               "type": "url",
+               "url": "https://www.youtube.com/"
+            } ],
+            "date_added": "13365519791079784",
+            "date_last_used": "0",
+            "date_modified": "13395743337655820",
+            "guid": "1952253b-c49b-42d6-8fbf-7c76d48444a6",
+            "id": "56",
+            "name": "privat",
+            "type": "folder"
+         }, {
+            "date_added": "13406657729452119",
+            "date_last_used": "0",
+            "guid": "59718c51-44ba-4e27-aa5d-191e9501bea1",
+            "id": "103",
+            "name": "LIT_Mentoring_Checkliste.xlsx",
+            "type": "url",
+            "url": "https://lit2-my.sharepoint.com/:x:/g/personal/gamzat_mukailov_lit-beratung_de/EccbPk77G_5AvYCAQ5dM6M0Bwbh_TWix9iMuVOLa0yo69Q?rtime=izASbuwa3kg"
+         }, {
+            "date_added": "13364482301467918",
+            "date_last_used": "13365680977574671",
+            "guid": "74909ee1-1e76-4437-adf4-481e56055ee7",
+            "id": "73",
+            "name": "LIT | Gather",
+            "type": "url",
+            "url": "https://app.gather.town/app/DD6YkTO4KjBDNiUU/LIT"
+         }, {
+            "date_added": "13364483309377647",
+            "date_last_used": "13405684204556590",
+            "guid": "0b119eb8-9055-4c5d-910f-8e6dcdf48aec",
+            "id": "74",
+            "name": "Whitelist Programme - LIT intern - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/207159372/Whitelist+Programme"
+         }, {
+            "date_added": "13395927739508045",
+            "date_last_used": "0",
+            "guid": "62c1702a-2d20-4dea-8212-0ca4ecc32069",
+            "id": "88",
+            "name": "Explore AI features | Atlassian Support",
+            "type": "url",
+            "url": "https://support.atlassian.com/organization-administration/docs/understand-atlassian-intelligence-features-in-products/"
+         }, {
+            "date_added": "13395927743970342",
+            "date_last_used": "0",
+            "guid": "2003a7b4-ba01-427b-b3dd-be47d4ca2d21",
+            "id": "89",
+            "name": "Atlassian Intelligence | KI in Atlassian Cloud-Produkten | Atlassian",
+            "type": "url",
+            "url": "https://www.atlassian.com/de/platform/artificial-intelligence?isModelOpen-64c344e5-38=false"
+         }, {
+            "date_added": "13364489096723618",
+            "date_last_used": "0",
+            "guid": "69382de5-5d24-42ba-a03a-f8d48378d8a3",
+            "id": "75",
+            "name": "Dokumentationsportal",
+            "type": "url",
+            "url": "https://docs.proalpha.com/de-DE/"
+         }, {
+            "date_added": "13364651730589469",
+            "date_last_used": "13406025065044169",
+            "guid": "aef5ef0e-2904-466e-a0e6-a2a05affd35a",
+            "id": "76",
+            "name": "Lernen im Team - Plan für den Serientermin jeden Freitag 13.30 - 14.30 - LIT intern - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/351338712/Lernen+im+Team+-+Plan+f+r+den+Serientermin+jeden+Freitag+13.30+-+14.30"
+         }, {
+            "date_added": "13365525149198330",
+            "date_last_used": "13399630812467898",
+            "guid": "e2de8f20-f2be-4f3e-85fe-52d3fe8067fd",
+            "id": "77",
+            "name": "Fernwartung - LIT intern - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/200704457/Fernwartung"
+         }, {
+            "date_added": "13365682481406729",
+            "date_last_used": "0",
+            "guid": "bbf4c985-b48f-437e-8cfe-22382a3abbb5",
+            "id": "78",
+            "name": "Code quality analysis for OpenEdge ABL • Riverside Software",
+            "type": "url",
+            "url": "https://riverside-software.fr/"
+         }, {
+            "date_added": "13366106440329462",
+            "date_last_used": "13393525630627267",
+            "guid": "c84e4cfd-1440-4d38-8934-aeb04330bd1c",
+            "id": "79",
+            "name": "Consulting.b2b / customer-projects.b2b durchsuchen - proALPHA Bitbucket",
+            "type": "url",
+            "url": "https://git.proalpha.com/projects/CONB2B/repos/customer-projects.b2b/browse"
+         }, {
+            "date_added": "13366106571683036",
+            "date_last_used": "0",
+            "guid": "cd380b3f-0edf-410e-8cea-a98042c108ac",
+            "id": "80",
+            "name": "Customer Delivery Management",
+            "type": "url",
+            "url": "https://packages.proalpha.com/external.delivery.management/?dl=outline-24431&i=arbeit"
+         }, {
+            "date_added": "13366107478316567",
+            "date_last_used": "0",
+            "guid": "d8d8875f-d64a-4f46-bfe9-b16a74678bce",
+            "id": "81",
+            "name": "Vorlagen",
+            "type": "url",
+            "url": "https://lit2.sharepoint.com/sites/LIT/Shared%20Documents/Forms/AllItems.aspx?csf=1&web=1&e=ng3Syp&CID=1be3a63d-3388-4376-a0ec-ddd47b8ac82e&FolderCTID=0x01200036F0CF17C129494FA2F22E40F1C71293&id=%2Fsites%2FLIT%2FShared%20Documents%2FGeneral%2F_LIT-OffizielleUnterlagen"
+         }, {
+            "date_added": "13366108227338263",
+            "date_last_used": "13366189817184429",
+            "guid": "64ee163f-2c17-4bec-afe6-c7c587e6d940",
+            "id": "82",
+            "name": "Consulting.b2b / customer-projects.b2b durchsuchen - proALPHA Bitbucket",
+            "type": "url",
+            "url": "https://git.proalpha.com/projects/CONB2B/repos/customer-projects.b2b/browse"
+         }, {
+            "date_added": "13366308581877203",
+            "date_last_used": "13371738599406949",
+            "guid": "257cc6e0-030e-46ae-97bf-d06992c3f40b",
+            "id": "83",
+            "name": "Zeitenerfassung, Buchen und Abrechnung im BCS - LIT intern - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/309297230/VA-IP-001+Zeitenerfassung+Buchen+und+Abrechnung+im+BCS"
+         }, {
+            "date_added": "13366711622415243",
+            "date_last_used": "13382612666303431",
+            "guid": "ab6a3bb4-0cbc-440d-baf3-d9979e99bc56",
+            "id": "84",
+            "name": "Rollen in der Entwicklung - LIT intern - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/LITintern/pages/367755312/Rollen+in+der+Entwicklung"
+         }, {
+            "date_added": "13366819389603719",
+            "date_last_used": "0",
+            "guid": "51207b49-ddea-4de0-b199-58b64a1e337d",
+            "id": "85",
+            "name": "#17465 LIT-30176: LIT - 9.3 DEMO Paket WEB integrieren - Stammdaten - BCS",
+            "type": "url",
+            "url": "https://projekte.lit-beratung.de/bcs/ticketdetail/main/display?oid=1722304869267_JAnnotation"
+         }, {
+            "date_added": "13366884503714364",
+            "date_last_used": "13372869121541987",
+            "guid": "49c17b75-f6f7-4f44-9a11-69e396ce21b9",
+            "id": "86",
+            "name": "VV Aramis (DeMaS) - Entwicklung bei LIT - Knowledge proALPHA - LITipedia",
+            "type": "url",
+            "url": "https://lit-beratung.atlassian.net/wiki/spaces/KNOW/pages/237699102/VV+Aramis+DeMaS+-+Entwicklung+bei+LIT#2.2.-DeMaS-Installer-erstmalig-starten"
+         } ],
+         "date_added": "13395662744109497",
+         "date_last_used": "0",
+         "date_modified": "13406657729452119",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Lesezeichen",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13395662744109497",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Andere Lesezeichen",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13395662744109497",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile Lesezeichen",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CooBChAIiIECEgri5KTv1GYAAAAAEgAaWE1JMDNrZTN2Q0ZpMjN4bjhLVjBVOHdRQkxza2RxUUNkVlo2aTVtVlJ1blJFR2kwaVBjVHE0WjF5UDY4dTdQN3VQeGtiNjFITitKc0VuaS9rVG00bURRPT0qGDlEZ1hTbFZCeDk2b1BDLzQ0a2RhL0E9PUgDEqgBCAoSowEKHDZ5YzM1R0MvYzZuWUtiMTJ4Z1hETjJwd2FsRT0SJDQ0ZWFiOTUzLTMwZmEtNDhjMC04NjQ0LTE3MzQ2NmYxYzE5ZBgAIAAoADCxstK3qjM4sKnomLIyQLGy0reqM0ocd2FSc2lCNUp6OHRlbTFGUDRDUFJoZzVlbjYwPVofIh2sT0JpTkMvL1g4K1k0UnBsc1lpZ28zeEhkMks4PWW4TUuSEqgBCF0SowEKHGk5OWtHS1NpamhvNlA2NlJuRnhSODZNOFJFRT0SJGNhNDA4MzE3LWY1MTYtNDk0My1iNzhiLWFjNGFmZWJmNmNiNRgAIAAoADCFuI7GnDM4usqE44MzQIW4jsacM0ocMFJ5N0VnT21UTkRpbXBSRmtiaHBIVWUzYTlvPVofIh3/SG1ERCtYUmpJYjAwSmJLRVN2cjVPTUF5czA0PWWPfvhoEqcBCGMSogEKHDlVNk5abjNIWld5ZGdZVWZVTVhIL0MvbG1sUT0SJGVkZGQwN2Y4LTRmYTMtNDBlZS05OTkxLWNmZDM5NDA5MTkxYxgAIAAoADCX/aGOjTM4l+uhjo0zQJfroY6NM0ocUGFwcENMZ3BPcmhFYWExZUhCTTBuTkhoeDVjPVoeIhxMYkkwemhTSW04ZGttRWhTMVZLMkJxeW5MbkU9ZbVJ3jUSqgEINRKlAQocTEdoNHRtSmpBTVE5N0wzME1JcjRSTjlSVU5RPRIkMGZkMTk4MjMtMWIyOS00ZGRkLTk0ZjYtZDMxZTRkOWMyZGI4GAAgACgAMKTsgpaXMzjhq6rG9jJApOyClpczShxzcC90WkxKdXUvam5pOUo4eHJHZnJmRVRFeFE9WiEiH////yt0MWhRQ29TMG5aMGNUVVJwTytEZlV3WUY2TT1l+/KF8RKnAQhkEqIBChwwRnZWTDZadTRyd3B1NTlrVW1GWm1hYlpGeEU9EiQzMmY2NDdmYS00ZmY3LTRhZDItOTI1Ny04OGRhNmYzYTcyNmIYACAAKAAw5c7mopozOKWSoY6NM0DlzuaimjNKHHhza1dEYnVTQzR6VTZlUkVxMzhyNm5ENnF6ST1aHiIcM3JQeUdWM2Z6WXQ2c1JoWElJK1gvZmFlanFZPWW1Sd41EqcBCBcSogEKHE50VjhXUHJyb3k4d1dxSU8yTDhQOTNRQWdEUT0SJGI1OTMyM2I3LTA4MTAtNDA1MC1iZDNhLTMzZmEyN2FhMjQzNRgAIAAoADCzkf/VlzM4sKnomLIyQLOR/9WXM0oca3N1elBMT3JSMTBHWjNNc0l0YnRSUE83ZEhFPVoeIhxjMUYzc3Nmc0hSZWpOTmVUVWNMQzUvbUllMUk9Zf9h2csSqQEIIhKkAQocenJHTEhqN0FKbTFpQk8wZWMvbStHQUM1c2NvPRIkMThhMTkyMDctYTEwNC00NDIxLWFmOGYtMzhlNDU0NGE4MTMzGAAgACgAMMem7MPaMjikkOzD2jJApJDsw9oyShw3MzR2NWs1MzFEdTNBeDdTRERQaWtrS25LdVE9WiAiHv+rMG5pUEo1L3ZOb0NQdkNyVkNPQ2pka01ORy9zPWUAAAAAEqkBCF8SpAEKHGJFaVRTOUhuWEhJc2h2aWVGWm10anVQK0tycz0SJGE4ZmJkNGJiLWMyMjUtNDRmZi04MDE4LTRmMmQ3MmUyODIyNxgAIAAoADD8t47GnDM4vbrz5YMzQPy3jsacM0oceWFlTU95SDZGcW9vVk5MQkNyOGpja21BZHV3PVogIh7/u0x4THVsc2puZ1dMYUppYWlFeTdPalFBN1Q2dz1l5GA2ExKpAQhREqQBChxtaG03aGlnWXNOcGdDcHE1QitpZGNWVVA1dDg9EiQyNDkzNzFiNS0xN2M0LTQzNDItYTFiMC04ZDdjZGM3MTNiNWIYACAAKAAw/dOy0qQzOLCp6JiyMkD907LSpDNKHG00dlEydGNxQ0tNWGRqeTc3aWdsTGIrd3hZST1aICIe/5kreUQ2K2hPRi91TFE1aW9BWXBwVDQ4N2NnQ0E9ZQy3fuoSqAEIDRKjAQocVHpTbjhqZ3BHYTZFdlplTXdrejdKanZyQzVRPRIkYTk2Y2YzNjYtMjE5NC00NTBiLWE3YzQtZGFmMzU1NGZmN2VlGAAgACgAMNmx6JiyMjiwqeiYsjJAsKnomLIyShxrc0VRZVA0SE5qaFpVY0xQL0QvcitlclZGSUE9Wh8iHe12OHNDWThQV3hzbmsxcFpTaFVYR3FmM3ZiNlk9ZQAAAAASqAEIXBKjAQocRTFmcnNIRTlhd3V2QzNHZzcrWDl0aDA5dUN3PRIkOTg4ZGU5MzktZWM1OC00MTUwLWI5NDQtMDQwMmY4ZWJlMGEzGAAgACgAMIm4jsacMzi30srjgzNAibiOxpwzShxRdWhtTldkU25FOFR4b1FvclJ3Mm5pK3hwdk09Wh8iHf93NG1DSTZ3VlZ2TEw3ckhjK0Vzamw3b1BlM3M9ZZ5OvtYSqAEIFBKjAQocamJqaDFKOFBvbkVNZWJrT3RNTzhhcDRnMEkwPRIkYzE1ZDAxNTYtNDY1ZC00M2MwLTg2NTAtNGEyMmJiY2I1YTk4GAAgACgAMNmy6JiyMjiwqeiYsjJAsKnomLIyShxmeUhLQ0NQcWEyQ1FzSHdnamlBdllLVjErcGs9Wh8iHf01Zk8xblZ3cC9wa3U5dWRMemcrQ3Y5OXBpdXc9ZQAAAAASqAEIQBKjAQocSUdEQlpRbkJPL3ZqNTMyUWlJYlFYS0lKREEwPRIkOGEyMTlhOTEtYjExNy00ZmM1LWIxZjQtNjI5OTQ1MDNlOWY4GAAgACgAMJS26JiyMjiwqeiYsjJAsKnomLIyShxHM0RwKzMyeUlyeVd4cE1YMWFoU0pVS212REU9Wh8iHf44SnA3QmptZXJFSlJnNDhqZUJwQW1nK0J5cVU9ZXfallESpwEICRKiAQocRjNZQytDNHdFcHV1Tll4aWdXWjlJdzVVOHVRPRIkZGZiMzgyNzgtMmRkZi00NDIxLWFjNTQtMmEyM2E2OTBmN2ZlGAAgACgAMITk7YOXMziwqeiYsjJAhOTtg5czShw4TjNFN0FORFlvR3RiNEZXZ0lyNHRTMHI3TlE9Wh4iHFlUVzJ5OGlLRHlGdWlsQkduT1pqeXpMaVlWTT1ltUneNRKpAQhWEqQBChxGcjlhcDNtcThlVzJQTDNyQnROSUh5cG1Tb2c9EiQ5MjMwMDU0NC00Njg0LTRkMTItOTVmZC05YzU2ZmJmMDY1OWMYACAAKAAw27TomLIyOLCp6JiyMkCwqeiYsjJKHFEvUU5TL3hFMUdwUmUwZDNNQ0o1N09UUXRSTT1aICIe//xBb3E4b3I0VzA1U0dHNGZaYTdtNnE5ZGRidUU9ZfvyhfESqAEIERKjAQocd2NoalBwcHVKK2Y0aTgzOVVhVi9relIwTXhBPRIkMDJjYjMxMGEtNDU0Ni00NzI2LTk0MGQtODUxZDhmMGUxZGE1GAAgACgAMIC4jsacMziwqeiYsjJAgLiOxpwzShxtWktBVktsUEhhSC9uN1dHeHlCeWN1d2R5SzQ9Wh8iHe0vQm4rdzBBTU9hbXl2aXRwZGVyOWkyZURyUGs9ZXckYfsSqQEIRhKkAQocQWVOU0UvdU9VV0d1UUkwSHROaWVuZWhNRWNBPRIkNWZlMGI4MTYtNjMxZC00MDQzLWE5NDAtZmIwNGExNWNjODU0GAAgACgAMKySmubwMjiogZrm8DJAqIGa5vAyShxLL3g3eFBTMEpPa2hvTE9xWUJPZXIxQ2xwSnM9WiAiHv/7Zi82N1A3cHRSdzFvbU40NTdXVi9CbC8zeUtFPWXS6KIIEqgBCBMSowEKHDJqeTNXL3Rpa2wrYkhqRTRlS3NMOSthN3Rndz0SJDY5ZTU5Zjc3LTkwNDEtNDQyYy05NjJmLTAyMjcwOWIwYTY1YxgAIAAoADD4t47GnDM4sKnomLIyQPi3jsacM0ocaVdaU3pDMjA4QWd4VUkveCtQajBEWlhZZmR3PVofIh37aDNXZ2YxVm0yWnVFS1ZmVUwvdFF5K1k1dCtJPWX78oXxEqsBCGESpgEKHEtjcVhjMDZTOFFoMkhzNVR0Y21INnZDdmRsMD0SJDIyMmFhNjYwLWViMjMtNDUwMi1hMzcwLTI5NGY3MjljN2U2ZhgAIAAoADDT64KWlzM4kZT4ioUzQNPrgpaXM0ocM0wxMVJ2czlKcFZTYXY1U3ZTSkdTdkxjalNNPVoiIiD///+3MUhSdHZMWTdLOFllWGxUSEh2aGR1Qk1nbkVvPWW1Sd41EqgBCE4SowEKHGRGLzZUYy9GMk9wMHZ5ajNOTFNlSzdRSFlEYz0SJDVkMTc3YjlkLWIwY2EtNGU4MS1iOTM1LTVmZTFlNzBiMTVlMxgAIAAoADDJtOiYsjI4sKnomLIyQLCp6JiyMkocaGtuV1Vvb2JsSUNLRnhmK0pTYm1oZ1JucGRJPVofIh39MzNwNFZQdG9xS0VjQ2lNcDZRcXo0cVVweUljPWVNmP9UEqgBCBASowEKHHFzb01YOXJxelNHNXM3VGtmNnZTdVFpb1hRRT0SJGEwZTU2ODExLWNkMjYtNDdjYi1iNWFmLTY5MDhmNmMxMzMwMBgAIAAoADD1/OKnojM4sKnomLIyQPX84qeiM0oceVhLaUMxY1RYOUVSVTM4WXJFbVpjNjY3MWxZPVofIh3bdm5PSG5jb25CdEVpTkpiMmR5YlQ0TXVqc3RNPWWcfnLoEqkBCFcSpAEKHHVMWHV2RDdQNTFGdXp2ekg2amhQTTI5dk11Zz0SJDljODVlNDJhLWZkODUtNDVhOS1iMWJhLTAxMDNjOGZkMDczZBgAIAAoADCYoNqvqTM4uYm+/vsyQJig2q+pM0ocYTU0QlVyNy9MdUc2THk1elovYUQvaFhUOE5rPVogIh7//3BDTWUvanpXdUVIZlRZRmp1RWJxLzFYT3piTT1lQ/htgBKoAQggEqMBChwwaHhweUNoZEVnTVgrQ0NqblJEN3NETy9iRHc9EiRlYWRkOTU0Mi00MWZjLTQyMGMtOTUzNi01MTAzZDdmZDcyYzYYACAAKAAw2o72wpUzOMCkidXWMkDajvbClTNKHFcvZmJOR1dINXg5ME1vcldibTROMVJZRkp4VT1aHyId/mljMjFUalZ2WGRadHpoTVFVUzZ6aXVuVzJ2dz1lAAAAABKpAQhHEqQBChxQOXc4Tjl2c2NycWlWeXFsQ2htdm1TZVpEKzg9EiRjMTBmYzdkMS1lNGFmLTQ5ZmMtYmM1Yy00YTFjZjY0MjQwZWUYACAAKAAw1LnRi/EyOPmh0YvxMkD5odGL8TJKHGJ0ZiszVERBVGI2dFduRXdUWXR0clk2cityUT1aICIe//1HVFFYbEJjQ0JVUVdYaG9XSlJjZ3lvZW5NK3M9ZTD3VtoSqAEIEhKjAQocWUJLcW13M3NsU3pTaExlVTk2bDZUditHUVRnPRIkOWU0M2M4NzMtYzUyZS00OThlLWJkMzYtYjIxOTZjYWIxZWJlGAAgACgAMOXkv62iMziwqeiYsjJA5eS/raIzShxEM0JMREQxZHFrMHBvNmdGb2gvRHNTdnFLRFE9Wh8iHfZKcGozdU1FSWlDWFFvNEFidGx3ZFB4TGJTTFU9ZWr41z8SpwEIBRKiAQocTzhoblBUVG1ZbGNNNG45YXZFMTg0aWxMaWZBPRIkYmEwZGI5N2EtNWQ2Mi00MjJlLWFiY2YtODFkMDdiNWY4NDc1GAAgACgAMLew6JiyMjiwqeiYsjJAsKnomLIyShxLZ09QTXZCcVI0bFoxR0pZZk03NnNpMHJmelE9Wh4iHG9BcWhZUUtJc1ZWQUV5ajAwZGcvL1hWUU4rMD1lAAAAABKoAQg/EqMBChwzVHJGU3VFQ2Q1LzFWQ1F4MFRrU2dkWkNXRkE9EiQxNzg3OTI2Ny0wZmE2LTQyMGEtODQ4Ni1mZmVmZjBlYzM1ZTYYACAAKAAwsoTJxIgzOLCp6JiyMkCyhMnEiDNKHGhXejJ2RnIvNnYvTnJma0lTbEptVW9aSTFEbz1aHyId/VRpVnhzWmJVdjRRRDEvRkp6Qkd3cXZaNFJhaz1l+JID1RKoAQgWEqMBChxSYmNXcUJ1U1lJSTg5blp3TTF6WlZkK0w4QXc9EiQ1ODE2ZmY2NC02MTZmLTQ3NWYtOWY4MS0xOGNkOTNhMTA3ZTAYACAAKAAw+LLomLIyOLCp6JiyMkCwqeiYsjJKHGZMblprMk14Y2tYOEE1dmVmdE0zdUNHWFpWOD1aHyId9jNLeXVldjRSNmRXclJ3TitkZWJURGFEU3NDND1lAAAAABKoAQgkEqMBChx3NmFwUVNYTHpXMEtxVzVURGNmd1MxcXRaVE09EiQ2OTFlNjA0MC00ZDUzLTRmZmUtOTc1Yy0wOTA3NTI2ZWRjZmMYACAAKAAwgaafjKkzOLCp6JiyMkCBpp+MqTNKHGdQU05kTGh5cHdtZE1SSUNRdnRVdEViL25uQT1aHyId/U5qWHpWZlJUQjd2clhvSDBPalBRcnUrTVVtQT1lzUvjHxKnAQgZEqIBChx3d3M5MXZjSEliS1NRYnVKRXNSQ1NxU2IxZms9EiQyM2ViMWY4MS1jMGQxLTQzYzgtOWY5OC02NDJkMzk2ZWFlNzIYACABKAEwhqafjKkzOLCp6JiyMkCGpp+MqTNKHEt6NkhSbUNweUF2bHlRUjM4SmV6bTNBYWV2RT1aHiIccEd1L3Vsb3lpbHZSVGhTMTYxRUNndlNzaVpjPWXNS+MfEqgBCA8SowEKHEVZNkZtcmw5QlMydXZCUVJmd0EvTXFQYWx4RT0SJDM5NWIyNmEyLWUxMGYtNGFmNS1hYzEyLTM2NTM4NDQ5MDg5YxgAIAAoADCRsuiYsjI4sKnomLIyQLCp6JiyMkocZERNbHRpcTFjanZJbnIwZUp2SE9GOVBGMzFZPVofIh23OGRVdEVpUWpaVG1MNVFPK1creC9mSDRZbFpRPWUAAAAAEqgBCEsSowEKHDd3ZnNNZ0hyMkV2TnRSdkNITlZmZDdCb1RoUT0SJDY0ZjNiYjgyLTNiNzUtNDk3Mi1iM2MzLTc2MjNmYjdhNzdlNRgAIAAoADCc3+SfkzM4sKnomLIyQJzf5J+TM0ocd3JMTkQrTXVGVjZEdEYvOXBhTDUyNzhaUzBrPVofIh3uTklaSmp2Y0FUQ1Bhejl1SUlDOXkrRUdESVA4PWX3XBOcEqgBCAgSowEKHFBOaEh2eXZRVXVXNWtSUGM0elZ0VWdDeStuND0SJDNhZTZhYWM1LTkyOTItNDg2NC1hOGE4LTQ2MTU1ZTYwNzU2YRgAIAAoADD0sOiYsjI4sKnomLIyQLCp6JiyMkocS0pmMjFRYlRnVDdUQktHdHlqQnBoVFNQWmNZPVofIh3bUUgwOGE5TWVac1FQR2twcWpPN1pURUh6T29BPWUAAAAAEqgBCBUSowEKHEwrL0ZIWG9maGhVaFJIejB1d3NWUURUbXJCQT0SJDMwMDRiZmQ5LTQxNzMtNDI5Ni04ZGM0LWJhNjA3NzFiN2IwYhgAIAAoADDnt47GnDM4sKnomLIyQOe3jsacM0ocV0lJLzlWaWdkVGZQRzZFVG4rL0VRbU9VMUJvPVofIh3+OEJaVjR2THlldFBCWEhldzF2d2MwTTJaOTlJPWX78oXxEqcBCDkSogEKHGVoWCt3Yml5UlRlUlhZZEdxdkZaY05KK1UxOD0SJGE0M2ZhMTQxLWEyMWYtNDdjYS05NDU5LTUzMjYzZDM1N2RmORgAIAAoADDH8YOGlzM4sKnomLIyQMfxg4aXM0ocVkRuUXhOeDg3bGg0c1dHZ3pLQlNNam05YjE0PVoeIhxSemRGdW9Hb1NZbTd3RzJvOS9HUHppb3dWSTA9ZffDXhISgwEIARJ/Chx5eEovNmZ2a2VjcjdrcDVFUXpCNHRXTHBkYkU9EiQxOGE2N2M2My05OWM3LTRiYmEtODE2Zi0zY2ZkYjQyMjdkZjcYACAAKAAwATjZlueYsjJA2ZbnmLIyShxhUkNXTGdoRjliNUlucUtJRHZ1Si9qdlFrRmM9WgBlAAAAABKqAQgwEqUBChxVNEhYQjVJcUJ0dHErV0RHdytqRzFiYUkrRTg9EiRkNTdhZjBlZS0wY2JiLTQwZmQtYTVkYS0wZDY5NmFkZTY3MzUYACAAKAAwxOuClpczOOXqo+W4MkDE64KWlzNKHHNiOGhYbEJpaVVpMmdZbU1PQnpkLy9yZ2lvWT1aISIf///pOCtPZHFxMUpQc3BrYVIyUlBQczhzRXhQbi80PWX78oXxEqgBCBwSowEKHG5FZUN5UC9rRzEzUzV4VnBXeTBkS21XWUNxbz0SJDYwZDQ5ZmMwLTkwZGItNGNhMC04YWNjLTllN2FkMjhkNWU3MRgAIAAoADCAj/bClTM41eePorUyQICP9sKVM0ocQ2c4M1BRR1o4SDRQd3JvTWJDS3BYUEM4aUlBPVofIh3uNnpEQnBqcjc3NTI4d1lNRGdUYVhrM2p2RnE0PWUAAAAAEqgBCBoSowEKHGVKWTJjS25zQ1p4MExPVldBVEp6dzI5UExtWT0SJDY3ZjU1ODk5LTFlNmUtNGZmMC1iNGVmLTdlMmE3ZWFmYTYyMBgAIAAoADDsjvbClTM4sKnomLIyQOyO9sKVM0ocWUlZMUUxelJsb0V3MFJkT1RBYXA4NjdaUno4PVofIh24VERnd0FOMEpLYll0ekxaQ3htSWVNaDR2K0FzPWUAAAAAEoMBCAMSfwocbmpnRHU4OGVDcnZYcDg2cEQ3ZkhHY3FGcDg4PRIkYmQ2ZGFjOWMtMjVjYS00ZWQ1LTk2NjAtZjVjNzZmNGY2MTg4GAAgACgAMAE42ZbnmLIyQNmW55iyMkoceXpOQjAxY241NEE3Y1JVMHVUKy9QZ21UdFVvPVoAZQAAAAASqQEILRKkAQocQ2h1d2ZOZDhJalZiN0lSR3ZHWWZKQ0sxRkN3PRIkYWU3NTBlYTktOTkyZS00YTVkLThhMzgtYTE5NzQ4OGRlNzIxGAAgACgAMJvsgpaXMzjVp4GftDJAm+yClpczShxhKzZuSWQyYk4vRndLWEl1SCtTbkpJVHNYR2c9WiAiHv/+ak9Zb1hEc2MxcStRb3ZEOHhSTVFYMTlGSUZjPWX78oXxEqgBCBsSowEKHHlkT0srcE9CR2hXZVA3TFpTNllESDBVc0N4WT0SJDdmODE4NjllLTg5NDUtNDJmYS1hZjNhLTNlMWViY2ZmMjFjYhgAIAAoADCSj/bClTM4sKnomLIyQJKP9sKVM0ocUlJWeHlQQWptNnZUVzZ2L0lYcGE0OWxCRER3PVofIh3cUkVSWHAzOGdRYWx1VURzSm83S1FuemNZR0p3PWUAAAAAEqgBCEESowEKHGJGbnNjRUxNaFgzTU1NdkpmNHF4UjRSNlgxST0SJGQ1N2UzM2M0LWUwZWEtNGRkMC05NDYyLTViM2E0MTc1ZmJkNRgAIAAoADCjtuiYsjI4sKnomLIyQLCp6JiyMkocV1V1K21XNkxkc1FqZ0RqS2hXSjJkbXhDVEZZPVofIh3/dmVncW1OaXYwalp6dWVqQ3cxUnpLZzFIOS93PWV8ilQfEqgBCAcSowEKHGVvK0hmTjlrTTVYNTQ4U2VoS0d6N29UMy9Cbz0SJGY2YjgxMjU2LTVkM2YtNGVhYS04ZjRkLTQ4ZTEwMjY2Zjg0MxgAIAAoADCf7IKWlzM4sKnomLIyQJ/sgpaXM0ocYUoza0dHN0drcGg4a3QwaWFVRFNRejQyUVcwPVofIh23Y3Yza1FWQnFyK0R6QXJubnU3MkhjaG9oSytvPWUU+B5qEqcBCDgSogEKHDdaTW1Ucy95ZmUxRkhFNVVQVVNkSmdnbzVRMD0SJDNjMzRlZWRjLWNmMWMtNDExZi04NGVlLWE2YzIxZGE2MzMxYxgAIAAoADCeteiYsjI4sKnomLIyQLCp6JiyMkocYm13S0dWUGNHSzNZdC9DaGJiS3BOU09LcDZzPVoeIhxzdVRHQmRzWU1mamRoUmFHSkZaNS96Nzg0T2s9ZQAAAAASpwEIZxKiAQocV0NWeExxakl6T2NuRjV4S212YS94ckJLZHA4PRIkOGJmZjY3NDgtZDcwNi00ZjAxLWE5MDctNjk3NDU2YjY3MTZhGAAgACgAMI3i79KkMzit1+/SpDNArdfv0qQzShxYWDVJTy9XQjRuSHFaUFZjVUNNbTVaS1ppckk9Wh4iHHZJUGtsSTg2SEpjKzVlWW55ZFpBanlwRitYTT1lP9mxuhKoAQgMEqMBChxCbDJNbHBzZnRJV0p3RVQxQ3ZzSkJJREFBSkk9EiRkYjY2NTA1NS03OWI0LTQ0NjUtYjNjMS05MzcwNTNjZjMxMTgYACAAKAAwge6uhKAzOLCp6JiyMkCB7q6EoDNKHDVJU1ZxdHJjZTZJWjVkUlp2NnlCcWlEd1pTMD1aHyId6zdaSU9oYnMyVDdKNExRNzBDbWVWNVBWMy9Pdz1lu49FtBKnAQgGEqIBChxVeDJtKzJrK0RKOU9WaUQwdmluWFNnOFQ3VFE9EiQ2MjA2NjMxNC1lOTE1LTQxYWYtOGIwMC1kNGYyMTZjMzNhNGQYACAAKAAw5uuClpczOLCp6JiyMkDm64KWlzNKHEdORXdyMjVyOHVrek9RcFdydVZ1OW9BeWt5Yz1aHiIcbk9vdm01bkl3ZFJVQlZjODFxaTZRY0ZxejlFPWXiUIDhEqgBCEoSowEKHDVLcDAxNDhnQ2NHcjN3THQ4OWlCMlRQVkV5WT0SJGE5ZGZkYjQ3LTdmMWEtNGMxZi1iMzk0LWU4NmU5OGMyNzAwYhgAIAAoADDl6dSCoTM4sKnomLIyQOXp1IKhM0ocOEJHcXlpeXBPdXJnU3A2bVdHdEtUcWh4TWU4PVofIh3ccEdNVVFpUFM1T1p6UVZRelFSWHNzbGVzWkxFPWXNS+MfEqkBCCcSpAEKHHlUam11dFhuOEhnUEYxeHk2ZUl2UEZvOXRxUT0SJGM2MTU2MzAxLWM1ODQtNDA1OC04OTFmLTdmZGE2MDhkYjY1ORgAIAAoADDhmvGzoDM4sKnomLIyQOGa8bOgM0ocTDZsOEo3bzkxMldPRUxQeHljTEVuYThTZk4wPVogIh7/qDBIN0FCcGlNNTlJNFBESlVIZ3Z4QVRZTXNSRT1lDLd+6hKpAQhDEqQBChxXMXl1T2hFdEZxYktpVElNV1htRlRjaXdQYjg9EiRlMmNkZGE1Yi1iMDhkLTQyYjQtOGU3MS1mYTg1NDg1NWI3ZTEYACAAKAAw7qy/2MQyOMeZv9jEMkDHmb/YxDJKHEpVdlNYVmJaNDJ1bDhXZFpzREN3RUFkVmowYz1aICIe/91VSzRBMUdXSHhKMVhYT1lhOXh1UTdPQ000TGM9ZZePumgSqAEICxKjAQoceEJZUE0xUGlKYzlyajlhTG1Vd01vMDlheGZnPRIkZmM2Yjk2NGYtOTMxNC00YjJmLWFhNWItNWE1NDBjZjNkMGNkGAAgACgAMIfMu9GiMziwqeiYsjJAh8y70aIzShw0ZXVEN0V6SU8rUUxWaGFYUXhQMGkvUjFnOEk9Wh8iHdZQdTAzQjJTMjdRaWRBd1J0elQvQTAzSC9mSEE9Zc1L4x8SqgEIMhKlAQocaDNUc2kwUXlaeGVSMHJPU0xHSGZtQ3dMYlNVPRIkMTk5ODhjOTAtNGE3OS00MWFkLWJjYmUtNmYxOTdhZDU1OTY1GAAgACgAMIzsgpaXMzjdzdek6jJAjOyClpczShxQQVFBVW9QN1N1QjgzVlBHbXlRNXBQSGMzcmM9WiEiH///+k84UmhtOXdvNktsSWZyNUdOZUcvRzV0UzNQOD1lYZCbIhKpAQguEqQBChxXUlh4eC9aVnk2dVcxZTRRR3ZkK3NGMG5YSTA9EiQ1NjA1MjZiMS01ZjFjLTQwYzQtYjAxMS1kYTNkZTA4NWI5NmQYACAAKAAw6uuClpczOLbZ+KC1MkDq64KWlzNKHGFCR29oQ1RGcFZwM1hpVHlFRDhaZkUrVDRTdz1aICIe//9LSGhJdTlBV0UydTYzRWNlWHNQQ05KaHJPUTA9ZRUJXzoSqAEIHhKjAQocOHZPQ3lHVHlHR25TMzhlWXBsRGlUeE5aYlFVPRIkYzc5NzBmZjItZjQ2YS00YWIxLWFlZjQtOWEwNGM1YTA3YWI3GAAgACgAMPSO9sKVMzjquMeTyTJA9I72wpUzShx4WUM4Z1Z4dkFYUzhIaUdLOXdQY3BKUXZ6QnM9Wh8iHftWdHRrVUhkQm9ham8vQjJKQ05jc01PYjFQcUE9ZQAAAAASqAEIJRKjAQocWllJby9ZOFdLSWtzQXFUL3U0L3VLeW5oS2p3PRIkMDBlODI2YzAtY2IzMC00ZTkyLWI3YjAtZjljOTM3ZDdjZGNlGAAgACgAMIri56ijMziwqeiYsjJAiuLnqKMzShx4bi93VE1XZXBqczM2NU9ibzRhVWFVZ3BSWVk9Wh8iHf5hdEpjZ0xCcFdYN1JZOG1VTGlyQ2hFQlh0d3M9Zc1L4x8SpwEIYhKiAQocOXpQdEVaOE1qK0dVUEhGQ29aektYVFl6Tk1vPRIkNmNiNjk5YTgtMzIyZi00NWY0LThhNzgtMjQwMGYyNjA5Yjg4GAAgACgAMMXHoI6NMzjzs6COjTNA87Ogjo0zShxKd3ByRFBrS3pRdlpCMFZ6aFE4cGg1SzkwQjg9Wh4iHHEwVzNtdi9IMVFtLzJpTDJPWCs5Y2prMHkvYz1lAAAAABKpAQgqEqQBChxFU0hnam1pL05iZHNkV0JheTlEampjK3kwTnM9EiRjNDQ0MjQyZS05MWY1LTQ4OGUtODEzYi04MGE0OWI3NGNmNTAYACAAKAAwiOyClpczOLCp6JiyMkCI7IKWlzNKHGc4WGFKelBqeFpTOU5sR2d3VmJVeHVteHFGdz1aICIe//VlNldROEltSXJ4a2FWNVIxUGNkS0E5RmdTSnc9ZYLncPASqQEISBKkAQocYWJBOGp2b1lheDFVTHRWb21MNlFjSk9wcmd3PRIkZjM1YTI2YzEtMzE2Mi00MmZiLWFiZmItZTI5ZDcwMDdlNDY2GAAgACgAMLmUw+L4Mji/gsPi+DJAv4LD4vgyShxHRDNybXpqcjYyeG5tZ1JVVFN5SFVmSDBlcG89WiAiHv/+UlhmYUxpTlpPakFqZXJuUVdPd3lTalE5STVJPWW8MCBUEqkBCCMSpAEKHG9oQ2tzRXdQY2sxbGZoTC8vWTdzQVhqdHFPQT0SJDE0YTQ5NWNmLTUxMzYtNGZhZC1hN2I0LTU4YjQ5YzliZmU2ZhgAIAAoADCZj/bClTM4pMyFhd8yQJmP9sKVM0ocd0VBOGpjUzJHTjZsMmE3SDA1T0E4VDM0dVRFPVogIh7/1XZYYTNLYTRGN0w0RkhHU01BT2FYTlBKc1lJcz1lAAAAABKoAQgmEqMBChxrNVdyQS9mNEY3SlNYdzVLNWxtNUpaZTZHc009EiQ1N2MyY2E0Yi1iMmIyLTQyZmItYjM5MC0yZmM0MjIyMzg4MmMYACAAKAAw+uuClpczOLCp6JiyMkD664KWlzNKHER3U0FyMHFISENnazlXSzRDMmtRd1c1cXlqdz1aHyId/1A3czlYQUZBWEVhSWNUY0xTeFJ2VDY5Rnc3RT1l+/KF8RKpAQgoEqQBChxHQ0dpSk5HYkF2MXR0RzQ4NUtXY1hrZGhSYlE9EiQwZjFjMzI0OS0xZmQ5LTQ1OWEtOGU5Ni02ZmZjYTZmYmQ2ZGQYACAAKAAw9euClpczOLCp6JiyMkD164KWlzNKHHVLQVlRa3IwOTdacyt1TWl1cHhqVkQwS2tTdz1aICIe/9Q4aHJuWlpLWXRLSFV4QU1RdnJGZHR2TGpncTA9Zb0pT98SqQEILBKkAQocTlJoQzVyTGpKd0lMVE9OSkl5L2dJdWk4aFF3PRIkYTczNjlkYjItODUwMi00MDc1LWFkNTMtNGJjMDgzNDkwNmEwGAAgACgAMKzsgpaXMzjagOf6sjJArOyClpczShxwdytBSGlSQS9oQTAyL2dqY3hwUlRrbGZMSWs9WiAiHv/9QThDWkVFR2ttTDJnUnhCVXhMZCtnZmlIcWprPWXhvbfLEqcBCA4SogEKHFNUUlpUa3NkSjUvOXQzb2hHNEhWeXhJSElsYz0SJDhkNzUxZDIwLTQzYWItNDU0MC04MjU4LTRhZWRjOGI1MmVmNxgAIAAoADC49OOyqjM4sKnomLIyQLj047KqM0ocbGJvdWoxd3VUTWN6U24xQXBldTl3TXVvUGhJPVoeIhxvSXNialoySkZlRnFLMUw1Uk9UZFJjR1NoQUU9ZTpU5pYSqQEIXhKkAQocVk9BWVNYUFloRG9vWU1IUWZ1OGFSWHVtSFJFPRIkZGYxNmNkNjEtNmRiYS00NmU1LTgwNzAtNTJmNTg4Yzg0ZTdjGAAgACgAMOO3jsacMzjkov+TijNA47eOxpwzShwzL3FpdWZVUFdKVEh4aTkvUGxNbGtVbFVWTzg9WiAiHv/dWVN2QUZhUnhwdktRcWo5ZkJoekl0NTYzbk53PWVq+Nc/EqcBCGUSogEKHG5FZUtUZTg2bkV6TGlwK01CYWpkT3I0N1k1Zz0SJDQzY2QwY2UyLWYwZmQtNDBkYy1hYjlkLWM5ZTJiZmE1NDJmMRgAIAEoATC/pYe0oDM4wP2ijo0zQLWSh7SgM0oceEVrUzRUSy81YTJiSE4yT2o1eTBHVHM4SFlzPVoeIhxtK1hyMHNGWGdZMGNzUlhmVzlGZHZZN3MrR0E9ZQy3fuoSqAEISRKjAQoceUFhRzA2SVd0UDZSTSs5aElRZUtSNldKYWc4PRIkYmY5OWU0OTgtNzViOS00NmFkLWFiYjQtYmJmZjIyMzNkNWRhGAAgACgAMPq06JiyMjiwqeiYsjJAsKnomLIyShw0SGM2TUVnYWdJV2JtaVdIcU91aFloaHlTWjQ9Wh8iHbk0dUhrZ090anFHNXljUUNpcXNmcVljS1NpNXM9ZRzPS/ISqQEIKRKkAQocWjlrMjMrUkRxR2F0U1dFT1BxblNkanNFT09VPRIkNjUxZDM4NDQtMzQyMy00Y2M5LWIzYTEtNjkwNDE2YTJiNjRlGAAgACgAMIPsgpaXMziwqeiYsjJAg+yClpczShxJaFNTVk00Vk56YlNvL21BZFBBcDhhMkttdVE9WiAiHv/qeHN0emkxeEFFNHRhM3R6SXJNMHRScENqNVk4PWU6VOaWEqoBCDYSpQEKHHdGcWtVb2JwUU00YVdIZk9HTGhKYXh2RmZLMD0SJGJlZGUwZmQzLWI0MDUtNGUxYS1iOWY3LWZiMmVhMmIzNWU0NxgAIAAoADCo7IKWlzM4sKnomLIyQKjsgpaXM0occlIvaGhtQ0RIMGpzTUxUN0FQQWsva001RVcwPVohIh////82SFdxNldna2NRb2kwVUhkbUR6S0IvdXdPWUk9ZTcMJK0SqAEIWBKjAQocRmZIQzUyYVBJMXV2b1E0N2p4NG42NnVUQjVjPRIkNjdiYjFmNTgtODhiMi00MDA5LWIyNzUtOWRiNjdlODE2M2ZiGAAgACgAMLWbtdb8Mjj1iLXW/DJA9Yi11vwyShxiTmh6ZlM2MXk3d1IwNU04Yk1jMjEwNmloMlk9Wh8iHeVSYVVFMk8wYmcyT2JvL2FvbWQ0SkdGcml5dFU9Zep7jJMSqQEIUxKkAQocbVJzK0J3c3N0d3JTdXpVV2tsd24wWTUvT3dRPRIkYjFkNDY3NTgtOWM2YS00YjkzLWJhYjAtOGYxM2IxOTUwOTlmGAAgASgBMNzy1oCZMziwqeiYsjJA9ezWgJkzShxIR3pkdk04VDRheENnb3dWT2tETURFVnE3K1k9WiAiHv/mdE9TaXVBZmxrMjJhNU1Gc1N2TUtLc3FsV3k0PWUAAAAAEqgBCFkSowEKHGYraUhxbCtWcVVhRUsrT1NwWnFmTUE1MlBOZz0SJDA3NjhlNjc0LWIyN2QtNGE1Yy1iODI5LTlmZjc5Njc5MDMxOBgAIAAoADC3vrXW/DI44qu11vwyQOKrtdb8MkocUU9ncTJDSmRzOHlUWFRQVDd6UEVDUmlLamVNPVofIh3pVSt4bU9YSVJXVVdkWksxMFBTQjZrdHRxSlFzPWWG7iZMEqgBCB0SowEKHHVFaG1RUERoMkFwd1E2cHZJWFVlZWFqU2s5VT0SJDQ4ZWZjZDBjLWQ1NTQtNGMxOC04NTJjLWM3NTQ2NTBiNTQ5YxgAIAAoADCMj/bClTM41IXunMcyQIyP9sKVM0ocUkdzZERxK08rQ3ArSXdtbFVOQmNOMFpFU2NFPVofIh33citsTktyQWxZcm0vdnNJak1GMktwWFBMWDlvPWUAAAAAEqgBCDsSowEKHHhzc1AyWGc5Nzg0cU5mZVlrbCtOaS8vWXBkMD0SJDBkMDllYThlLTA4ZmEtNDQ0OS05YmJjLTZmNWY5YjM2ZGViZhgAIAAoADC2/eOVijM4sKnomLIyQLb945WKM0ocRFV1emdjQ0ZuckZGSnRyOWFXRlc5TlpvamlzPVofIh3URHJZUngvTnZ5dWkraE9jL3J0di85dWJPdlhBPWXdIY4TEqgBCE8SowEKHEpNMmRJRmMwMTRiK0Q5QnltdncyVE5ack1rST0SJGM2Y2M0YTAzLTA0ODctNGEyMS04NjZkLTI5YzU2NGE4NjYwYxgAIAAoADDMmYDd8zI4sKnomLIyQLCp6JiyMkocb3EySmZwd050Qk5UV0Q3MWV6Vk1SOUorS0djPVofIh3+MFcrMW5WZlNIeGZQSkxlN2E1c29VU1RQMHFnPWVxZbUsEqgBCBgSowEKHGhtaDdzVmJMV2VkMTY4WFBnWlNpNTZTOHZTYz0SJGU4MTkyM2ZkLWI2YjUtNDViOS05YTUyLThjOGI5NTRkOTgxNhgAIAAoADCgs+iYsjI4sKnomLIyQLCp6JiyMkocVHVQdVFFK0hhdVZTUmx4TXhTSXF2dFVzMEVrPVofIh37dTBRNlc3cWNMZUVuMHZDRkJ3RkdtdCtraFFVPWUAAAAAEqkBCFUSpAEKHG5sVmkycGhUV0tBSXJVaTdzVXBsdStJRlRQQT0SJDc4YTEyNzllLWM3OTctNGUwMC04ODMxLTA4ZWY5MjVmYjc3ZBgAIAAoADDqtOiYsjI4sKnomLIyQLCp6JiyMkocQlhreTJGOW8vd2tXa21uZmdITTh0ZHRxS3dBPVogIh7/+WxncUg5b0FmQXVzQ010T2VPa1BHa1NDTUNTOD1lvVws0BKoAQghEqMBChxVQWJ3Mlc3RnJUNi9lNUpaUU5rajgwMmNlc0E9EiQ4OWUzYzFkNC1mY2E2LTQwZmQtYTcwMi05YjBhYjA2NzlhZmQYACAAKAAwho/2wpUzOIPtraTaMkCGj/bClTNKHGdDMHVHMDJpSjNNVlJwOGJpdU9BaXBxWFpvdz1aHyId/1ZQQittZVhqcVBpSEk1MUhsS0pzemk2V1Mvdz1lAAAAABKqAQg0EqUBChxPcEFncE40WFJ6VDZ4MkxqcGVuUHBMMHJFbzg9EiQ5YmRlZDc2Yy1hYThhLTRmYTUtODM3ZS03ZTg4YTU0ODZiZTgYACAAKAAw7Jrxs6AzOO/xw8L2MkDsmvGzoDNKHG1Ca25BT0tVK01zT3BoeGptcnhiaXEvcEF1QT1aISIf///+bzFFaGsxUFdEYUF1dWdDMEJ0V3ZGUU5SZVBVPWUMt37qEqoBCDcSpQEKHDNtS3pTVG1UMVJhTDVybVdjaG9oSFBuVUczRT0SJDZiOWQ5ZWYzLTQ5NmQtNGU0NC1hODFiLTkwZTlkMjA3YTU0OBgAIAAoADDv64KWlzM408S+q7IyQO/rgpaXM0ocU1h2bEVPVWlrNlJXc2NlbExGOE1GWUtZaXJrPVohIh////9uVUdNdTRDdG1WbG1Ha1g2NEJDVElhVG1qcjQ9ZeKiXwsSqAEITRKjAQocZGNuOUt2VmY0cFZINGFqTXRBckt5TUo5OVZRPRIkYTExNGY0MmQtMDVlNS00ODM1LTk4NWQtMjQyMGYxOTQ3YTc2GAAgACgAMLv3lryKMziwqeiYsjJAu/eWvIozShxYQTVncElRMXhGMHl3TnBGM25WNm1nc3E5Qkk9Wh8iHftzd3g5dUJDNXJGZWh1c21jUE9ydU9JTlRucHc9ZRUJXzoSqAEIOhKjAQocb3p4TTlxUTQvbVNhMDdOcjhSNTRQRTJqQVlZPRIkYTc1M2Y1YjAtZDRiNC00ODdkLWFjZTItYTk3YjdiYWNhZDk3GAAgACgAMMTFvMSSMziwqeiYsjJAxMW8xJIzShxaWjJRYXJ5QVExR1BqdTdrbWdyVmtCaEtId289Wh8iHak5N1BsT2dvTmpOMXNCV2RRMFZQVURZeWRyUjg9ZRijkHQSqAEIPBKjAQocSFl6Um8zMUZtbUhNOWd5aVFBYTVOKyttS3NZPRIkNzlkNmFkYTctZmU5OS00MGFkLTg4ZjItOGYyY2UzZDk4M2IzGAAgACgAMK/945WKMziwqeiYsjJAr/3jlYozShxLZnpCZ1lQT3ZYU1dleVJyQVZnZ1JBV2pwTVE9Wh8iHeovQUdnMVA5TzBrd2NRYm8xaDVidmNJT2RXczg9ZS8YQP8SqgEIMxKlAQocaCtqS2tvOHN0RmQ2azEwVXV4dFB3T0pWNm9jPRIkMTgzYWZlNTktZDJiZC00NWEwLTg3YTMtYTI0NDgzMmY1NmQ1GAAgACgAMMDrgpaXMzilmNLG7TJAwOuClpczShxqUlBNbVRqQ1F0OHd4SUlGQzAzL1JaS1pYRFE9WiEiH////VQxTXdOeU8xNklzZy9IVlY1VTlqY0VtN2Y3ND1lTZj/VBKDAQgCEn8KHFljU1RvbnZFU1B3cUNzNEwyY3JWaHY2OEw5OD0SJGNjOTdiMzcyLWUyMzctNDRmMS1hN2U0LTRlZTg0YWZhN2FkNRgAIAAoADABONmW55iyMkDZlueYsjJKHG9QVmtod0JSYlY2NUtDV1IyK0lPTkhXb091OD1aAGUAAAAAEqkBCEQSpAEKHGQ0WUE1YWtZdHIzVDRUMm9PM0Jvbk9zekZSaz0SJGRmN2UwNTc1LWZlYTAtNGVkYi1hODZlLTY4MjJiYzNjYmRlNBgAIAAoADCp/eOVijM4sJ/f8s8yQKn945WKM0ocTTFMa0xES0hENVU2MEZFL3U5QWVuR2tHazlnPVogIh7/7m1kQXJBUzdnOU96WGdobG0yVmR4aCtUZWFQST1l3SGOExKqAQgvEqUBChxZdzRURTFPdU02ZC9KYkRpTm5vdE56TDB0clE9EiRhYjdmZDE5Mi1mZGU4LTQxOGItYWQyZC1lNTUzMDEyNzg0MjYYACAAKAAwyeuClpczONvFo+W4MkDJ64KWlzNKHG4vazFUOFJiSkE3ZkdSQVFyajdzbnBLVk5CND1aISIf///SWVN2WDNzRDVyYk1XdmNOZFRGTHN5NVFSWUd3PWWo7d3/EqgBCD4SowEKHDJBN1c3QmF3STNna3cxOUdIZkpyWTBrVXV3QT0SJGUxMTgxZjQyLWY4NGMtNDU2MS1hNTE4LTBlM2UyYzdlZjU2OBgAIAAoADD6teiYsjI4sKnomLIyQLCp6JiyMkocbEFzLzV2WDlHYnpPRWVaejBLblJNcjB3aDVJPVofIh36T1NNUmxLRk55c1FhdzAydGRCUVRXOGFEbk5jPWVVYOgDEqgBCB8SowEKHDcvZFhlWjJibTVaU2QyTTB4WkN2YzlTYVZtUT0SJGIxZjM5M2NiLThiODktNDQwNy04NDhkLTgwZmYzZWUxYWUyNhgAIAAoADD6jvbClTM4htaxicsyQPqO9sKVM0ocdGs0RC9ibFVDZUZidlZFcjJFMUxzWDhJNDJZPVofIh39N2JHYTFLTXJjemlDSVJjeXVWZGNHYzhjaVU0PWUAAAAAEqkBCFQSpAEKHE1oZ0lCbW10WXl6aURPckVBbHNrSURHNEJTWT0SJDZkMDgxNzU2LWY3ZTAtNDA2ZS04YjA1LWIyZWYzNDk2MTcyNRgAIAAoADDPgZPlpzM4sKnomLIyQM+Bk+WnM0ocTU9xRGwwaGZraUp5RDNTSTk2YnNjbnVCUHZjPVogIh7/82xuQ295c2tkaVFVdVBDdGRwTDBnUlIrdHNKMD1lzUvjHxKpAQhCEqQBChxZZC9qNkJGSEhmMXdQaFBuWEQzNGN0UjFyZUE9EiRlYzY1M2U3Yy0xNWM1LTQxMDUtOTJhMi02MGM2ZjdjYzNlYjAYACAAKAAwt7fDx7YyOPKkw8e2MkDypMPHtjJKHDZzbmVvRGlRUHBFZElwSCtGOGJUWk9ON3NkTT1aICIe/7tyNEZmb2dhbVk1cGhSYzAyUXV5RnY2Q0pMMmM9ZQAAAAASqQEIKxKkAQocK1U0bU9JNWlDSFdFYXlKZXJkdjN0QUgvNmhvPRIkMThmZTMyZjAtNjc5My00M2RmLWJiMjMtNmY0NTNmYTQyNjE0GAAgACgAMP/rgpaXMziwqeiYsjJA/+uClpczShxrSXRhWW1TaC9lMHcyUmFycFNITTRXMlREYTA9WiAiHv/6VXpyRU9VRU5TSllCQlQrWXlDdTZGRXBwTXdZPWX78oXxEqkBCEUSpAEKHFRrTE9tSmJVSGhXZVp2RnJWTzg1L0xMMUVQZz0SJDg3MTdhYmM4LTI0OGMtNDRiZS04NjA1LWMzZmYyZmMxMTgxZBgAIAAoADDr5OSr2TI4stLkq9kyQLLS5KvZMkocK3pwejUvT25ndlBmRTBXNGowL3lnSU8wRGRjPVogIh7/92Z0MG9zOGwyMmdsV3JobEtyVVVzT1VTOHprVT1lmX7YMRKoAQhbEqMBChx0VmFtbW84V2JKV1QyR1pvWTlnekJZY24yYW89EiQ5YWRhNDVmYi0xNTgyLTQ4MGMtYTU3Mi04M2Y0MGU3ZDJhYjkYACAAKAAw9LeOxpwzOOiO0eeDM0D0t47GnDNKHEdMdlFZRjVYWDR4N1dLM2RPUmZDR21rdmlzZz1aHyId/3N2alplYXlxZ3lUUXJHVWNuTWVxOFpocWV2RT1liw4c4BKoAQhQEqMBChx5RXFiOHFWbWF0MDg4ZVRNaTFzRnh5dE1DWnc9EiQyNjcyNWU2ZS1iMjdhLTQ5NzctOTY0Yy0xNmFhOWM5MzcwYzIYACAAKAAwuLfomLIyOLCp6JiyMkCwqeiYsjJKHHA1TWtFMEZnSSt1TUtvVXZkbE9hYVlIRjQ1dz1aHyId/zJwK3NWQzNIZFVzRGUwbjI5L2ViM0dLc1ZmQT1lqO3d/xKoAQhMEqMBChx0VTM4c0h3alc3QmErUmhOdzM2Uzh1ckNZc2s9EiRjNGViODc0OC03Njg2LTRjMjgtYmEzNC0xN2QyNzMzYWU5MzkYACAAKAAwgJiZpaIzOLCp6JiyMkCAmJmlojNKHFVPdnV6S29SQ1p0eGJSVWU5TlRQMGNOb1RzWT1aHyId91hXT1VDQlh2N051dkRKTHI3WkZqQTlqMGdZST1lzUvjHxKpAQhSEqQBChwrellFUzZYSlFqc1puYkZlOW0yOVhJb2VmMGs9EiRhN2Y3Zjc2MC0xMjJhLTQ4MTEtYmQxYy0wZGQ3ZTkxNTVlNzQYACAAKAAw0pmA3fMyOLCp6JiyMkCwqeiYsjJKHHJGdDlrMm1nekd3MU9BTmplOEVIejJPYXZDZz1aICIe/8xmR3N6Qzc0UC9BRGxycEtUdjRXNENGZnp4QVE9ZXFltSwSqwEIYBKmAQocZHEyRis1ODBCeUVuQVZOOVcyWlVnWTJ1dW13PRIkMGY3NDA5MzctMGM4YS00NWUxLWIwMDgtZmU2ODQ4Zjk3NzBhGAAgASgBMOaa8bOgMzju0saLjTNA5prxs6AzShxJU2hENGlqbkd2ektkNW9EcGJER2R2cG1DR1E9WiIiIP///9tkUzZSeExJR3d1VTNvKzQ0WnNPME96OU9wME09ZQy3fuoSqgEIMRKlAQocN1ErWllDTkxoUmhqeVd5MnVCNlNVK2pHcU9VPRIkM2JjMWJhZDEtNGU3NC00NjkwLTkwNmYtZDI3OGUzNjc1OTE3GAAgACgAMM7rgpaXMzi2mPSxuzJAzuuClpczShxOY3J6bmwrNzNBSjN5VXdzb3JMQkxVR0hWUTA9WiEiH///9EFpZG9UUHEwRFkvUEg4UjkyZytqYlIzemprdz1l+/KF8RKoAQg9EqMBChxtN1FodE9XMWxiUUlFeEdsMlRWOGJiWDZVbk09EiRhM2I0YTE3Yy00ZTk0LTQ0ZDUtYTk0Mi04ZDgyNmU4YzU0YjcYACAAKAAwppKa5vAyOLCp6JiyMkCwqeiYsjJKHG9QbVVWcE50UlQ3eEd5RWFJWVl5dVZnc2NNST1aHyId9VBScHlGb2hMR01WQWN2SU40NzN3Y1VkK0tsZz1lxZ1D1DABOAA=",
+   "version": 1
+}
