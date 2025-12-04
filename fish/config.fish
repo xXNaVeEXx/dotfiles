@@ -5,6 +5,11 @@ if test -d /opt/homebrew/bin
     fish_add_path /opt/homebrew/bin
 end
 
+# Rust/Cargo
+if test -f ~/.cargo/env.fish
+    source ~/.cargo/env.fish
+end
+
 # Add Flutter if installed
 if test -d ~/development/flutter/bin
     fish_add_path ~/development/flutter/bin
