@@ -10,6 +10,19 @@ export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 export PATH="/usr/lib/jvm/default-java/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
+# Auto-install fzf if not present
+if ! command -v fzf &> /dev/null; then
+    echo "fzf not found. Installing..."
+    sudo apt update && sudo apt install -y fzf
+fi
+
+# Auto-install zoxide if not present
+if ! command -v zoxide &> /dev/null; then
+    echo "zoxide not found. Installing..."
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
 # Install zinit if not present
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 if [ ! -d "$ZINIT_HOME" ]; then
@@ -53,6 +66,15 @@ zstyle ':completion:*:descriptions' format '[%d]'
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
 # switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
+
+# zoxide
+
+# zoxide (smarter cd)
+eval "$(zoxide init zsh)"
+
+# zoxide aliases
+alias cd="z"  # replace cd with z
+alias cdi="zi"  # interactive mode with fzf
 
 # Keybindings
 bindkey -e
