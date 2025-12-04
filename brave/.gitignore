@@ -1,21 +1,6 @@
-# Sensible Daten - NICHT in Git!
-*/Cookies*
-*/Login Data*
-*/Web Data*
-*/History*
-*Session*
-*Tabs*
-*/Sync Data/
-*/Cache/
-*/GPUCache/
-*/Code Cache/
-*/DawnCache/
-*/Service Worker/
-.DS_Store
-.com.brave.*
-
-# Diese Dateien NICHT committen
-*/AIChat*
-*/Account Web Data*
-*/Affiliation Database*
-*/CdmStorage.db*
+# Nur Bookmarks erlauben, Rest blocken
+*
+!.gitignore
+!*/
+!*/Bookmarks
+!*/Bookmarks.bak
