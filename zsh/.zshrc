@@ -55,17 +55,61 @@ if [ -s "$NVM_DIR/bash_completion" ]; then
     source "$NVM_DIR/bash_completion"
 fi
 
+# Function to detect Linux distro and install package
+install_package() {
+    local package=$1
+    local install_cmd=""
+
+    # Detect the distribution
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            nixos)
+                echo "$package not found. On NixOS, please add it to your configuration.nix or home-manager config."
+                return 1
+                ;;
+            ubuntu|debian|pop|linuxmint)
+                install_cmd="sudo apt update && sudo apt install -y $package"
+                ;;
+            fedora|rhel|centos)
+                install_cmd="sudo dnf install -y $package"
+                ;;
+            arch|manjaro|endeavouros|cachyos)
+                install_cmd="sudo pacman -S --noconfirm $package"
+                ;;
+            opensuse*)
+                install_cmd="sudo zypper install -y $package"
+                ;;
+            *)
+                echo "Unknown distribution: $ID. Skipping $package installation."
+                return 1
+                ;;
+        esac
+
+        if [ -n "$install_cmd" ]; then
+            echo "$package not found. Installing..."
+            eval $install_cmd
+        fi
+    fi
+}
+
 # Auto-install fzf if not present
 if ! command -v fzf &> /dev/null; then
-    echo "fzf not found. Installing..."
-    sudo apt update && sudo apt install -y fzf
+    install_package fzf
 fi
 
-# Auto-install zoxide if not present
+# Auto-install zoxide if not present (using curl installer as it's distro-agnostic)
 if ! command -v zoxide &> /dev/null; then
-    echo "zoxide not found. Installing..."
-    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-    export PATH="$HOME/.local/bin:$PATH"
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [ "$ID" = "nixos" ]; then
+            echo "zoxide not found. On NixOS, please add it to your configuration.nix or home-manager config."
+        else
+            echo "zoxide not found. Installing..."
+            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+    fi
 fi
 
 # Install zinit if not present
