@@ -31,12 +31,47 @@ zinit light jeffreytse/zsh-vi-mode
 # Autoload completions
 autoload -U compinit && compinit
 
+# fzf integration
+zinit light Aloxaf/fzf-tab
+
+# fzf configuration
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
+
+# fzf key bindings and completion
+if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
+  source /usr/share/doc/fzf/examples/key-bindings.zsh
+fi
+if [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
+  source /usr/share/doc/fzf/examples/completion.zsh
+fi
+
+# fzf-tab config (disable sort when completing `git checkout`)
+zstyle ':completion:*:git-checkout:*' sort false
+# set descriptions format to enable group support
+zstyle ':completion:*:descriptions' format '[%d]'
+# preview directory's content with exa when completing cd
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -1 --color=always $realpath'
+# switch group using `,` and `.`
+zstyle ':fzf-tab:*' switch-group ',' '.'
+
+# Keybindings
+bindkey -e
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+
 # History settings
 HISTFILE=~/.config/zsh/.histfile
 HISTSIZE=1000
 SAVEHIST=1000
 setopt SHARE_HISTORY
 setopt HIST_IGNORE_ALL_DUPS
+
+# Complition styling
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# Aliases
+alias ls='ls --color'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
