@@ -1,6 +1,0 @@
-# Nur Bookmarks erlauben, Rest blocken
-*
-!.gitignore
-!*/
-!*/Bookmarks
-!*/Bookmarks.bak
