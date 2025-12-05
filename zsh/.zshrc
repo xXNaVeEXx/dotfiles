@@ -157,7 +157,14 @@ eval "$(zoxide init zsh)"
 # Aliases
 alias cd="z"
 alias cdi="zi"
-alias ls='eza'
+
+# eza (better ls with icons)
+alias ls='eza --icons'
+alias ll='eza -l --icons --git'
+alias la='eza -la --icons --git'
+alias lt='eza --tree --icons'
+
+# bat (better cat)
 alias cat='bat'
 
 # Keybindings
