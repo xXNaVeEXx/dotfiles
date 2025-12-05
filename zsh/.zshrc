@@ -157,7 +157,8 @@ eval "$(zoxide init zsh)"
 # Aliases
 alias cd="z"
 alias cdi="zi"
-alias ls='ls --color'
+alias ls='eza'
+alias cat='bat'
 
 # Keybindings
 bindkey -e
