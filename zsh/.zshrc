@@ -13,6 +13,7 @@ export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
 export PATH="/usr/lib/jvm/default-java/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export KUBECONFIG="$HOME/.config/.kube/k3s-config"
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
 # NVM configuration - Force correct path
 export NVM_DIR="$HOME/.nvm"
