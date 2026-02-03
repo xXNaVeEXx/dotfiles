@@ -14,6 +14,8 @@ export PATH="/usr/lib/jvm/default-java/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export KUBECONFIG="$HOME/.config/.kube/k3s-config"
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+export PATH="$HOME/.opencode/bin:$PATH"
+
 
 # NVM configuration - Force correct path
 export NVM_DIR="$HOME/.nvm"
