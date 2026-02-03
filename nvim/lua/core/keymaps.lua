@@ -13,7 +13,7 @@ vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help ta
 -- resize window
 vim.keymap.set('n', '<c-w>', ':resize +2<CR>')
 vim.keymap.set('n', '<c-s>', ':resize -2<CR>')
-vim.keymap.set('n', '<c-a>', ':vertical resize -2<CR>')
+vim.keymap.set('n', '<c-f>', ':vertical resize -2<CR>')
 vim.keymap.set('n', '<c-d>', ':vertical resize +2<CR>')
 
 -- fix ident
