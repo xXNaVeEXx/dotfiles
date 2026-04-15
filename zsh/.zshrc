@@ -174,6 +174,9 @@ alias lt='eza --tree --icons'
 # bat (better cat)
 alias cat='bat'
 
+# Hermes agent (docker)
+alias hermes='docker compose -f ~/.hermes/docker-compose.yml exec --user hermes hermes hermes'
+
 # Keybindings
 bindkey -e
 bindkey '^p' history-search-backward
