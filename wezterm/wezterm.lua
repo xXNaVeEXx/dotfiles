@@ -5,7 +5,7 @@ local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
 config.font = wezterm.font('GohuFont 14 Nerd Font Mono')
-config.font_size = 19
+config.font_size = 14
 
 config.colors = {
   foreground = "#CBE0F0",
