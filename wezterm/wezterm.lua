@@ -39,26 +39,26 @@ config.skip_close_confirmation_for_processes_named = {
 
 config.min_scroll_bar_height = "0.5cell"
 
--- Maus-Bindings: Defaults (inkl. Klick öffnet Hyperlink) BEIBEHALTEN und
--- nur die Fenster-Drag-Einträge ergänzen. config.mouse_bindings ersetzt
--- sonst sämtliche Defaults — dann wären Links nicht mehr klickbar.
-local mouse = wezterm.default_mouse_bindings()
-table.insert(mouse, {
-  event = { Drag = { streak = 1, button = 'Left' } },
-  mods = 'SUPER',
-  action = wezterm.action.StartWindowDrag,
-})
-table.insert(mouse, {
-  event = { Drag = { streak = 1, button = 'Left' } },
-  mods = 'CTRL|SHIFT',
-  action = wezterm.action.StartWindowDrag,
-})
-table.insert(mouse, {
-  event = { Drag = { streak = 1, button = 'Left' } },
-  mods = 'ALT',
-  action = wezterm.action.StartWindowDrag,
-})
-config.mouse_bindings = mouse
+-- Maus-Bindings: NICHT die Defaults ersetzen! Eine Zuweisung an
+-- config.mouse_bindings ersetzt sämtliche Defaults (inkl. Klick öffnet
+-- Hyperlink, Auswahl, Mausrad). Neuere WezTerm-Versionen bieten
+-- wezterm.default_mouse_bindings() zum Mergen — wenn vorhanden, hängen wir
+-- nur die zwei nicht-Default-Drag-Bindings an; sonst lassen wir die Defaults
+-- komplett unangetastet (SUPER+Drag ist ohnehin Default).
+if wezterm.default_mouse_bindings then
+  local mouse = wezterm.default_mouse_bindings()
+  table.insert(mouse, {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.StartWindowDrag,
+  })
+  table.insert(mouse, {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'ALT',
+    action = wezterm.action.StartWindowDrag,
+  })
+  config.mouse_bindings = mouse
+end
 
 -- Klickbare Datei-Pfade im Terminal: JEDER absolute Pfad /home/… oder
 -- /nix/store/… im Terminal-Text wird klickbar (file:line-Angaben öffnen die
