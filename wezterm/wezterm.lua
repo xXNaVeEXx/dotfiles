@@ -58,5 +58,15 @@ config.mouse_bindings = {
 
 }
 
+-- Klickbare Datei-Pfade im Terminal: JEDER absolute Pfad /home/… oder
+-- /nix/store/… im Terminal-Text wird klickbar (file:line-Angaben öffnen die
+-- Datei selbst; der Teil nach dem Doppelpunkt wird abgeschnitten).
+local rules = wezterm.default_hyperlink_rules()
+table.insert(rules, {
+  regex = [==[/(?:home|nix/store)/[^\s'"`,()\[\]{}:;!?*|<>]+]==],
+  format = 'file://$0',
+})
+config.hyperlink_rules = rules
+
 -- and finally, return the configuration to wezterm
 return config
