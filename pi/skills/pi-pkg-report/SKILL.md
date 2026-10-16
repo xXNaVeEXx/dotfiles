@@ -12,12 +12,14 @@ Live-Stand abgeglichen wird — niemals aus dem Gedächtnis antworten, immer fri
 ## Schritt 1 — Inventur (immer zuerst, deterministisch)
 
 ```bash
-python3 <skill-dir>/report.py          # Diff + ANSI-Übersichtstabelle
-python3 <skill-dir>/report.py --dl     # zusätzlich npm-Downloadstatistiken (langsamer, online)
+python3 <skill-dir>/scripts/report.py          # Diff + ANSI-Übersichtstabelle
+python3 <skill-dir>/scripts/report.py --dl     # zusätzlich npm-Downloadstatistiken (langsamer, online)
 ```
 
 Das Skript liefert:
 - alle installierten npm-Pakete + Versionen (aus `~/.pi/agent/npm/node_modules/<pkg>/package.json`)
+- Eigenbau-Extensions aus `~/.pi/agent/extensions/` (*.ts-Dateien direkt + Unterverzeichnisse
+  mit .ts-Dateien; node_modules/tsconfig.json ausgenommen) — mit Änderungsdatum statt Version
 - lokale Pfad-Pakete (falls vorhanden, gesondert aufgeführt)
 - **Diff gegen das HTML**: fehlende Sektionen (NEU), Sektionen ohne Paket (ENTFERNT), Versions-Drift
 - eine Kurztabelle mit 1-Zeiler je Paket (aus dem `<p class="lead">` der jeweiligen Sektion)
@@ -45,6 +47,13 @@ und Quickref-Zeile löschen, renummerieren, danach muss `grep -i <name>` auf die
 liefern (Querverweise anderer Sektionen entschärfen oder entfernen).
 
 **Versions-Drift** — `chip ver` und Quickref-Versionszelle aktualisieren.
+
+**Eigenbau-Extensions** (neu in `~/.pi/agent/extensions/`): analog zu neuen Paketen, aber
+Quelle ist der Quelltext-Header (`head -40 ~/.pi/agent/extensions/<name>/index.ts` bzw.
+`<name>.ts`) statt README; statt npm-/Versions-/DL-Chips nur
+`<span class="chip">lokal: extensions/<name></span>`, Kategorie „Eigenbau“ (eigene TOC-h3,
+Sektionen am Ende vor `</main>`, Quickref fortführen). Kein Versions-Drift — das Datum ist
+nur Info. Entfernte Eigenbau-Extensions laufen über die normale ENTFERNT-Prozedur.
 
 **Hero-Stats** prüfen: Anzahl Erweiterungen = Anzahl Sektionen; Kategorien zählen;
 DL-Angabe grob plausibel halten.
@@ -88,9 +97,23 @@ unter der passenden `<h3>`-Kategorie. Quickref-Zeile:
 
 ### Validierung nach JEDER HTML-Änderung (Pflicht)
 
-Python-HTMLParser-Checker: VOID-Tags (`meta br hr img input link source wbr`), Stack-Balance,
-alle `href="#…"`-Anker müssen als `id` existieren, `section.ext`-Anzahl == Paketanzahl,
-Quickref-Nummern lückenlos 1..N. Erst wenn alles ✔ ist, gilt die Änderung als fertig.
+```bash
+python3 <skill-dir>/scripts/validate.py   # Exit 0 = ok, 1 = Fehler, 2 = Setup
+```
+
+Prüft automatisch: VOID-Tags (`meta br hr img input link source wbr`), Stack-Balance,
+alle `href="#…"`-Anker müssen als `id` existieren, `section.ext`-Anzahl == npm-Pakete in
+settings.json + Eigenbau-Extensions in `~/.pi/agent/extensions/`, Quickref-Nummern
+lückenlos 1..N. Erst bei Exit 0 gilt die Änderung als fertig.
+
+Zwei Stolperfallen beim HTML-Editieren:
+- **Kein ASCII-`"` innerhalb doppelt-gequoteter Attributwerte** — es beendet das Attribut
+  früh und bricht das Parsing (z.B. Suchfeld-Platzhalter: deutsche Anführungszeichen
+  `„…“` nutzen, nie `"…"`). Melden pi-lens oder der Validator Escape-Fehler auf einer
+  Zeile, zuerst auf ein gerades Quote suchen, das das Attribut vorzeitig schließt.
+- **Ein unplausibles Validator-Ergebnis (z.B. „0 Anker-Links“ bei 14 Sektionen) ist ein
+  Checker-Bug, kein Clean-Pass** — mit zweiter Methode (regex) gegengeprüfen, nie
+  Ergebnis 0/Kommentar-lose einfach als ok werten.
 
 ## Schritt 4 — HTML/Artefakte im Terminal ansehen (auf Wunsch)
 
@@ -99,7 +122,7 @@ python3 <skill-dir>/view.py                          # rendert ~/pi-extensions-g
 python3 <skill-dir>/view.py <datei.html>             # beliebige simple HTML-Datei
 python3 <skill-dir>/view.py --full                   # inkl. Tutorial-Codeblöcke
 python3 <skill-dir>/view.py --links                  # OSC-8-Hyperlinks (klickbar)
-python3 <skill-dir>/report.py --links                # Guide-Pfad als klickbarer Link
+python3 <skill-dir>/scripts/report.py --links    # Guide-Pfad als klickbarer Link
 ```
 
 Rendert Überschriften, Chips (Version etc.), Quickref-Tabelle, Listen und Tipps als ANSI-Text

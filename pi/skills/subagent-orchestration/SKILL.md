@@ -33,6 +33,10 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    Abschlussbericht ≤ 80 Zeilen als letzte Antwort und als Datei unter docs/reports/.
 4. **Starten**: `acp_delegate` (agent worker, festes Modell, thinkingLevel medium, timeoutMinutes ~180).
    Parallelität nach RAM: jeder Worker-pi lädt alle pi-Pakete des Nutzers (~0,6–0,9 GB); bei knappem RAM genau einer.
+   Zwei Worker nur, wenn ihre Pfade disjunkt sind UND sich ihre Build-Läufe nicht blockieren. Grund: Zwei cargo-Läufe
+   im selben Target-Verzeichnis warten auf dasselbe Build-Lock; der wartende Worker steht dann minutenlang und belegt
+   RAM. Gute Paarung: ein Rust-Paket + ein Paket ohne Compiler-Lauf (CI, Skripte, Doku). In beiden Startdateien den
+   anderen Worker mit seinen Pfaden als tabu nennen; feste Sätze wie „kein anderer Worker“ in der Vorlage ersetzen.
 5. **Abbruch (exit 143)**: `.out`/`.activity` lesen. Vollständiger Bericht vorhanden → fertig. Sonst mit
    `resumeFrom: <runId>` fortsetzen (Verlauf und Teilarbeit bleiben) und im Task sagen, wo es weitergeht.
    Wird derselbe Worker wiederholt vom RAM-Wächter beendet: dem Nutzer die RAM-Fresser nennen und ihn bitten,
@@ -43,8 +47,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - `git write-tree` → genau diesen Baum als Snapshot auf der Remote-Maschine prüfen (eigenes Target-Verzeichnis) →
      `git commit-tree` aus dem geprüften Baum mit Prüfabsatz und „Offen:“-Liste, Betreff ≤ 72 Zeichen → pushen.
    - Offene Punkte aus dem Bericht in Queue/TODO übernehmen.
-7. **CI**: Läufe per REST mit der VOLLEN Commit-SHA suchen (kurze SHA liefert nichts), Beobachtung als Hintergrundtask;
-   temporäre ci/*-Branches danach löschen.
+7. **CI**: Läufe per REST mit der VOLLEN Commit-SHA suchen (kurze SHA liefert nichts). Beobachtung als Hintergrundtask
+   mit `surviveReload: true`. Grund: Ein Reload von pi (z. B. nach Änderungen an Erweiterungen) beendet sonst alle
+   laufenden Hintergrundtasks. Temporäre ci/*-Branches danach löschen. Release-Pakete: Skill desktop-app-release.
 8. **Statusbericht** (Sprache des Nutzers, knapp): fertig + gepusht (SHA, was es für ihn bedeutet), läuft gerade,
    Probleme mit Ursache, nächste Pakete, was ich von ihm brauche.
 9. **Fortschritts-Checkliste für den Nutzer** (wenn er sehen will, was erledigt ist und was fehlt):

@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 """pi-pkg-report: Live-Inventur der installierten Pi-Erweiterungen.
 
-Vergleicht ~/.pi/agent/settings.json (Feld `packages`) mit dem HTML-Guide
-~/pi-extensions-guide.html und druckt Diff + ANSI-Übersichtstabelle.
+Vergleicht ~/.pi/agent/settings.json (Feld `packages`) UND die Eigenbau-Extensions
+in ~/.pi/agent/extensions/ mit dem HTML-Guide ~/pi-extensions-guide.html
+und druckt Diff + ANSI-Übersichtstabelle.
 
-Nutzung: report.py [--dl] [--json]
+Nutzung: report.py [--dl] [--json] [--links]
   --dl    zusätzlich npm-Downloadstatistiken abrufen (online, langsamer)
   --json  maschinenlesbare Ausgabe statt ANSI
+  --links Guide-Pfad als OSC-8-Hyperlink ausgeben
 """
 import json
 import os
 import re
 import sys
+import time
 import urllib.request
 
 HOME = os.path.expanduser("~")
 SETTINGS = os.path.join(HOME, ".pi/agent/settings.json")
 HTML_PATH = os.path.join(HOME, "pi-extensions-guide.html")
 NPM_ROOT = os.path.join(HOME, ".pi/agent/npm/node_modules")
+EXT_DIR = os.path.join(HOME, ".pi/agent/extensions")
+EXT_EXCLUDE = {"node_modules", "tsconfig.json"}
 
 # npm-Paketname -> Sektions-ID im HTML, wenn sie abweichen
 SECTION_ALIAS = {
@@ -52,6 +57,28 @@ def installed_packages():
         elif isinstance(p, str):
             local.append(p)
     return pkgs, local
+
+
+def local_extensions():
+    """Eigenbau-Extensions: *.ts direkt in EXT_DIR + Unterverzeichnisse mit .ts-Dateien.
+    Liefert {name: "dd.mm.yy"} — Name = Datei-Stem bzw. Verzeichnisname,
+    Datum = letzte Änderung der .ts-Quellen (dirs: neueste Datei)."""
+    eig = {}
+    if not os.path.isdir(EXT_DIR):
+        return eig
+    for entry in sorted(os.listdir(EXT_DIR)):
+        p = os.path.join(EXT_DIR, entry)
+        if entry in EXT_EXCLUDE:
+            continue
+        if entry.endswith(".ts") and os.path.isfile(p):
+            eig[entry[:-3]] = time.strftime("%d.%m.%y", time.localtime(os.path.getmtime(p)))
+        elif os.path.isdir(p):
+            ts_files = [os.path.join(p, f) for f in os.listdir(p)
+                        if f.endswith(".ts") and os.path.isfile(os.path.join(p, f))]
+            if ts_files:
+                newest = max(os.path.getmtime(f) for f in ts_files)
+                eig[entry] = time.strftime("%d.%m.%y", time.localtime(newest))
+    return eig
 
 
 def html_state():
@@ -101,6 +128,7 @@ def main():
     if not os.path.isfile(SETTINGS):
         sys.exit(f"settings.json nicht gefunden: {SETTINGS}")
     pkgs, local = installed_packages()
+    eig = local_extensions()
     if not os.path.isfile(HTML_PATH):
         print(f"{RED}HTML-Guide fehlt: {HTML_PATH}{R}")
         secs, qn, hero = {}, [], None
@@ -119,11 +147,22 @@ def main():
             problems.append(f"VERSION: {name} HTML v{s['ver']} != installiert v{ver}")
         else:
             status = "✓"
-        rows.append({"nr": i, "pkg": name, "ver": ver, "sid": sid, "status": status, "lead": s["lead"] if s else ""})
+        rows.append({"nr": i, "pkg": name, "ver": ver, "sid": sid, "status": status,
+                     "lead": s["lead"] if s else "", "kind": "npm"})
 
-    pkg_sids = {SECTION_ALIAS.get(n, n) for n in pkgs}
+    for j, (name, date) in enumerate(sorted(eig.items()), len(rows) + 1):
+        s = secs.get(name)
+        if s is None:
+            status = "NEU"
+            problems.append(f"NEU (Eigenbau): {name} hat keine Sektion im HTML")
+        else:
+            status = "✓"
+        rows.append({"nr": j, "pkg": name, "ver": date, "sid": name, "status": status,
+                     "lead": s["lead"] if s else "", "kind": "eigenbau"})
+
+    known_sids = {SECTION_ALIAS.get(n, n) for n in pkgs} | set(eig)
     for sid in secs:
-        if sid not in pkg_sids:
+        if sid not in known_sids:
             problems.append(f"ENTFERNT: Sektion '{sid}' ohne installiertes Paket")
 
     n_secs = len(secs)
@@ -135,14 +174,16 @@ def main():
 
     if use_dl:
         for r in rows:
-            r["dl"] = fmt_dl(npm_downloads(r["pkg"]))
+            if r["kind"] == "npm":
+                r["dl"] = fmt_dl(npm_downloads(r["pkg"]))
 
     if as_json:
-        print(json.dumps({"packages": rows, "local": local, "problems": problems}, ensure_ascii=False, indent=2))
+        print(json.dumps({"packages": rows, "eigenbau": eig, "local": local,
+                          "problems": problems}, ensure_ascii=False, indent=2))
         return
 
     # ----- ANSI-Ausgabe -----
-    print(f"\n{B}{CY}Pi-Erweiterungen — Live-Stand ({len(pkgs)} npm-Pakete){R}")
+    print(f"\n{B}{CY}Pi-Erweiterungen — Live-Stand ({len(pkgs)} npm-Pakete + {len(eig)} Eigenbau){R}")
     if local:
         print(f"{DIM}Lokale Pfad-Pakete: {', '.join(local)}{R}")
     hdr = f"  {B}#  {'Paket':<34}{'Version':<10}{'Status':<10}{'DL/Mon':<9}Kurzbeschreibung{R}" if use_dl else \
@@ -152,9 +193,12 @@ def main():
         st = r["status"]
         st_c = G if st == "✓" else (Y if "→" in st else RED)
         name = r["pkg"] if len(r["pkg"]) <= 34 else r["pkg"][:33] + "…"
+        if r["kind"] == "eigenbau":
+            name = MAG + name + R
+            st_c = st_c if st != "✓" else CY
         base = f"  {DIM}{r['nr']:>2}.{R} {name:<34}{r['ver']:<10}{st_c}{st:<9}{R}"
         if use_dl:
-            base += f"{r.get('dl','?'):<9}"
+            base += f"{r.get('dl','—'):<9}"
         base += r["lead"]
         print(base)
 
