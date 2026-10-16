@@ -1,5 +1,32 @@
 {
   "lastChangelogVersion": "1.3.0",
   "defaultProvider": "zai-coding-cn",
-  "defaultModel": "glm-5.3"
+  "defaultModel": "glm-5.3",
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "npm:billion-context",
+    "npm:pi-web-access",
+    "npm:pi-subagents",
+    "npm:pi-goal-x",
+    "npm:bigpowers",
+    "npm:pi-powerline-footer",
+    "npm:pi-lens",
+    "npm:pi-background-tasks",
+    "npm:@narumitw/pi-usage",
+    "npm:openwiki",
+    "npm:@plannotator/pi-extension",
+    "npm:pi-simplify",
+    "npm:pi-antigravity"
+  ],
+  "extensions": [
+    "-builtin:mcp"
+  ],
+  "retry": {
+    "enabled": true,
+    "maxRetries": 10,
+    "baseDelayMs": 2000,
+    "provider": {
+      "maxRetryDelayMs": 16000
+    }
+  }
 }
