@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "memoryEnabled": true,
+  "userProfileEnabled": true,
+  "memoryCharLimit": 2200,
+  "userCharLimit": 1375,
+  "memoryNudgeInterval": 10,
+  "skillNudgeInterval": 10,
+  "reviewEnabled": true,
+  "reviewMinGapMinutes": 15,
+  "sessionSearchEnabled": true
+}
