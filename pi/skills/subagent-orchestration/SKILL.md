@@ -15,10 +15,17 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - Eigene Turns kurz halten (lange Läufe als Hintergrundtask), damit der Nutzer mich jederzeit erreicht.
 - Nichts darf abstürzen: Prozesse des Nutzers nie anfassen; vor jedem Start `free -m` und Swap prüfen (siehe ram-audit).
 - Ohne Rückfragen weiterarbeiten, solange Arbeit offen ist; Entscheidungen in Queue/Plan festhalten.
+  Offene Fragen, die ein Paket blockieren, mit der empfohlenen Vorgabe entscheiden und in der Checkliste in einem
+  eigenen Abschnitt („Ohne dich entschieden“) mit Begründung zeigen. So kann der Nutzer später widersprechen,
+  ohne dass die Arbeit wartet.
 
 ## Procedure
 1. **Queue** im Projekt-`.tmp/` führen: Reihenfolge, Status je Paket, Paare, die nicht parallel laufen dürfen
    (gleiche Dateien). Ein Paket, das Dateien eines laufenden oder gestageten Pakets braucht, erst nach dessen Commit starten.
+   Bei zwei Worker-Spuren EINE Warteschlange plus Kollisionsliste führen statt fester Reihenfolgen je Spur. Wird eine
+   Spur frei, das erste Paket nehmen, das nicht mit dem Paket der anderen Spur kollidiert und dessen Vorgänger fertig
+   ist. Den spurabhängigen Teil der Prüfbefehle (z. B. eigenes Target-Verzeichnis) per kleinem Skript vor die
+   Prüfdatei des Pakets setzen, statt Prüfdateien je Spur doppelt zu pflegen.
 2. **Aufgabendatei je Paket** = Kopf + gemeinsamer Schwanz:
    - Kopf: Warum (Nutzerwunsch sinngemäß), Befund mit Datei:Zeile („Zeilen neu prüfen“), Aufgabe in Teilen,
      Tests mit Paket-Präfix (`<pkg>_*`), „Nicht anfassen“ (Pfade paralleler/gestageter Pakete, Lockfile, fremde
@@ -75,6 +82,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - Eine Zeile „Voraussichtlich fertig: …“ mitführen, die das Skript bei jedem Lauf neu rechnet: Paketgröße
      (S/M/L → Stunden), laufende Pakete halb, geteilt durch die übliche Parallelität, plus Zuschlag für Abbrüche.
      Eine Spanne nennen statt Scheingenauigkeit; Wartepunkte des Nutzers getrennt ausweisen.
+   - Zeilen ohne Paket zählen in der Prognose nicht mit. Darum vor einer Fertig-Aussage alle diese Zeilen von einem
+     Text-Worker ohne Compiler einordnen lassen: erledigt (mit Beleg), neues Paket (Aufgabe gleich schreiben),
+     außerhalb des Umfangs (mit Grund) oder wartet auf den Nutzer. Sonst ist die Prognose zu optimistisch.
 10. **Nach eigenem Absturz oder Reload**:
    - Ursache belegen (Skill ram-audit, journalctl) und dem Nutzer nennen.
    - Worker sind eigene Prozesse und laufen weiter. Ihre Benachrichtigungen an die tote Sitzung gehen verloren →
