@@ -64,7 +64,10 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - Dem Nutzer den Pfad im Repo, den Web-Link und das Artefakt nennen.
 
 ## Pitfalls
-- Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.
+
+- `[skip ci]` gilt für den ganzen Push: GitHub prüft nur die Nachricht des obersten Commits. Liegt ein
+  Doku-Commit mit `[skip ci]` (z. B. Checkliste) auf dem Paket-Commit, läuft für das Paket keine CI. Darum erst
+  den Paket-Commit pushen, dann den Doku-Commit. Fehlende Läufe per `workflow_dispatch` auf dem Branch nachholen.- Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.
 - „completed exit=0“ eines Hintergrundtasks heißt nicht grün: Wrapper-Skripte verschlucken Fehler; rc und
   Ergebniszeilen im Log lesen.
 - Zeilennummern in Aufgaben veralten, sobald andere Pakete committet sind — Worker immer per grep neu bestimmen lassen.
