@@ -1,6 +1,6 @@
 ---
 name: image-ocr-fallback
-description: Text aus eingefügten Screenshots/Bildern per Tesseract-OCR erschließen, wenn das aktive Modell keine Bilder anzeigen kann, inkl. Vorverarbeitung und Verifikation der OCR-Ergebnisse gegen das Live-System. Use when the read tool reports the model does not support images, when text must be extracted from a pasted screenshot/image (e.g. /tmp/pi-clipboard-*.png), or when the user cannot paste/attach images into Pi's input field.
+description: Bilder in Pi nutzbar machen — Einfügen (lokal/SSH/tmux via image-paste-Extension + WezTerm smart_paste, Platzhalter [[ image N ]]), Vision-Bridge für Modelle ohne Bild-Input und Tesseract-OCR-Fallback inkl. Verifikation gegen das Live-System. Use when the read tool reports the model does not support images, when text must be extracted from a pasted screenshot/image (e.g. /tmp/pi-clipboard-*.png), when the user cannot paste/attach images into Pi's input field (also over SSH), or when maintaining the image-paste extension or WezTerm image paste.
 ---
 
 # image-ocr-fallback
@@ -11,6 +11,7 @@ Klasse: Inhalt eingefügter Screenshots/Bilder erschließen, wenn `read` das Bil
 
 ## Procedure
 
+0. **Vision-Bridge zuerst:** Ist `~/.pi/agent/extensions/image-paste.ts` geladen, ersetzt sie Bilder für Nicht-Vision-Modelle automatisch durch Beschreibungen eines Vision-Modells (in Nachricht und read-Ergebnis, Block `<image described-by=…>`). Kommt trotzdem "[Current model does not support images]" an → Extension prüfen (`references/pasting-images-into-pi.md`), sonst manuell weiter mit OCR.
 1. **Read trotzdem versuchen** — die Meldung kommt erst im Antworttext; nutzt nichts, kostet einen Call.
 2. **OCR-Fallback prüfen:** `tesseract --list-langs`. Fehlt eng/deu (hier nur `afr`, `osd` installiert): `afr` trägt Lateinschrift und liest Deutsch/Englisch passabel — Befehl: `tesseract <bild> - -l afr`.
 3. **Bei Matsch vorverarbeiten** mit ImageMagick:
@@ -22,7 +23,7 @@ Klasse: Inhalt eingefügter Screenshots/Bilder erschließen, wenn `read` das Bil
 
 ## Bilder überhaupt in Pi hineinbekommen
 
-Nutzer kann keine Bilder einfügen → `references/pasting-images-into-pi.md` (Ctrl+V statt Cmd+V, Diagnose von Keybinding/Native-Clipboard-Helper).
+Nutzer kann keine Bilder einfügen, Bild-Paste über SSH/tmux, `[[ image N ]]`-Platzhalter, Vision-Bridge oder WezTerm-`smart_paste` warten → `references/pasting-images-into-pi.md` (Architektur der image-paste-Extension + WezTerm-Hook, Diagnose, Test-Harness außerhalb von Pi).
 
 ## Pitfalls
 
