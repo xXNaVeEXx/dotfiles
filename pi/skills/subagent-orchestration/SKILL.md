@@ -53,6 +53,10 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    15–25 min). Geteilte Spezial-Targets (z. B. Windows-Cross-Check) bleiben gemeinsam: dort „Blocking waiting for
    file lock“ abwarten. Laufenden Worker dafür kurz abbrechen und mit `resumeFrom` plus Parallel-Hinweis fortsetzen. In beiden Startdateien den
    anderen Worker mit seinen Pfaden als tabu nennen; feste Sätze wie „kein anderer Worker“ in der Vorlage ersetzen.
+   Vor zwei Rust-Spuren die Last der Build-Maschine prüfen (freier Speicher und Swap per ssh). Belegen Programme des
+   Nutzers sie schon, in jeder Startdatei `CARGO_BUILD_JOBS` auf etwa die halbe Kernzahl setzen und dem Nutzer die
+   Belegung nennen. Grund: Jeder rustc-Job großer Crates braucht 1–2 GB; mit voller Job-Zahl swappt die Maschine,
+   und die Läufe dauern ein Vielfaches.
 5. **Abbruch (exit 143)**: `.out`/`.activity` lesen. Vollständiger Bericht vorhanden → fertig. Sonst mit
    `resumeFrom: <runId>` fortsetzen (Verlauf und Teilarbeit bleiben) und im Task sagen, wo es weitergeht.
    Wird derselbe Worker wiederholt vom RAM-Wächter beendet: dem Nutzer die RAM-Fresser nennen und ihn bitten,
@@ -106,6 +110,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.
 - „completed exit=0“ eines Hintergrundtasks heißt nicht grün: Wrapper-Skripte verschlucken Fehler; rc und
   Ergebniszeilen im Log lesen.
+- Kommen Abschlussmeldungen längst ausgewerteter Hintergrundtasks gesammelt und verspätet (z. B. nach einem Reload),
+  einmal `bg_status` aufrufen. Ist alles beendet, jede weitere dieser Meldungen ohne Werkzeugaufruf in einem Satz
+  quittieren. Grund: Jede Meldung startet einen eigenen Turn; Prüfaufrufe je Meldung verbrauchen nur Kontext.
 - Zeilennummern in Aufgaben veralten, sobald andere Pakete committet sind — Worker immer per grep neu bestimmen lassen.
 - `bg_delegate`-Ergebnis mit `delivery: artifact`: In `result.json` ist `answer` kein Klartext. Die Teile
   `answer.blocks[].data_base64` base64-dekodieren, zusammenfügen und gegen `answer.sha256` prüfen.

@@ -9,7 +9,8 @@ description: Use when packaging or releasing a cross-platform desktop app (Tauri
 
 Klasse: Installer einer plattformübergreifenden Desktop-App in der CI bauen, prüfen und als Release ausliefern.
 Stack beim Nutzer: Tauri v2 + GitHub Actions (Standard-Runner), Release-Workflow per Tag, Release als Entwurf.
-Fallen von Tauri (Konfiguration, Sidecars, Linux, Windows, macOS, Updater) stehen in references/tauri-v2.md.
+Fallen von Tauri (Konfiguration, Sidecars, Linux, Windows, macOS, CI-Plattenplatz, Updater) stehen in
+references/tauri-v2.md.
 
 ## Procedure
 1. **Billig vorprüfen, nicht voll bündeln:**

@@ -51,6 +51,14 @@
 - Plattformwahl beim `workflow_dispatch`: Ein kleiner Vorab-Job baut die Matrix aus der Eingabe (z. B. mit jq) und
   gibt sie über `fromJSON` an den Build-Job; Tag-Läufe bauen immer alle Plattformen.
 
+## CI-Testjobs (Plattenplatz)
+- Die Projektvorlage setzt `[lib] crate-type = ["staticlib", "cdylib", "rlib"]`; staticlib und cdylib braucht nur
+  Tauri Mobile. Reine Desktop-Apps deshalb nur mit `["rlib"]` bauen. Grund: Bei großen Apps ist die staticlib im
+  Debug-Bau über 1 GB groß und wird bei jedem Test-Bau neu geschrieben; auf GitHub-Runnern bricht der Rust-Job dann
+  mit „No space left on device“ beim Schreiben der `.a` ab. Kommt eine Mobile-App dazu, beide wieder ergänzen.
+- Baut ein späterer Schritt neu, obwohl ein `--no-run`-Schritt schon alles gebaut hat, den Grund mit
+  `CARGO_LOG=cargo::core::compiler::fingerprint=info` sichtbar machen (Zeilen mit `dirty`/`stale`).
+
 ## Updater
 - `tauri-plugin-updater` mit `default-features = false` einbinden. Grund: Seine Standard-Features schalten in
   reqwest die System-Proxy-Erkennung ein, und durch Cargos Feature-Vereinigung gilt das dann für alle HTTP-Anfragen
