@@ -299,4 +299,35 @@ export function renderExpanded(info: CallInfo, width: number, theme: ThemeLike, 
 	return shown;
 }
 
+/**
+ * Zusammenfassung einer Werkzeuggruppe:
+ * „▸ 4 Aufrufe · Befehl ×2 · Lesen · 3,2s · 1 ✗“ mit rechtsbündigem Klick-Hinweis.
+ * `fresh` (kurz nach dem Zuklappen) zeigt ▾ als Übergang, sonst ▸.
+ */
+export function renderGroupLine(members: CallInfo[], width: number, theme: ThemeLike, fresh = false): string {
+	const w = Math.max(1, width);
+	const chevron = theme.fg("accent", theme.bold(fresh ? "▾" : "▸"));
+	const title = theme.fg("toolTitle", theme.bold(`${members.length} Aufrufe`));
+	const counts = new Map<string, number>();
+	for (const m of members) counts.set(m.toolName, (counts.get(m.toolName) ?? 0) + 1);
+	const parts: string[] = [];
+	for (const [tool, n] of counts) parts.push(theme.fg("dim", n > 1 ? `${germanName(tool)} ×${n}` : germanName(tool)));
+	let ms = 0;
+	for (const m of members) ms += m.durationMs ?? 0;
+	const dur = formatDuration(ms);
+	if (dur) parts.push(theme.fg("dim", dur));
+	const running = members.filter((m) => m.running).length;
+	if (running > 0) parts.push(theme.fg("muted", `◌ ${running} läuft`));
+	const errs = members.filter((m) => m.isError).length;
+	if (errs > 0) parts.push(theme.fg("error", `${errs} ✗`));
+	let line = parts.length > 0 ? `${chevron} ${title} ${theme.fg("dim", "·")} ${parts.join(theme.fg("dim", " · "))}` : `${chevron} ${title}`;
+	const hint = theme.fg("muted", "Klick: aufklappen");
+	const hintW = visibleWidth(hint);
+	if (visibleWidth(line) + 2 + hintW <= w) {
+		const gap = Math.max(2, w - visibleWidth(line) - hintW);
+		line += " ".repeat(gap) + hint;
+	}
+	return truncateToWidth(line, w, "…");
+}
+
 export { colorFor };
