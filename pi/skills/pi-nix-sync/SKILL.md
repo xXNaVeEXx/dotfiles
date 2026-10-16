@@ -16,7 +16,7 @@ Architektur: nix-conf installiert Pi (Flake-Input `github:earendil-works/pi/stab
 
 ## Beteiligte Stellen
 - `~/projects/nix-conf/flake.nix`: Input `pi` (follows nixpkgs), wird via `extraSpecialArgs`/`specialArgs` an home-module durchgereicht (3 Stellen: mkHomeLinux, nixos, darwin).
-- `~/projects/nix-conf/home/modules/pi.nix`: Paket + `pi-sync`-Skript + systemd-User-Timer + `launchd.agents.pi-sync` (mkIf isDarwin, RunAtLoad, StartInterval 1200) + Safety-Logik: FRESH-Marker (Klon in diesem Lauf erstellt) ODER leere lokale skills → MODE=pull (push UNMÖGLICH auf Jungmaschinen); Clone-Selbstheilung via fetch origin main + rev-parse-Vergleich + internem `git reset --hard origin/main`; First-Run-Paketinstall aus settings.json via `pi install`.
+- `~/projects/nix-conf/home/modules/pi.nix`: Paket + `pi-sync`-Skript + systemd-User-Timer (nur Linux, darwin nur Skript+Activation) + Bootstrap (Erst-Pull wenn `~/.pi/agent/skills` leer).
 - `~/projects/nix-conf/home/options.nix`: `myHome.pi.enable` (mkEnableOption-Muster des Repos).
 - Enables: `home/gamzat-cachyos.nix`, `gamzat-shared.nix`, `gamzat.nix` (nixos), `gamzat-darwin.nix`. maga/marv kriegen Pi NICHT.
 - dotfiles-Repo `github:xXNaVeEXx/dotfiles`: Subtree `pi/` = AGENTS.md, settings.json, keybindings.json, skills/, extensions/ (OHNE node_modules — Symlink-Farm, regenerierbar), hermes-mind/{MEMORY.md,USER.md,config.json}.
@@ -33,14 +33,7 @@ Architektur: nix-conf installiert Pi (Flake-Input `github:earendil-works/pi/stab
 
 ## Stolperfallen
 - Neue .nix-Datei untracked → Flake-Fehler beim switch: Datei VOR der Evaluation `git add`en.
-- bg_run/bash mit Pipe (`| tail`) verschluckt den Exit-Code des eigentlichen Befehls (Pipe liefert tail-RC zurück) → Rebuilds ungepiped starten oder `PIPESTATUS` prüfen; bei Remote-Builds hinter ssh am Ende der Kommandokette einen expliziten Erfolgs-Marker (`&& echo BUILD_DONE`) setzen und im Log prüfen statt dem Exit-Code zu vertrauen.
-- REMOTE-REBUILD: Nach `git pull` auf der Zielmaschine IMMER `git log --oneline -1` gegen den erwarteten Commit prüfen, bevor gebaut wird — ein still fehlgeschlagener Pull (z.B. unstaged changes ⇒ „cannot pull with rebase") baut sonst unvermerkt gegen den ALten Stand.
-- Shell in `writeShellScriptBin ''…''`: `${var#pattern}` ist Nix-Interpolation → als `''${…}` escapen. Interne `''`-Paare im Shell (z.B. `read -r -d ''`) sprengen den Nix-String (Symptom: „syntax error, unexpected ID, expecting '.' or '='" mitten im Skript) — Shell-Code umstrukturieren statt escapen (z.B. relative `find`-Pfade statt Parameter-Expansion, zeilenweise `read` statt `-d ''`).
-- INVARIANTE: Eine Maschine mit leerem Sync-Slice (frisch geklont oder junges ~/.pi) darf NIEMALS pushen — pull-only verhindert Löschung des Repo-Inhalts.
-- MTIME-GUARD im push-Pfad: Pro Datei wird geprüft, nicht pro Snapshot — gepusht werden nur Dateien mit lokaler mtime NEUER als die letzte erfolgreiche Synchronisation (State-Datei `~/.pi/agent/.pi-sync-state`, wird nur nach sauberem Push aktualisiert). Veraltete lokale Kopien können damit neuere Remote-Versionen nie überschreiben; Löschungen synct nur, wenn die Clone-Kopie nicht neuer ist als der letzte Sync. Grenze: kein Zeilen-Merge — bei Offline-Edits auf zwei Maschinen gewinnt pro Datei die neuere Änderung.
-- Existenz-Guards wie `[ -d skills ] || exit 0` sind nach einem Repo-Verlust FALLEN: Sie blockieren die Selbstheilung still. Recovery-Weg: intakte Maschine (lokaler Slice = Quelle der Wahrheit) pusht erneut; Clone-Divergenz (unpushter Commit) im Skript mit `git reset --hard origin/main` realignen, `git pull --ff-only` failt dort still.
-- home-manager-Skripte sind pro Maschine gebaut (homeDir + /nix/store-Pfade eingebrannt) — NIEMALS zwischen Maschinen kopieren; macOS `/home` ist autofs („Operation not supported"). Für Mac-Notfall-Sync: Schritte manuell via ssh mit korrekten Pfaden ausführen (clone --depth 1 + rsync pull-only).
-- darwin headless: `darwin-rebuild build --flake .#macbookpro` braucht kein sudo (switch schon — sudo ohne NOPASSWD → User muss switch selbst ausführen).
-- systemd-Timer ohne WantedBy definieren + per `home.activation` (daemon-reload + enable --now) starten; `systemctl --user enable` warnt dann „no installation config" — unit läuft trotzdem (`is-active` prüfen).
-- land-branch.sh kann einen Commit, der bereits auf lokalem main sitzt (ahead of origin), nicht landen („Squash merge produced no changes") → `git checkout -b <branch> && git branch -f main origin/main && land-branch <branch>`.
+- bg_run/bash mit Pipe (`| tail`) verschluckt den Exit-Code des eigentlichen Befehls (Pipe liefert tail-RC zurück) → Rebuilds ungepiped starten oder `PIPESTATUS` prüfen; einen „completed"-Exit-0 immer gegen die Log-Tail auf echte Fehler prüfen.
+- Erstlauf von pi-sync klont nach `~/projects/dotfiles`; schlägt SSH fehl, exitiert er still (Timer retryt). /tmp/dotfiles ist NICHT der Sync-Klon.
+- pi-sync überschreibt lokale Divergenzen im Sync-Slice im Last-Pusher-Wins-Verfahren; Git-Historie im Klon bleibt Rückgrat.
 - Timer-Service läuft ohne TTY/Agent: git push kann ohne SSH-Agent scheitern — toleriert, nächster Lauf retryt.
