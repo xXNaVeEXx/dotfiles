@@ -63,3 +63,8 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - „completed exit=0“ eines Hintergrundtasks heißt nicht grün: Wrapper-Skripte verschlucken Fehler; rc und
   Ergebniszeilen im Log lesen.
 - Zeilennummern in Aufgaben veralten, sobald andere Pakete committet sind — Worker immer per grep neu bestimmen lassen.
+- `bg_delegate`-Ergebnis mit `delivery: artifact`: In `result.json` ist `answer` kein Klartext. Die Teile
+  `answer.blocks[].data_base64` base64-dekodieren, zusammenfügen und gegen `answer.sha256` prüfen.
+- Eine neue Startart für Worker (z. B. pi ohne Erweiterungen, um RAM zu sparen) zuerst mit einer Ein-Zeilen-Probe
+  testen (`-p "Antworte nur mit OK"`). Erst danach eine lange Sitzung damit fortsetzen. Grund: Ohne Erweiterungen
+  fehlen auch die Provider- und Auth-Anpassungen, die der Eltern-Agent nutzt. Der Lauf scheitert dann sofort.
