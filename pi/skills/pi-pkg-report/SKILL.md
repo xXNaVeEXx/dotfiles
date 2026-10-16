@@ -123,10 +123,10 @@ Zwei Stolperfallen beim HTML-Editieren:
 ## Schritt 4 — HTML/Artefakte im Terminal ansehen (auf Wunsch)
 
 ```bash
-python3 <skill-dir>/view.py                          # rendert ~/pi-extensions-guide.html im Terminal
-python3 <skill-dir>/view.py <datei.html>             # beliebige simple HTML-Datei
-python3 <skill-dir>/view.py --full                   # inkl. Tutorial-Codeblöcke
-python3 <skill-dir>/view.py --links                  # OSC-8-Hyperlinks (klickbar)
+python3 <skill-dir>/scripts/view.py                 # rendert ~/pi-extensions-guide.html im Terminal
+python3 <skill-dir>/scripts/view.py <datei.html>     # beliebige simple HTML-Datei
+python3 <skill-dir>/scripts/view.py --full           # inkl. Tutorial-Codeblöcke
+python3 <skill-dir>/scripts/view.py --links          # OSC-8-Hyperlinks (klickbar)
 python3 <skill-dir>/scripts/report.py --links    # Guide-Pfad als klickbarer Link
 ```
 
