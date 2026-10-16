@@ -35,7 +35,11 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    Parallelität nach RAM: jeder Worker-pi lädt alle pi-Pakete des Nutzers (~0,6–0,9 GB); bei knappem RAM genau einer.
    Zwei Worker nur, wenn ihre Pfade disjunkt sind UND sich ihre Build-Läufe nicht blockieren. Grund: Zwei cargo-Läufe
    im selben Target-Verzeichnis warten auf dasselbe Build-Lock; der wartende Worker steht dann minutenlang und belegt
-   RAM. Gute Paarung: ein Rust-Paket + ein Paket ohne Compiler-Lauf (CI, Skripte, Doku). In beiden Startdateien den
+   RAM. Gute Paarung: ein Rust-Paket + ein Paket ohne Compiler-Lauf (CI, Skripte, Doku).
+   Zwei Rust-Pakete gleichzeitig nur mit getrennten Target-Verzeichnissen auf der Build-Maschine: Der zweite Worker
+   setzt in JEDEM cargo-Aufruf `export CARGO_TARGET_DIR=<base>/target-b` (sein erster Lauf baut einmal komplett,
+   15–25 min). Geteilte Spezial-Targets (z. B. Windows-Cross-Check) bleiben gemeinsam: dort „Blocking waiting for
+   file lock“ abwarten. Laufenden Worker dafür kurz abbrechen und mit `resumeFrom` plus Parallel-Hinweis fortsetzen. In beiden Startdateien den
    anderen Worker mit seinen Pfaden als tabu nennen; feste Sätze wie „kein anderer Worker“ in der Vorlage ersetzen.
 5. **Abbruch (exit 143)**: `.out`/`.activity` lesen. Vollständiger Bericht vorhanden → fertig. Sonst mit
    `resumeFrom: <runId>` fortsetzen (Verlauf und Teilarbeit bleiben) und im Task sagen, wo es weitergeht.
@@ -83,7 +87,8 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 
 - `[skip ci]` gilt für den ganzen Push: GitHub prüft nur die Nachricht des obersten Commits. Liegt ein
   Doku-Commit mit `[skip ci]` (z. B. Checkliste) auf dem Paket-Commit, läuft für das Paket keine CI. Darum erst
-  den Paket-Commit pushen, dann den Doku-Commit. Fehlende Läufe per `workflow_dispatch` auf dem Branch nachholen.- Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.
+  den Paket-Commit pushen, dann den Doku-Commit. Fehlende Läufe per `workflow_dispatch` auf dem Branch nachholen.
+- Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.
 - „completed exit=0“ eines Hintergrundtasks heißt nicht grün: Wrapper-Skripte verschlucken Fehler; rc und
   Ergebniszeilen im Log lesen.
 - Zeilennummern in Aufgaben veralten, sobald andere Pakete committet sind — Worker immer per grep neu bestimmen lassen.
