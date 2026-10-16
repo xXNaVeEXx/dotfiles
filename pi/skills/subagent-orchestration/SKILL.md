@@ -47,6 +47,12 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - `git write-tree` → genau diesen Baum als Snapshot auf der Remote-Maschine prüfen (eigenes Target-Verzeichnis) →
      `git commit-tree` aus dem geprüften Baum mit Prüfabsatz und „Offen:“-Liste, Betreff ≤ 72 Zeichen → pushen.
    - Offene Punkte aus dem Bericht in Queue/TODO übernehmen.
+   - Pfade des Pakets außerhalb des Filters des Staging-Skripts (z. B. CI-Workflows im Repo-Wurzelordner) von Hand
+     stagen. Grund: Das Skript filtert auf den App-Ordner und lässt sie sonst still weg.
+   - Pakete, die nur Skripte, Workflows oder Doku ändern, brauchen keinen Snapshot-Build. Beleg sind dann die Linter
+     des Workers plus ein CI-Testlauf.
+   - Nach dem Commit `git status` prüfen: Wurde eine geteilte generierte Datei nur im Index neu erzeugt und fehlen ihr
+     im Arbeitsbaum genau die Einträge des committeten Pakets, mit `git show HEAD:<pfad> > <pfad>` zurücksetzen.
 7. **CI**: Läufe per REST mit der VOLLEN Commit-SHA suchen (kurze SHA liefert nichts). Beobachtung als Hintergrundtask
    mit `surviveReload: true`. Grund: Ein Reload von pi (z. B. nach Änderungen an Erweiterungen) beendet sonst alle
    laufenden Hintergrundtasks. Temporäre ci/*-Branches danach löschen. Release-Pakete: Skill desktop-app-release.
@@ -62,6 +68,16 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
      daran hänge ich ans Ende des Commit-Skripts, damit sie nicht vergessen wird. Was laut Bericht noch „Offen“ ist,
      öffne ich von Hand wieder. Neue Befunde und Wartepunkte des Nutzers trage ich sofort ein.
    - Dem Nutzer den Pfad im Repo, den Web-Link und das Artefakt nennen.
+   - Eine Zeile „Voraussichtlich fertig: …“ mitführen, die das Skript bei jedem Lauf neu rechnet: Paketgröße
+     (S/M/L → Stunden), laufende Pakete halb, geteilt durch die übliche Parallelität, plus Zuschlag für Abbrüche.
+     Eine Spanne nennen statt Scheingenauigkeit; Wartepunkte des Nutzers getrennt ausweisen.
+10. **Nach eigenem Absturz oder Reload**:
+   - Ursache belegen (Skill ram-audit, journalctl) und dem Nutzer nennen.
+   - Worker sind eigene Prozesse und laufen weiter. Ihre Benachrichtigungen an die tote Sitzung gehen verloren →
+     Ergebnisse aus `/tmp/acp-delegate/<runId>.out` lesen.
+   - Hintergrundtasks der alten Sitzung sind weg (außer `surviveReload`): Logs prüfen oder neu starten.
+     Nur eigene liegengebliebene Remote-Läufe beenden.
+   - `git status` + Index gegen HEAD prüfen, dann die Queue fortsetzen.
 
 ## Pitfalls
 
