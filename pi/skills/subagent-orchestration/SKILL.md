@@ -43,9 +43,15 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    sie zu schließen, statt endlos neu zu starten.
 6. **Integrieren, ohne den Arbeitsbaum anzufassen** (andere Worker arbeiten darin):
    - Nur die Pfade des Pakets in den Index stagen; geteilte generierte Dateien aus den gestageten Quellen neu
-     erzeugen; Lockfile nur, wenn sein Diff allein zu diesem Paket gehört.
+     erzeugen; Lockfile nur, wenn sein Diff allein zu diesem Paket gehört. Paketpfade außerhalb des Ordners, auf den
+     das Staging-Skript filtert (z. B. CI-Workflows im Repo-Wurzelordner), von Hand stagen.
    - `git write-tree` → genau diesen Baum als Snapshot auf der Remote-Maschine prüfen (eigenes Target-Verzeichnis) →
      `git commit-tree` aus dem geprüften Baum mit Prüfabsatz und „Offen:“-Liste, Betreff ≤ 72 Zeichen → pushen.
+     Ändert ein Paket nur Skripte, Workflows oder Doku, entfällt der Snapshot-Build. Nachweis sind dann die
+     Linter-Läufe des Workers (sh -n, shellcheck, actionlint) und ein CI-Probelauf nach dem Push.
+   - Danach `git status`: Eine geteilte generierte Datei, die nur im Index neu erzeugt wurde, erscheint im Arbeitsbaum
+     als Änderung. Fehlen im Diff nur die Einträge des eben committeten Pakets, die Datei auf HEAD setzen
+     (`git show HEAD:<pfad> > <pfad>`), sonst nicht anfassen. Grund: Ein laufender Worker kann sie gerade ändern.
    - Offene Punkte aus dem Bericht in Queue/TODO übernehmen.
 7. **CI**: Läufe per REST mit der VOLLEN Commit-SHA suchen (kurze SHA liefert nichts). Beobachtung als Hintergrundtask
    mit `surviveReload: true`. Grund: Ein Reload von pi (z. B. nach Änderungen an Erweiterungen) beendet sonst alle
@@ -62,6 +68,15 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
      daran hänge ich ans Ende des Commit-Skripts, damit sie nicht vergessen wird. Was laut Bericht noch „Offen“ ist,
      öffne ich von Hand wieder. Neue Befunde und Wartepunkte des Nutzers trage ich sofort ein.
    - Dem Nutzer den Pfad im Repo, den Web-Link und das Artefakt nennen.
+10. **Nach eigenem Absturz** (meine Sitzung vom OOM-Killer oder systemd-oomd beendet):
+   - Ursache belegen (Skill ram-audit, „Nach einem Absturz“) und dem Nutzer Prozess und Swap-Wert nennen. Sind seine
+     Programme der Grund, ihn bitten, sie zu schließen.
+   - Worker-Ergebnisse aus `/tmp/acp-delegate/<runId>.out` lesen. Grund: Benachrichtigungen an die beendete Sitzung
+     gehen verloren.
+   - Hintergrundtasks der alten Sitzung (CI-Beobachtung, Remote-Prüfungen) sind mit ihr beendet: Ergebnis im Log
+     prüfen, sonst neu starten. Auf der Remote-Maschine nach liegengebliebenen eigenen Läufen sehen und nur diese
+     beenden.
+   - `git status` und Index gegen HEAD prüfen, dann an der Queue weitermachen und den Stand kurz melden.
 
 ## Pitfalls
 - Nie ein write und ein bash, das diese Datei liest, im selben parallelen Batch — die Reihenfolge ist nicht garantiert.

@@ -2,6 +2,7 @@
   "lastChangelogVersion": "1.3.0",
   "defaultProvider": "zai-coding-cn",
   "defaultModel": "glm-5.3",
+  "hideThinkingBlock": true,
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:billion-context",

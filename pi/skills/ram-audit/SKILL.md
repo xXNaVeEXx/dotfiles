@@ -23,6 +23,13 @@ Klasse: Analyse von RAM-/Swap-Verbrauch und sichere Empfehlung, was beendet werd
 4. **Prozessbäume & Ports klären**, bevor irgendetwas als "überflüssig" gilt: `ps -o pid=,ppid=,etime=,rss= -p <pids>` und `ss -tlnp | grep <port>`. Kinder (Proxys, Webhelper) gehören zu einer Session — nie einzeln als Waisen deklarieren, solange der Parent lebt. Auch ein Proxy mit totem Parent (umgehängt an systemd) kann noch eine lebende Session bedienen: vorher `ss -tnp | grep :<port>` prüfen, welcher Prozess eine Verbindung hält.
 5. **Empfehlung als Tabelle** mit RAM+Swap-Summe, Risiko und Restart-Kommando. Immer anbieten, es direkt auszuführen (Nutzer will proaktive Execution).
 
+## Nach einem Absturz
+
+- Wer wurde beendet und warum: `journalctl -b --since -2h | grep -iE 'oomd|oom killer|out of memory'` (bei Bedarf
+  `--user`). systemd-oomd beendet bei hoher Swap-Belegung die ganze cgroup mit dem meisten Swap, z. B. einen
+  tmux-Scope samt aller Kindprozesse; der Kernel-OOM-Killer beendet dagegen einzelne Prozesse.
+- Danach die Verbraucher wie oben aggregieren und dem Nutzer nennen, welche Programme den Druck erzeugt haben.
+
 ## Kill-Regeln (mit Begründung)
 
 - Desktop (plasmashell, kwin_wayland, Xwayland): nie killen — killt die Session.
