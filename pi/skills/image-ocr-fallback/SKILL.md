@@ -1,6 +1,6 @@
 ---
 name: image-ocr-fallback
-description: Text aus eingefügten Screenshots/Bildern per Tesseract-OCR erschließen, wenn das aktive Modell keine Bilder anzeigen kann, inkl. Vorverarbeitung und Verifikation der OCR-Ergebnisse gegen das Live-System. Use when the read tool reports the model does not support images, or when text must be extracted from a pasted screenshot/image (e.g. /tmp/pi-clipboard-*.png).
+description: Text aus eingefügten Screenshots/Bildern per Tesseract-OCR erschließen, wenn das aktive Modell keine Bilder anzeigen kann, inkl. Vorverarbeitung und Verifikation der OCR-Ergebnisse gegen das Live-System. Use when the read tool reports the model does not support images, when text must be extracted from a pasted screenshot/image (e.g. /tmp/pi-clipboard-*.png), or when the user cannot paste/attach images into Pi's input field.
 ---
 
 # image-ocr-fallback
@@ -19,6 +19,10 @@ Klasse: Inhalt eingefügter Screenshots/Bilder erschließen, wenn `read` das Bil
    ```
    Varianten: `--psm 4` (Spalten) oder `--psm 6` (Block), ggf. in horizontale Bänder croppen.
 4. **OCR-Ergebnis gegen das Live-System verifizieren, nie blind glauben.** UI-Screenshots verhunzen Zahlen systematisch (18789→"1878A", PIDs→"1A46788"). Jede konkrete PID/Port/Zahl aus dem OCR per `ps`, `ss -tlnp`, `docker ps` gegenprüfen und die echte ID in die Analyse setzen. Textuelle Meldungen (Fehlerstrings) per `grep` im System reproduzieren statt aus dem OCR zu zitieren.
+
+## Bilder überhaupt in Pi hineinbekommen
+
+Nutzer kann keine Bilder einfügen → `references/pasting-images-into-pi.md` (Ctrl+V statt Cmd+V, Diagnose von Keybinding/Native-Clipboard-Helper).
 
 ## Pitfalls
 
