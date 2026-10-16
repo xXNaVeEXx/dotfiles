@@ -30,7 +30,12 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - Kopf: Warum (Nutzerwunsch sinngemäß), Befund mit Datei:Zeile („Zeilen neu prüfen“), Aufgabe in Teilen,
      Tests mit Paket-Präfix (`<pkg>_*`), „Nicht anfassen“ (Pfade paralleler/gestageter Pakete, Lockfile, fremde
      Bereiche; in geteilten Dateien nur Zeilen mit Marker `// <PKG>:`).
+   - Den Parallel-Hinweis für den anderen Worker („seine Pfade nur lesen …“) per Skript aus dem Abschnitt
+     „Deine Pfade“ des Kopfs erzeugen, nicht von Hand: so passt er immer zum Kopf.
    - Schwanz: Prüfbefehle, Berichtsformat, Arbeitsweise.
+   - Beim Stagen einer geteilten Datei, in der mehrere Pakete Zeilen haben (z. B. Modul- und Befehlslisten), ein
+     Skript nehmen, das nur Zeilen mit dem eigenen Marker übernimmt und gemischte Blöcke meldet, statt den Blob
+     von Hand zu bauen.
    - Platzhalter mit Python `str.replace` ersetzen und prüfen, dass keiner übrig ist — sed bricht, sobald der Titel
      `/` oder `&` enthält.
 3. **Startdatei** (Prompt bleibt kurz: „Lies <Startdatei> vollständig und führe sie aus“): HEAD, fremde uncommittete
