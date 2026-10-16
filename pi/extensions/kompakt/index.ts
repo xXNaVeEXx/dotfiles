@@ -6,12 +6,6 @@
  * - ctrl+o (app.tools.expand): höchstens 15 Zeilen Ausgabe, ohne Kasten.
  * - Klick auf eine Zeile: Overlay mit voller Ausgabe; Klick auf "[Diff #id]": Diff-Betrachter von artifacts.
  * - /details [n] bzw. alt+o: Overlay für den n-letzten Aufruf (Tastatur-Alternative).
- * - Werkzeuggruppen: aufeinanderfolgende Aufrufe (ohne Text dazwischen) bilden eine Gruppe.
- *   Am Ende eines Agent-Durchlaufs klappt sie automatisch zu: „▸ 4 Aufrufe · Befehl ×2 · … · Klick: aufklappen“.
- *   Klick auf die Gruppenzeile (oder alt+g für die letzte) klappt gestaffelt animiert auf/zu; ▾-Spalte klappt zu.
- *   /kompakt gruppen auto|an|aus; gespeichert in ~/.pi/agent/kompakt.json (Standard: auto).
- * - Eingeklapptes Denken: Label „✦ Gedanken · Klick zum Aufklappen“ über ctx.ui.setHiddenThinkingLabel;
- *   das global zugeklappte Denken kommt aus der pi-Einstellung hideThinkingBlock (Klick-Toggle von pi bleibt).
  * - /kompakt an|aus|status – gespeichert in ~/.pi/agent/kompakt.json (Standard: an).
  * - Werkzeuge mit eigenem Renderer behalten ihren Inhalt, nur ohne farbigen Kasten.
  *
@@ -21,7 +15,7 @@
  *   sendet   "artifacts:open" {id, ctx}
  */
 import type { ExtensionAPI, ExtensionContext, ToolRenderers } from "@earendil-works/pi-coding-agent";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
@@ -36,7 +30,6 @@ import {
 	relPath,
 	renderErrorLine,
 	renderExpanded,
-	renderGroupLine,
 	renderLine,
 	clean,
 } from "./render";
@@ -45,31 +38,19 @@ import { DetailViewer } from "./viewer";
 const AGENT_DIR = process.env.PI_CODING_AGENT_DIR || path.join(os.homedir(), ".pi", "agent");
 const CONFIG_FILE = path.join(AGENT_DIR, "kompakt.json");
 
-/** Still bis auf KOMPAKT_DEBUG=1: Kette tool_call → liveCalls → addToGroup → agent_end nachvollziehen. */
-function dbg(msg: string): void {
-	if (!process.env.KOMPAKT_DEBUG) return;
+function loadEnabled(): boolean {
 	try {
-		appendFileSync(path.join(AGENT_DIR, "kompakt-debug.log"), `${new Date().toISOString().slice(11, 23)} ${msg}\n`);
+		const j = JSON.parse(readFileSync(CONFIG_FILE, "utf8")) as { enabled?: unknown };
+		return j.enabled !== false;
 	} catch {
-		// Debug-Log darf nie stören
+		return true;
 	}
 }
 
-type GroupMode = "auto" | "an" | "aus";
-
-function loadConfig(): { enabled: boolean; groups: GroupMode } {
-	try {
-		const j = JSON.parse(readFileSync(CONFIG_FILE, "utf8")) as { enabled?: unknown; groups?: unknown };
-		return { enabled: j.enabled !== false, groups: j.groups === "an" || j.groups === "aus" ? j.groups : "auto" };
-	} catch {
-		return { enabled: true, groups: "auto" };
-	}
-}
-
-function saveConfig(enabled: boolean, groups: GroupMode): void {
+function saveEnabled(on: boolean): void {
 	mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
 	const tmp = `${CONFIG_FILE}.${process.pid}.tmp`;
-	writeFileSync(tmp, JSON.stringify({ enabled, groups }, null, 2) + "\n");
+	writeFileSync(tmp, JSON.stringify({ enabled: on }, null, 2) + "\n");
 	renameSync(tmp, CONFIG_FILE);
 }
 
@@ -87,16 +68,6 @@ type RenderCtx = {
 };
 type ResultLike = { content?: { type: string; text?: string }[]; details?: unknown };
 
-const STAGGER = 26;
-
-/** Assistant-Nachricht mit sichtbarem Text (oder Nutzer-Nachricht) beendet eine Aufruf-Sequenz. */
-function closesGroup(m: { role?: string; content?: unknown } | undefined): boolean {
-	if (!m) return false;
-	if (m.role === "user") return true;
-	if (m.role !== "assistant" || !Array.isArray(m.content)) return false;
-	return m.content.some((b) => (b as { type?: string })?.type === "text");
-}
-
 function textOf(result: ResultLike | undefined): string {
 	if (!result?.content) return "";
 	return result.content
@@ -106,9 +77,7 @@ function textOf(result: ResultLike | undefined): string {
 }
 
 export default function kompaktExtension(pi: ExtensionAPI) {
-	const cfg = loadConfig();
-	let enabled = cfg.enabled;
-	let groupMode: GroupMode = cfg.groups;
+	let enabled = loadEnabled();
 	let lastCtx: ExtensionContext | undefined;
 	/** toolCallId → Aufrufdaten (für /details und Klicks) */
 	const records = new Map<string, CallInfo>();
@@ -116,99 +85,6 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 	/** toolCallId → Diff-Chip aus artifacts */
 	const chips = new Map<string, DiffChip>();
 	const changedFiles = new Set<string>();
-
-	/** Werkzeuggruppe: aufeinanderfolgende Aufrufe ohne Text dazwischen. */
-	interface Group {
-		id: number;
-		members: string[];
-		collapsed: boolean;
-		/** Date.now() des letzten Umklappens – steuert Animation/Übergang. */
-		animAt?: number;
-	}
-	let openGroup: Group | undefined;
-	let lastGroup: Group | undefined;
-	let groupSeq = 0;
-	const groups = new Map<number, Group>();
-	const groupOf = new Map<string, Group>();
-	/** Nur live gesehene Aufrufe gruppieren – historische Zeilen bleiben flach. */
-	const liveCalls = new Set<string>();
-	const invalidateCall = new Map<string, () => void>();
-	const invalidateRes = new Map<string, () => void>();
-
-	function resetGroups(): void {
-		openGroup = undefined;
-		lastGroup = undefined;
-		groups.clear();
-		groupOf.clear();
-		liveCalls.clear();
-	}
-
-	function rememberCall(callId: string, invalidate: () => void): void {
-		if (invalidateCall.size > 2000) invalidateCall.clear();
-		invalidateCall.set(callId, invalidate);
-	}
-
-	function rememberResult(callId: string, invalidate: () => void): void {
-		if (invalidateRes.size > 2000) invalidateRes.clear();
-		invalidateRes.set(callId, invalidate);
-	}
-
-	const memberInfos = (g: Group): CallInfo[] => g.members.map((id) => records.get(id)).filter((x): x is CallInfo => !!x);
-
-	function repaintGroup(g: Group): void {
-		for (const id of g.members) {
-			invalidateCall.get(id)?.();
-			invalidateRes.get(id)?.();
-		}
-	}
-
-	function addToGroup(callId: string): void {
-		if (groupMode === "aus") return dbg(`add ${callId}: skip (modus aus)`);
-		if (!liveCalls.has(callId)) return dbg(`add ${callId}: skip (nicht live)`);
-		if (groupOf.has(callId)) return dbg(`add ${callId}: skip (schon gruppiert)`);
-		if (!openGroup) {
-			const g: Group = { id: ++groupSeq, members: [], collapsed: false };
-			groups.set(g.id, g);
-			openGroup = g;
-			if (groups.size > 80) {
-				const oldest = groups.keys().next().value as number;
-				const old = groups.get(oldest);
-				if (old) for (const id of old.members) groupOf.delete(id);
-				groups.delete(oldest);
-				if (lastGroup?.id === oldest) lastGroup = undefined;
-			}
-		}
-		openGroup.members.push(callId);
-		groupOf.set(callId, openGroup);
-		dbg(`add ${callId} → g${openGroup.id} (n=${openGroup.members.length})`);
-	}
-
-	/** Grenze: Aufruf-Sequenz beenden (Nutzer-/Text-Nachricht, neuer Turn). */
-	function closeGroupBoundary(): void {
-		openGroup = undefined;
-	}
-
-	/** Am Ende eines Agent-Durchlaufs: Gruppen ab 2 Aufrufen automatisch zuklappen. */
-	function collapseAll(): void {
-		closeGroupBoundary();
-		dbg(`agent_end: groups=${groups.size} mode=${groupMode}`);
-		if (groupMode !== "auto") return;
-		for (const g of groups.values()) {
-			if (!g.collapsed && g.members.length >= 2) {
-				g.collapsed = true;
-				g.animAt = Date.now();
-				lastGroup = g;
-				repaintGroup(g);
-			}
-		}
-	}
-
-	function toggleGroup(g: Group): void {
-		g.collapsed = !g.collapsed;
-		g.animAt = Date.now();
-		lastGroup = g;
-		repaintGroup(g);
-	}
 
 	const remember = (ctx: ExtensionContext | undefined) => {
 		if (ctx) lastCtx = ctx;
@@ -248,7 +124,6 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 				new DetailViewer(
 					title,
 					lines.map((text, i) => ({ text, color: colorFor(kinds[i], info.isError) })),
-					// SAFETY: ui.custom liefert den vollen pi-Tui-Theme; DetailViewer braucht nur fg()/bold() – beide sind garantiert vorhanden.
 					theme as unknown as ThemeLike,
 					() => tui.terminal.rows,
 					() => done(undefined),
@@ -259,15 +134,8 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		);
 	}
 
-	/** Klick auf eine Zeile: eingeklappte Gruppe → aufklappen, ▾-Spalte → zuklappen, Chip → Diff, sonst Detail-Overlay. */
-	function clickOn(info: CallInfo, chipRange: { from: number; to: number; id: number } | undefined, x: number, callId?: string): void {
-		const g = callId ? groupOf.get(callId) : undefined;
-		if (g && g.members.length >= 2 && groupMode !== "aus") {
-			if (g.collapsed || x < 2) {
-				toggleGroup(g);
-				return;
-			}
-		}
+	/** Klick auf eine Zeile: Chip → Diff, edit/write mit Chip → Diff, sonst Detail-Overlay. */
+	function clickOn(info: CallInfo, chipRange: { from: number; to: number; id: number } | undefined, x: number): void {
 		const id = chipRange && x >= chipRange.from && x < chipRange.to ? chipRange.id : info.chip && (info.toolName === "edit" || info.toolName === "write") ? info.chip.id : undefined;
 		if (id !== undefined && openDiff(id)) return;
 		if (id !== undefined) lastCtx?.ui.notify(`Artefakt #${id} gibt es in dieser Sitzung nicht (mehr) – zeige Details`, "info");
@@ -277,55 +145,18 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 	/** Die Zeile eines Aufrufs. Liest bei jedem Zeichnen den aktuellen Stand. */
 	class LineComponent {
 		private chipRange: { from: number; to: number; id: number } | undefined;
-		private animScheduled = false;
 		constructor(
 			public info: CallInfo,
 			public theme: ThemeLike,
-			public callId: string,
-			public markDirty: () => void,
-		) {
-			rememberCall(callId, markDirty);
-		}
+		) {}
 		render(width: number): string[] {
-			const g = groupOf.get(this.callId);
-			if (g && g.members.length >= 2 && groupMode !== "aus") {
-				const idx = g.members.indexOf(this.callId);
-				if (g.collapsed) {
-					if (idx !== 0) return [];
-					const fresh = g.animAt !== undefined && Date.now() - g.animAt < 220;
-					if (fresh && !this.animScheduled) {
-						this.animScheduled = true;
-						setTimeout(() => {
-							this.animScheduled = false;
-							this.markDirty();
-						}, 240);
-					}
-					return [renderGroupLine(memberInfos(g), width, this.theme, fresh)];
-				}
-				if (g.animAt !== undefined) {
-					const wait = idx * STAGGER - (Date.now() - g.animAt);
-					if (wait > 0) {
-						if (!this.animScheduled) {
-							this.animScheduled = true;
-							setTimeout(() => {
-								this.animScheduled = false;
-								this.markDirty();
-							}, wait + 16);
-						}
-						return [];
-					}
-				}
-				const l = renderLine(this.info, Math.max(1, width - 2), this.theme);
-				this.chipRange = l.chip ? { from: l.chip.from + 2, to: l.chip.to + 2, id: l.chip.id } : undefined;
-				return [(idx === 0 ? this.theme.fg("accent", "▾ ") : "  ") + l.text];
-			}
 			const l = renderLine(this.info, width, this.theme);
 			this.chipRange = l.chip;
 			return [l.text];
 		}
 		handleMouse(e: MouseEv) {
 			if (e.type !== "click" || e.button !== "left") return undefined;
-			clickOn(this.info, this.chipRange, e.x, this.callId);
+			clickOn(this.info, this.chipRange, e.x);
 			return { handled: true };
 		}
 		invalidate(): void {}
@@ -333,35 +164,13 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 
 	/** Fehlerzeile bzw. ausgeklappte Ausgabe unter der Zeile. */
 	class ResultComponent {
-		private animScheduled = false;
 		constructor(
 			public info: CallInfo,
 			public theme: ThemeLike,
 			public expanded: boolean,
-			public callId: string,
-			public markDirty: () => void,
-		) {
-			rememberResult(callId, markDirty);
-		}
+		) {}
 		render(width: number): string[] {
 			if (this.info.running) return [];
-			const g = groupOf.get(this.callId);
-			if (g && g.members.length >= 2 && groupMode !== "aus") {
-				if (g.collapsed) return [];
-				if (g.animAt !== undefined) {
-					const wait = (g.members.indexOf(this.callId) + 2) * STAGGER - (Date.now() - g.animAt);
-					if (wait > 0) {
-						if (!this.animScheduled) {
-							this.animScheduled = true;
-							setTimeout(() => {
-								this.animScheduled = false;
-								this.markDirty();
-							}, wait + 16);
-						}
-						return [];
-					}
-				}
-			}
 			if (this.expanded) return renderExpanded(this.info, width, this.theme, 15);
 			if (this.info.isError) return [renderErrorLine(this.info, width, this.theme)];
 			return [];
@@ -417,7 +226,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 				const ctx = rctx as RenderCtx;
 				if (!enabled && base?.renderCall) return (base.renderCall as (...a: unknown[]) => unknown)(args, theme, rctx) as never;
 				const info = infoFor(toolName, ctx);
-				return new LineComponent(info, theme as ThemeLike, ctx.toolCallId, ctx.invalidate) as never;
+				return new LineComponent(info, theme as ThemeLike) as never;
 			},
 			renderResult: (result: unknown, opts: unknown, theme: unknown, rctx: unknown) => {
 				const ctx = rctx as RenderCtx;
@@ -425,7 +234,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 				const info = infoFor(toolName, ctx, result as ResultLike);
 				const o = opts as { expanded?: boolean; isPartial?: boolean };
 				info.running = !!o?.isPartial;
-				return new ResultComponent(info, theme as ThemeLike, !!o?.expanded, ctx.toolCallId, ctx.invalidate) as never;
+				return new ResultComponent(info, theme as ThemeLike, !!o?.expanded) as never;
 			},
 		} as ToolRenderers;
 	}
@@ -449,15 +258,8 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		if (chips.size > 500) chips.delete(chips.keys().next().value as string);
 	});
 
-	pi.on("session_start", (e, ctx) => {
+	pi.on("session_start", (_e, ctx) => {
 		remember(ctx);
-		if ((e as { reason?: string })?.reason !== "reload") resetGroups();
-		// Eingeklapptes Denken hübsch beschriften (pi-eigener Klick-Toggle bleibt aktiv).
-		try {
-			ctx.ui.setHiddenThinkingLabel("✦ Gedanken · Klick zum Aufklappen");
-		} catch {
-			// ältere pi-Versionen ohne diesen Hook
-		}
 		changedFiles.clear();
 		broadcast();
 		updateStatus();
@@ -466,27 +268,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		remember(ctx);
 		broadcast();
 	});
-	pi.on("tool_call", (e, ctx) => {
-		remember(ctx);
-		const id = (e as { toolCallId?: string })?.toolCallId;
-		dbg(`tool_call ${id}`);
-		if (id) {
-			liveCalls.add(id);
-			// Gruppe hier anlegen, NICHT im Renderer: pi erstellt die Komponente schon beim
-			// Message-Stream, das tool_call-Event kommt erst beim Executions-Start.
-			addToGroup(id);
-		}
-	});
-	pi.on("message_end", (e) => {
-		const m = (e as { message?: { role?: string; content?: unknown } }).message;
-		dbg(`message_end role=${m?.role} text=${closesGroup(m)}`);
-		if (closesGroup(m)) closeGroupBoundary();
-	});
-	// turn_start ist KEINE Grenze: pi feuert es pro Tool-Loop-Durchlauf, nicht pro Nutzerfrage —
-	// es würde die Gruppe nach jedem Tool-Result aufreißen.
-	pi.on("user_bash", () => closeGroupBoundary());
-	pi.on("agent_end", () => collapseAll());
-	pi.on("agent_settled", () => dbg("agent_settled"));
+	pi.on("tool_call", (_e, ctx) => remember(ctx));
 	pi.on("tool_result", (e, ctx) => {
 		remember(ctx);
 		const ev = e as { toolName?: string; isError?: boolean; input?: Record<string, unknown> };
@@ -525,44 +307,22 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerShortcut("alt+g", {
-		description: "kompakt: letzte Werkzeuggruppe auf-/zuklappen",
-		handler: (ctx) => {
-			remember(ctx);
-			if (lastGroup && lastGroup.members.length >= 2) toggleGroup(lastGroup);
-		},
-	});
-
 	pi.registerCommand("kompakt", {
-		description: "Kompakte Werkzeugzeilen: an | aus | status | gruppen auto|an|aus",
+		description: "Kompakte Werkzeugzeilen: an | aus | status",
 		getArgumentCompletions: (prefix: string) =>
-			["an", "aus", "status", "gruppen auto", "gruppen an", "gruppen aus"].filter((s) => s.startsWith(prefix.trim())).map((s) => ({ value: s, label: s })),
+			["an", "aus", "status"].filter((s) => s.startsWith(prefix.trim())).map((s) => ({ value: s, label: s })),
 		handler: async (args, ctx) => {
 			remember(ctx);
 			const a = String(args ?? "").trim().toLowerCase();
-			if (a.startsWith("gruppen")) {
-				const m = a.split(/\s+/)[1];
-				if (m !== "auto" && m !== "an" && m !== "aus") {
-					ctx.ui.notify("Aufruf: /kompakt gruppen auto | an | aus", "warning");
-					return;
-				}
-				groupMode = m;
-				if (m === "aus") resetGroups();
-				try {
-					saveConfig(enabled, groupMode);
-				} catch (err) {
-					ctx.ui.notify(`kompakt.json nicht gespeichert: ${(err as Error).message}`, "error");
-				}
-				for (const g of groups.values()) repaintGroup(g);
-			} else if (a === "an" || a === "on") enabled = true;
+			if (a === "an" || a === "on") enabled = true;
 			else if (a === "aus" || a === "off") enabled = false;
 			else if (a !== "" && a !== "status") {
-				ctx.ui.notify("Aufruf: /kompakt an | aus | status | gruppen auto|an|aus", "warning");
+				ctx.ui.notify("Aufruf: /kompakt an | aus | status", "warning");
 				return;
 			}
 			if (a === "an" || a === "on" || a === "aus" || a === "off") {
 				try {
-					saveConfig(enabled, groupMode);
+					saveEnabled(enabled);
 				} catch (err) {
 					ctx.ui.notify(`kompakt.json nicht gespeichert: ${(err as Error).message}`, "error");
 				}
@@ -571,7 +331,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 			}
 			const where = existsSync(CONFIG_FILE) ? relPath(CONFIG_FILE, ctx.cwd) : "Standard";
 			ctx.ui.notify(
-				`kompakt ist ${enabled ? "an" : "aus"} · Gruppen: ${groupMode === "auto" ? "auto (klappt nach jedem Durchlauf zu)" : groupMode === "an" ? "an (nur Klick/alt+g)" : "aus"} (${where})`,
+				`kompakt ist ${enabled ? "an" : "aus"} (${where}). Gilt für neue Zeilen; bereits gezeichnete wechseln den Inhalt, nicht den Rahmen.`,
 				"info",
 			);
 		},

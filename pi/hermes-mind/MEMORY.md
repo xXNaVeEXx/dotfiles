@@ -1,4 +1,4 @@
-Environment: Pi 1.3.0 coding agent; default provider zai-coding-cn (glm-5.3). Extensions laden via jiti aus ~/.pi/agent/extensions/*.ts; 'typebox'-Imports werden vom Pi-Loader aliased.
+Environment: Pi 1.2.0 coding agent; default provider zai-coding-cn (glm-5.3). Extensions laden via jiti aus ~/.pi/agent/extensions/*.ts; 'typebox'-Imports werden vom Pi-Loader aliased.
 §
 Self-improvement stack lives in hermes-mind: extension ~/.pi/agent/extensions/hermes-mind.ts; memory files ~/.pi/agent/hermes-mind/MEMORY.md + USER.md (this file, §-separated entries, frozen snapshot per session); skill_manage tool over ~/.pi/agent/skills; session_search (FTS5, ~/.pi/agent/hermes-mind/sessions.db); autonomous review turns arrive as custom message 'hermes-review' every N user turns / tool iterations.
 §

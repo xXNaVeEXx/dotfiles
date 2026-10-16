@@ -22,7 +22,6 @@ Klasse: Extensions für den Pi-Coding-Agent bauen, deren UI-Verhalten testen und
 - **Tasten:** `matchesKey(data, keyId)`; Shift-Kombis als `"shift+r"` (nicht `"R"`); gültig u. a. `"escape"`, `"return"`, `"space"`, `"home"`, `"end"`.
 - **Imports:** `@earendil-works/pi-coding-agent` (ExtensionAPI, ExtensionContext, Theme, KeybindingsManager) und `@earendil-works/pi-tui` (matchesKey, visibleWidth, Focusable, TUI, TuiMouseEvent) — Pi's Loader löst die auf.
 - Vorlagen: `$PI/examples/extensions/overlay-test.ts` (Focusable+Overlay), `widget-placement.ts`.
-- **Eingeklapptes Denken umbeschriften:** `ctx.ui.setHiddenThinkingLabel(label)` ist ein offizieller ui-Hook; global zugeklapptes Denken = pi-Einstellung `hideThinkingBlock: true` (settings.json). Pi's Klick-Toggle auf den Thinking-Block bleibt dabei aktiv.
 
 ### 3. Robustheit
 - Jeder Handler in try/catch; Fehler in eigene Log-Datei (`fs.appendFileSync`), nie crashen.
@@ -33,7 +32,6 @@ Klasse: Extensions für den Pi-Coding-Agent bauen, deren UI-Verhalten testen und
 ### 4. Reproduzierbares TUI-Testing (tmux-Harness)
 - Start: `tmux new-session -d -s <name> -x 160 -y 45 "cd /tmp && pi --model <provider/model>"`; Prompt per `tmux send-keys -t <s> "…" Enter`; Lesen: `tmux capture-pane -t <s> -p` (Text) bzw. `-e` (ANSI-Farbcodes als Beweis, z. B. Renderer-Attribution über exakte RGB-Sequenz).
 - Prüfpunkte einzeln anfahren, nach jedem `sleep` + capture; am Ende `tmux kill-session -t <name>`.
-- Lange Testläufe (Modell-Prompt mit Wartezeit + mehrere Captures) als ein `bg_run`-Shell-Skript starten und aufs Abschluss-Event warten; `bg_wait` matcht NICHT bg_run-Tasks (nur Subagenten-/Provider-Runs).
 - Slash-Commands (`/foo`) per send-keys sind unzuverlässig (Autocomplete-Popup kann Zeichen konsumieren) — Funktionen über registrierte Shortcuts oder den Modell-Umweg („Führe bitte genau diesen Befehl mit dem bash-Tool aus: …") triggern und Tastatur-Interaktion (Enter/Escape/Buchstaben) direkt senden.
 
 ### 5. TUI-Artefakte dem Verursacher zuordnen (Bisect)
@@ -61,12 +59,6 @@ Klasse: Extensions für den Pi-Coding-Agent bauen, deren UI-Verhalten testen und
 - Diagnose-Rezept: `NODE_OPTIONS='--require /tmp/hook.cjs' pi …` mit Hook auf `process.stderr.write`, der bei Inhalts-Treffer `new Error().stack` mitdruckt → Stack nennt Datei+Zeile des Verursachers sofort. /proc/<pid>/fd/2-Scan hilft NICHT, wenn der Writer in-process pumpt.
 - Timing-Attribution vor dem Stack-Fang: stderr in Datei umleiten, `tail -f` mit Zeitstempel mitlaufen lassen. Write bei Startup ≠ Write pro Turn: löst ein NICHT-verwandter Befehl (z. B. `echo`) denselben Write aus, ist ein Hook vor JEDEM tool_call die Quelle — nicht der Befehlsinhalt; das wählt die Verdächtigen (tool_call-Hooks) vor dem Grep aus.
 - Fund: `bigpowers/extensions/omp-hooks.ts` `currentBranch()` (guard-git-Hook vor JEDEM bash tool_call, `execSync("git rev-parse --abbrev-ref HEAD")`) → außerhalb Repos deutsche git-Meldung im TUI. Lokal mit `stdio:["ignore","pipe","ignore"]` gepatcht (2026-10-16); **npm-Updates des Pakets überschreiben den Patch** — bei erneutem Echo zuerst diese Datei prüfen.
-
-### 9. Tool-Renderer mit quergreifendem State (Gruppen über mehrere Aufrufe)
-- `registerToolRenderer`-Callbacks erhalten den RenderCtx mit `toolCallId` und `invalidate()` — beides in die eigene Komponente durchreichen. Den Ctor-Param NICHT `invalidate` nennen: er kollidiert mit der vom Component-Interface geforderten Methode `invalidate(): void` (TS „Duplicate identifier") — `markDirty` verwenden und die Interface-Methode als no-op lassen.
-- Quergreifender State: Modul-Maps `callId → invalidate` füllen die Komponenten im Konstruktor; ein Toggle ruft die Invalidates aller Gruppenmitglieder — das erzeugt Frame-Neuzeichnung aller betroffenen Zeilen.
-- Animation in der TUI: beim Umklappen `animAt = Date.now()` setzen; `render()` prüft elapsed und gibt `[]` zurück, bis das Mitglied dran ist; ein `setTimeout(markDirty, wait+16)` liefert den Folge-Frame. Kollabiert-Zustand = erstes Mitglied rendert Gruppenzeile, Rest `[]`.
-- Sequenzgrenzen aus Events ableiten: `message_end` mit assistant-Text oder user-Rolle, `turn_start`, `user_bash` beenden eine Aufruf-Sequenz; `agent_end` ist der Auto-Collapse-Punkt. NUR Calls gruppieren, deren `tool_call`-Event live gesehen wurde (Set) — beim Rebuild historischer Chats feuern keine Events und die Textgrenzen sind nicht ableitbar.
 
 ## Pitfalls
 - Type-Assertions (`as unknown as T` etc.) ohne unmittelbar vorausgehenden `SAFETY:`-Kommentar blockieren den write/edit-Write (anti-slop-Lint): die Invariante, die TypeScript nicht prüfen kann, in einem Kommentar über der Assertion benennen.
