@@ -47,5 +47,8 @@ Fallen von Tauri (Konfiguration, Sidecars, Linux, Windows, macOS, Updater) stehe
 ## Pitfalls
 - Mitgelieferte Laufzeiten (z. B. Node) aus offiziellen Upstream-Builds nehmen, nie aus Nix. Grund: Nix-Binaries
   hängen an /nix/store-Pfaden (Interpreter, Bibliotheken) und haben andere Build-Optionen.
+- Mitgelieferte `node_modules` vor dem Bündeln auf die Zielplattform beschneiden: Prebuilds anderer OS/CPU und
+  musl-Varianten auf glibc-Linux entfernen. Grund: Paketierer wie linuxdeploy prüfen jede mitgelieferte ELF-Datei
+  und brechen an fremden Binaries ab (Details in references/tauri-v2.md).
 - Staging- und Hilfsskripte müssen `$CARGO_TARGET_DIR` beachten. Grund: CI und Entwicklungsrechner nutzen
   verschiedene Target-Verzeichnisse; ein fest verdrahtetes `target/` findet die Binaries nicht.

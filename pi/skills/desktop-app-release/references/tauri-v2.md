@@ -20,6 +20,11 @@
 ## Linux (AppImage)
 - Bei „failed to run linuxdeploy“ nennt Tauri ohne `--verbose` keine Ursache. Release-Builds unter Linux deshalb
   immer mit `--verbose` laufen lassen.
+- linuxdeploy sucht im AppDir unter `usr/lib` rekursiv nach ELF-Dateien und ruft für jede `ldd` auf. Scheitert ldd
+  an einer Datei, bricht das ganze AppImage ab. Typische Ursache: mitgelieferte `node_modules` mit nativen Modulen
+  fremder Plattformen (`prebuilds/linux-arm64/…`, `…/musl/…`). Darum beim Staging alle Prebuilds und
+  Plattformordner entfernen, die nicht zum Ziel passen (anderes OS oder andere CPU, auf glibc-Linux auch musl).
+- FUSE muss im CI-Runner nicht installiert sein: Tauri startet linuxdeploy mit `APPIMAGE_EXTRACT_AND_RUN=1`.
 - Das .deb entsteht vor dem AppImage. Scheitert nur das AppImage, liegt das .deb trotzdem im Bundle-Ordner; ein
   Artefakt-Upload mit `if: failure()` macht es zugänglich.
 
@@ -37,6 +42,14 @@
   ablegen; Tauri übernimmt sie beim Bündeln. Grund: Ohne diese Schlüssel beendet macOS die App beim ersten Zugriff.
 - Entitlements, Signierung und Notarisierung brauchen ein Apple-Entwicklerkonto des Nutzers; bis dahin als „wartet
   auf Nutzer“ führen.
+
+## GitHub Actions (tauri-action)
+- tauri-action lädt Pakete nur zu einem Release hoch (`tagName` oder `releaseId`); ohne diese Eingaben baut es nur.
+  Für Testläufe ohne Tag diese Eingaben nur beim Tag-Push setzen und die Pakete aus dem Bundle-Ordner
+  (`target/[<ziel>/]release/bundle`) selbst mit `actions/upload-artifact` hochladen (per Commit-SHA gepinnt, kurze
+  Aufbewahrung).
+- Plattformwahl beim `workflow_dispatch`: Ein kleiner Vorab-Job baut die Matrix aus der Eingabe (z. B. mit jq) und
+  gibt sie über `fromJSON` an den Build-Job; Tag-Läufe bauen immer alle Plattformen.
 
 ## Updater
 - `tauri-plugin-updater` mit `default-features = false` einbinden. Grund: Seine Standard-Features schalten in

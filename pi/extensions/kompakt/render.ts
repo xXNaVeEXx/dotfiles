@@ -320,7 +320,7 @@ export function renderGroupLine(members: CallInfo[], width: number, theme: Theme
 	if (running > 0) parts.push(theme.fg("muted", `◌ ${running} läuft`));
 	const errs = members.filter((m) => m.isError).length;
 	if (errs > 0) parts.push(theme.fg("error", `${errs} ✗`));
-	let line = parts.length > 0 ? `${chevron} ${title} ${theme.fg("dim", "·")} ${parts.join(theme.fg("dim", " · "))}` : `${chevron} ${title}`;
+	let line = `${chevron} ${title} ${parts.join(theme.fg("dim", " · "))}`;
 	const hint = theme.fg("muted", "Klick: aufklappen");
 	const hintW = visibleWidth(hint);
 	if (visibleWidth(line) + 2 + hintW <= w) {
