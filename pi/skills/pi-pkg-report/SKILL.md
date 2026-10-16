@@ -148,8 +148,8 @@ Links durch. Im pi-TUI erscheinen Pfade als Text — die Regel hyperlinkt sie tr
 ## Schritt 5 — Kollisions-Check (nach jeder Installation/Entfernung oder auf Wunsch)
 
 ```bash
-python3 <skill-dir>/check.py           # ANSI-Report; Exit-Code 1 bei harten Kollisionen
-python3 <skill-dir>/check.py --json    # maschinenlesbar
+python3 <skill-dir>/scripts/check.py         # ANSI-Report; Exit-Code 1 bei harten Kollisionen
+python3 <skill-dir>/scripts/check.py --json  # maschinenlesbar
 ```
 
 Prüft zwei Ebenen:
@@ -157,12 +157,13 @@ Prüft zwei Ebenen:
 1. **Harte Kollisionen** (Code-Scan über `registerCommand`/`registerTool` in allen
    .js/.ts der installierten Pakete + Skill-Namen aus SKILL.md-Frontmatter inkl.
    User-Skills): identische Command-/Tool-/Skill-Namen in 2+ Paketen → rot, kritisch.
-   Es werden NUR die Pakete aus settings.json gescannt, keine Transitiv-Abhängigkeiten.
+   Gescannt werden die npm-Pakete aus settings.json UND die Eigenbau-Extensions aus
+   `~/.pi/agent/extensions/` (Labels `eigenbau:<name>`); keine Transitiv-Abhängigkeiten.
 2. **Weiche Überlappungen** (kuratierte Rollen-Matrix `ROLES` + `VERDICTS` in check.py):
    Pakete mit gemeinsamen funktionalen Rollen werden paarweise ausgegeben mit Bewertung
    „OK — … (ergänzend)“ oder „ÜBERLAPPUNG PRÜFEN“, wenn kein Verdict hinterlegt ist.
 
-Pflege bei neuen Paketen: in `ROLES` eine Rollen-Menge ergänzen (klein halten, z.B.
+Pflege bei neuen Paketen/Eigenbau-Extensions: in `ROLES` eine Rollen-Menge ergänzen (klein halten, z.B.
 {"delegation", "code-review"}) und für jedes neue Überlappungspaar mit bekannter Bewertung
  einen Eintrag in `VERDICTS` hinterlegen (Key: `frozenset({a, b})`). Fehlt die Classification,
 listet das Skript das Paket unter „Ohne Rollen-Classification“ auf.
@@ -172,10 +173,10 @@ Exit-Codes: 0 = sauber, 1 = harte Kollision, 2 = Setup-Fehler.
 ## Schritt 6 — Terminal-Preview in tmux-Splits (auf Wunsch)
 
 ```bash
-python3 <skill-dir>/preview.py <datei>            # inline in aktueller Pane
-python3 <skill-dir>/preview.py --split <datei>    # rechte Pane (45 %) mit Live-Vorschau
-python3 <skill-dir>/preview.py --both  <datei>    # neues Fenster: links Code, rechts Vorschau
-python3 <skill-dir>/preview.py --code <datei>     # Code-Ansicht erzwingen (bat)
+python3 <skill-dir>/scripts/preview.py <datei>             # inline in aktueller Pane
+python3 <skill-dir>/scripts/preview.py --split <datei>     # rechte Pane (45 %) mit Live-Vorschau
+python3 <skill-dir>/scripts/preview.py --both  <datei>     # neues Fenster: links Code, rechts Vorschau
+python3 <skill-dir>/scripts/preview.py --code <datei>      # Code-Ansicht erzwingen (bat)
 ```
 
 Typ-Erkennung: Bilder (png/jpg/gif/webp/bmp/ico/svg/tiff) → `chafa --format symbols`
@@ -191,6 +192,6 @@ bat ✓ installiert, chafa via `nix profile install nixpkgs#chafa`.
 
 - npm-Warnungen (`install-scripts`) bei `pi install/remove` sind harmlose Sicherheitshinweise.
 - npm-Name ≠ Sektions-ID möglich: `@plannotator/pi-extension` → Sektion `plannotator`.
-  Das Mapping steht in `report.py` (Dict `SECTION_ALIAS`) — bei neuen Sonderfällen ergänzen.
+  Das Mapping steht in `scripts/report.py` (Dict `SECTION_ALIAS`) — bei neuen Sonderfällen ergänzen.
 - DL-Zahlen im HTML sind Schnappschüsse; bei jeder Reconciliation frisch ziehen und die
   `~XX Tsd/Mio DL/Monat`-Chips aktualisieren.
