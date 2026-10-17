@@ -57,6 +57,12 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    Nutzers sie schon, in jeder Startdatei `CARGO_BUILD_JOBS` auf etwa die halbe Kernzahl setzen und dem Nutzer die
    Belegung nennen. Grund: Jeder rustc-Job großer Crates braucht 1–2 GB; mit voller Job-Zahl swappt die Maschine,
    und die Läufe dauern ein Vielfaches.
+   Neben JEDEM Worker sofort eine Wache als Hintergrundtask starten (bg_run, `surviveReload`), die endet, sobald der
+   Worker-Prozess weg ist oder seine `.activity`-Datei N min (≈15) unverändert ist (Vorlage scripts/worker-wache.sh).
+   Grund: Abschlussmeldungen von acp_delegate wecken eine ruhende Sitzung nicht, sie warten bis zur nächsten
+   Nutzereingabe — die Arbeit steht dann stundenlang still. bg_run-Meldungen wecken die Sitzung zuverlässig.
+   Worker-Prozess finden: pi-Prozess mit `PI_ACP_DELEGATE_DEPTH=1` in `/proc/<pid>/environ`, dessen Startzeit der
+   Entstehung der `.activity`-Datei am nächsten liegt (die runId steht nicht in der Befehlszeile).
 5. **Abbruch (exit 143)**: `.out`/`.activity` lesen. Vollständiger Bericht vorhanden → fertig. Sonst mit
    `resumeFrom: <runId>` fortsetzen (Verlauf und Teilarbeit bleiben) und im Task sagen, wo es weitergeht.
    Wird derselbe Worker wiederholt vom RAM-Wächter beendet: dem Nutzer die RAM-Fresser nennen und ihn bitten,
