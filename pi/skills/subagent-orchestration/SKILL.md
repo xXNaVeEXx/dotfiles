@@ -51,7 +51,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    Zwei Rust-Pakete gleichzeitig nur mit getrennten Target-Verzeichnissen auf der Build-Maschine: Der zweite Worker
    setzt in JEDEM cargo-Aufruf `export CARGO_TARGET_DIR=<base>/target-b` (sein erster Lauf baut einmal komplett,
    15–25 min). Geteilte Spezial-Targets (z. B. Windows-Cross-Check) bleiben gemeinsam: dort „Blocking waiting for
-   file lock“ abwarten. Laufenden Worker dafür kurz abbrechen und mit `resumeFrom` plus Parallel-Hinweis fortsetzen. In beiden Startdateien den
+   file lock“ abwarten. Ändert ein Worker auf der Build-Maschine Quellen an Ort und Stelle (z. B. `clippy --fix` im
+   gespiegelten Baum), darf bis zum Ende niemand sonst spiegeln, auch der Orchestrator nicht. Grund: rsync --delete
+   überschreibt die halb reparierten Dateien. Eine Wache meldet das Ende; parallele Läufe warten so lange. Laufenden Worker dafür kurz abbrechen und mit `resumeFrom` plus Parallel-Hinweis fortsetzen. In beiden Startdateien den
    anderen Worker mit seinen Pfaden als tabu nennen; feste Sätze wie „kein anderer Worker“ in der Vorlage ersetzen.
    Vor zwei Rust-Spuren die Last der Build-Maschine prüfen (freier Speicher und Swap per ssh). Belegen Programme des
    Nutzers sie schon, in jeder Startdatei `CARGO_BUILD_JOBS` auf etwa die halbe Kernzahl setzen und dem Nutzer die
