@@ -1,20 +1,18 @@
 #!/bin/sh
-# Wache für einen acp_delegate-Worker. Als bg_run (surviveReload) neben jedem Worker starten:
-# acp_delegate-Abschlussmeldungen wecken eine ruhende Sitzung NICHT (sie warten bis zur nächsten
-# Nutzereingabe), die Meldung eines endenden bg_run-Tasks schon.
+# Wache für einen acp_delegate-Worker. Als bg_run starten (surviveReload), damit ihr Ende die Sitzung weckt:
+# acp_delegate-Meldungen wecken eine ruhende Sitzung nicht.
 # Endet, sobald der Worker-Prozess weg ist (fertig oder vom Watchdog beendet) oder seine
-# .activity-Datei <still> Minuten unverändert ist; druckt dann das Ende der .out-Datei.
-# Aufruf: sh worker-wache.sh <runId> [<pid>|auto] [<still-min>=15]
-# Tipp: erst `timeout 20 sh worker-wache.sh <runId> auto` aufrufen, um die pid zu sehen, dann mit
-# fester pid als bg_run starten (auto braucht die frisch angelegte .activity-Datei).
-run=$1; pid=${2:-auto}; still=${3:-15}
-d=${ACP_DELEGATE_DIR:-/tmp/acp-delegate}
+# .activity-Datei <still> Minuten unverändert ist.
+# Wartet der Worker auf einen eigenen langen Befehl (bash-Kind des Worker-pi, z. B. Workspace-clippy auf der
+# Build-Maschine), gilt er erst nach <hard> Minuten ohne Aktivität als still. LSP-Kinder zählen nicht.
+# Aufruf: sh worker-wache.sh <runId> [<pid>|auto] [<still-min>=15] [<hard-min>=75]
+run=$1; pid=${2:-auto}; still=${3:-15}; hard=${4:-75}
+d=/tmp/acp-delegate
 act=$d/$run.activity
 out=$d/$run.out
-[ -n "$run" ] || { echo "Aufruf: worker-wache.sh <runId> [<pid>|auto] [<still-min>]"; exit 2; }
+[ -n "$run" ] || { echo "Aufruf: worker-wache.sh <runId> [<pid>|auto] [<still-min>] [<hard-min>]"; exit 2; }
 
-# pid suchen: pi-Prozess mit PI_ACP_DELEGATE_DEPTH=1, dessen Start der Entstehung der .activity-Datei
-# am nächsten liegt (die runId steht nicht in der Befehlszeile des Workers)
+# pid suchen: pi-Prozess mit PI_ACP_DELEGATE_DEPTH=1, dessen Start der Geburt der .activity-Datei am nächsten liegt
 if [ "$pid" = auto ]; then
   i=0
   while [ ! -f "$act" ] && [ $i -lt 30 ]; do sleep 2; i=$((i+1)); done
@@ -29,14 +27,19 @@ if [ "$pid" = auto ]; then
   pid=$best
   [ -n "$pid" ] && [ "$bestd" -le 120 ] || { echo "KEIN-PID: kein passender Worker-Prozess für $run (Abstand $bestd s)"; exit 3; }
 fi
-echo "Wache $run: pid $pid, still=$still min, Start $(date +%H:%M:%S)"
+echo "Wache $run: pid $pid, still=$still min (mit bash-Kind $hard min), Start $(date +%H:%M:%S)"
 
 while kill -0 "$pid" 2>/dev/null; do
   if [ -f "$act" ]; then
     age=$(( $(date +%s) - $(stat -c %Y "$act") ))
     if [ "$age" -ge $((still * 60)) ]; then
-      echo "STILL: $run seit $((age / 60)) min ohne Aktivität (pid $pid lebt noch)"
-      break
+      if [ "$age" -lt $((hard * 60)) ] && pgrep -P "$pid" -x bash >/dev/null 2>&1; then
+        : # wartet auf einen eigenen Befehl → noch nicht still
+      else
+        echo "STILL: $run seit $((age / 60)) min ohne Aktivität (pid $pid lebt noch)"
+        pgrep -P "$pid" -a 2>/dev/null | cut -c1-200 | sed 's/^/  Kind: /'
+        break
+      fi
     fi
   fi
   sleep 30

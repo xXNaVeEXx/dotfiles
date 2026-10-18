@@ -63,6 +63,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    und die Läufe dauern ein Vielfaches.
    Neben JEDEM Worker sofort eine Wache als Hintergrundtask starten (bg_run, `surviveReload`), die endet, sobald der
    Worker-Prozess weg ist oder seine `.activity`-Datei N min (≈15) unverändert ist (Vorlage scripts/worker-wache.sh).
+   Hat der Worker-pi gerade ein bash-Kind (er wartet auf einen eigenen langen Befehl, z. B. Workspace-clippy auf der
+   Build-Maschine), erst nach einer harten Grenze (≈75 min) als still melden. Nur bash-Kinder zählen, weil Worker-pis
+   auch LSP-Kinder haben. Grund: Sonst meldet die Wache bei jedem langen Prüflauf einen Fehlalarm.
    Grund: Abschlussmeldungen von acp_delegate wecken eine ruhende Sitzung nicht, sie warten bis zur nächsten
    Nutzereingabe — die Arbeit steht dann stundenlang still. bg_run-Meldungen wecken die Sitzung zuverlässig.
    Worker-Prozess finden: pi-Prozess mit `PI_ACP_DELEGATE_DEPTH=1` in `/proc/<pid>/environ`, dessen Startzeit der
