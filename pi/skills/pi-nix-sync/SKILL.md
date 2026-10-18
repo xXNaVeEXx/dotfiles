@@ -27,6 +27,7 @@ Architektur: nix-conf installiert Pi (Flake-Input `github:earendil-works/pi/stab
 
 ## Stolperfallen
 - Neue .nix-Datei untracked → Flake-Fehler beim switch: Datei VOR der Evaluation `git add`en.
+- `mkHomeLinux` in flake.nix pinnt `pkgs = nixpkgs.legacyPackages.x86_64-linux` — alle Linux-homeConfigurations bauen damit nur für x86_64. Vor dem Aufnehmen einer aarch64-linux-Maschine (z. B. Apple-Silicon-Linux) den Pin auf einen System-Parameter umstellen (legacyPackages."${system}"), sonst verfälscht oder bricht der Flake die Architektur.
 - bg_run/bash mit Pipe (`| tail`) verschluckt den Exit-Code des eigentlichen Befehls (Pipe liefert tail-RC zurück) → Rebuilds ungepiped starten oder `PIPESTATUS` prüfen; einen „completed"-Exit-0 immer gegen die Log-Tail auf echte Fehler prüfen.
 - Erstlauf von pi-sync klont nach `~/projects/dotfiles`; schlägt SSH fehl, exitiert er still (Timer retryt). /tmp/dotfiles ist NICHT der Sync-Klon.
 - Rebuilds im Hintergrund (bg_run) in nix-conf: der Dirty-Tree-Prompt von `rebuild.sh` (`read -n 1`) exitet ohne TTY sofort mit RC 1, Log zeigt nur die Warnzeile → `printf 'y\n' | ./rebuild.sh …` voranstellen. Danach scheitert darwin `switch` an sudo ohne Passwort-TTY (tty_tickets verhindert Vorab-Caching) → im Hintergrund stattdessen sudo-frei `darwin-rebuild build --flake .#<host>` validieren und die Aktivierung dem User-interaktiven `./rebuild.sh switch` überlassen (Home-Manager-only-Ziele auf Linux brauchen kein sudo und laufen komplett im Hintergrund durch).
