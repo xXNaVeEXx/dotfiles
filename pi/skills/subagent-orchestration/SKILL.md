@@ -13,6 +13,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - Ich orchestriere nur: Worker recherchieren und implementieren; ich schreibe Aufgaben, starte, integriere, committe,
   pushe und berichte. Selbst eingreifen nur bei akutem RAM-Mangel oder bei kleinen Integrationsfixes.
 - Eigene Turns kurz halten (lange Läufe als Hintergrundtask), damit der Nutzer mich jederzeit erreicht.
+- Worker-Plätze nie leer lassen: Endet ein Paket, sofort das nächste starten und erst danach integrieren,
+  prüfen und Lücken lesen. Die Aufgabe für das nächste Paket schreibe ich, während das laufende noch arbeitet.
+  Ein freier Platz darf höchstens ein paar Minuten frei bleiben, nicht bis die eigene Integration fertig ist.
 - Nichts darf abstürzen: Prozesse des Nutzers nie anfassen; vor jedem Start `free -m` und Swap prüfen (siehe ram-audit).
 - Ohne Rückfragen weiterarbeiten, solange Arbeit offen ist; Entscheidungen in Queue/Plan festhalten.
   Offene Fragen, die ein Paket blockieren, mit der empfohlenen Vorgabe entscheiden und in der Checkliste in einem
