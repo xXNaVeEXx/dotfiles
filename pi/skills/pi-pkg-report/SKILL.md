@@ -63,6 +63,19 @@ nur Info. Entfernte Eigenbau-Extensions laufen über die normale ENTFERNT-Prozed
 **Hero-Stats** prüfen: Anzahl Erweiterungen = Anzahl Sektionen; Kategorien zählen;
 DL-Angabe grob plausibel halten.
 
+**Guide fehlt komplett (Neuaufbau)** — zuerst Recovery-Versuch: `ls`, Trash, `find ~ -maxdepth 3
+-name '*extensions-guide*'`, grep über `~/.pi/agent/sessions/` nach `quickref|ext-header`. Nichts
+auffindbar → kompletter Neuaufbau:
+1. Daten je Paket: `package.json` (version/description) + `head -50 README.md` (Tags strippen);
+   Eigenbau: `head -35` des Quelltext-Headers; DL-Stats per curl (Scoped-Namen URL-encoden:
+   `@`→`%40`, `/`→`%2F`).
+2. Struktur: Tutorial-Sektion mit `class="ext intro"` (bleibt von Zählung/Diff ausgenommen) +
+   Sektionen nach Kategorien, Eigenbau am Ende vor `</main>`; Reihenfolge/IDs am bestehenden
+   Guide orientieren (report.py-`SECTION_ALIAS` beachten).
+3. In Schreib-Chunks bauen (write für head/CSS/Hero/TOC, danach `cat >> … <<'EOF'`-Heredocs) —
+   Nummern (Sektions-Kommentare + Quickref) von Anfang an korrekt vergeben.
+4. Abnahme-Kriterium: validate.py Exit 0 UND report.py ohne Diff („Guide aktuell").
+
 ### Sektions-Template (Struktur konsequent beibehalten)
 
 ```html
@@ -99,6 +112,12 @@ Code-Span-Klassen im Tutorial: `c`=Kommentar, `p`=Prompt, `hl`=Tool-Call, `s`=St
 `o`=Slash-Command. TOC-Zeile: `<a href="#<sektions-id>"><span class="ico">EMOJI</span> anzeigename</a>`
 unter der passenden `<h3>`-Kategorie. Quickref-Zeile:
 `<tr><td>N</td><td class="nm"><a href="#<sektions-id>">name</a></td><td>VERSION</td><td>Kategorie-kurz</td><td>Kernfunktion</td><td>Einstieg</td></tr>`
+
+Stolperfalle Sektions-Tag: `<section class="ext" id="…">` muss EXAKT so aussehen —
+report.py/validate.py matchen `<section class="ext"` wortwörtlich; Zusatzklassen wie
+`class="ext kat-eigenbau"` fallen aus Zählung und Diff (Sektion gilt dann als fehlend).
+Eigenbau-Sonderoptik (z.B. Dashed-Border) inline ins `ext-icon`-style legen statt als
+zusätzliche Sektions-Klasse; nur das Tutorial darf `class="ext intro"` haben.
 
 ### Validierung nach JEDER HTML-Änderung (Pflicht)
 
