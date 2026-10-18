@@ -90,7 +90,16 @@ Klasse: Extensions für den Pi-Coding-Agent bauen, deren UI-Verhalten testen und
   zwischen öffnendem Codeblock-Div und `<pre>` steht die Meta-Zeile → `.*?` mit re.S
   verwenden, kein `\s*`-Anschluss.
 
+### 11. Extension auf Remote-Rechner installieren (SSH-Weg)
+- Bei direktem SSH-Zugang schneller als der HTML-Export aus Abschnitt 10 (der bleibt für Empfänger ohne SSH-Zugang). Voraussetzung: Key-Auth (`ssh -o BatchMode=yes` als Probe).
+- Inventur zuerst: `ssh <host> 'pi --version; ls -la ~/.pi/agent/extensions/'` — Pi-Version, Bestand und Kollisionen prüfen; dort bereits vorhandene Eigenbauten unangetastet lassen.
+- Übertragen bytegenau per `scp` (je Unterverzeichnis ein Zielordner-`mkdir -p` vorab), danach Abnahme als Schleife: `shasum -a 256` lokal vs. `sha256sum` remote über JEDE Datei, bei Abweichung sofort abbrechen.
+- Load-Test zweistufig: (1) isoliert `pi -ne -p --extension ~/.pi/agent/extensions/<eine-datei> "ok"` — `-ne` unterdrückt den Auto-Load; ohne ihn killt eine einzige kaputte Datei den Start und die Fehlermeldung nennt ggf. eine andere Datei als die geprüfte. (2) voll `pi -p "ok"` ohne `-ne` (Auto-Load lädt ALLE Extensions aus dem Verzeichnis).
+- Extension-Selbsttests mitlaufen lassen, wenn vorhanden (z.B. `PI_ARTIFACTS_SELFTEST=1` für artifacts) — Teil-✗ gegen Umgebungs-Deltas der Zielmaschine lesen (fehlender Browser, chafa, Clipboard-Tools), nicht gegen den Code.
+- Loader-/Runtime-Umgebung der Zielmaschine sichern: nötiges Env (z.B. Bun-Binary → `JITI_ESM_EVAL_TEMP_FILE=1`) idempotent in Shell-rc setzen (grep-Guard vor dem Anhängen) UND in der INSTALL-NOTES.md der Ziel-extensions/ dokumentieren; fehlende System-Binaries mit sudo-Bedarf als Einschränkung samt Install-Hinweis dokumentieren statt sie zu umgehen.
+
 ## Pitfalls
+- Pi als Bun-Binary (mise-Install, erkennbar an `/$bunfs/root/pi` im Fehler): TS-Extensions laden fatal mit `ResolveMessage: NameTooLong … 'data:text/javascript;base64,…'` — jitis ESM-Fallback importiert die Extension als data:-URL, Buns Resolver versagt daran, und der eingebaute Tempfile-Fallback prüft auf Node-`ENAMETOOLONG`, das Bun nicht setzt. Fix: `export JITI_ESM_EVAL_TEMP_FILE=1` (Shell-Env, z.B. ~/.bashrc) — erzwingt Tempfile-Eval. Das Env muss beim PROZESS-START vorhanden sein: Sessions, die ohne es gestartet wurden, sind per `/reload` nicht heilbar (process.env bleibt zur Laufzeit fix) — einmal beenden und neu starten; danach wirkt /reload normal. Auf Node-Installationen (nix/npm) tritt das nicht auf.
 - edit-Tool-Meldung „File modified since your write"/„Edit without read" ist RETRYABLE, kein Fehlerzustand: Datei einmal kurz readen und den identischen edit erneut senden (mtime-Guard gegen parallele Analyzer-Touches).
 - Type-Assertions (`as unknown as T` etc.) ohne unmittelbar vorausgehenden `SAFETY:`-Kommentar blockieren den write/edit-Write (anti-slop-Lint): die Invariante, die TypeScript nicht prüfen kann, in einem Kommentar über der Assertion benennen.
 - `matchesKey(data, "R")` ist invalide — Shift-Keys heißen `"shift+r"`, weil KeyId-Parser Modifier präfixt.

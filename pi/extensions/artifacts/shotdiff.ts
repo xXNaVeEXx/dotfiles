@@ -2,7 +2,8 @@
  * shotdiff — HTML-Vorher/Nachher-Vergleich als Terminal-Bilder.
  *
  * screenshotPair(): rendert eine HTML-Datei („nachher“) und optional einen
- * übergebenen Vorher-Inhalt per headless Brave als PNGs nach
+ * übergebenen Vorher-Inhalt per headless Chromium-Browser (PI_ARTIFACTS_BROWSER
+ * überschreibt; sonst brave → chromium → chrome-Kaskade) als PNGs nach
  * ~/.cache/pi-artifacts/. Der Vorher-Stand wird als Nachbar-Datei
  * `.pi-shot-before-<name>` im selben Verzeichnis geschrieben, damit relative
  * Assets/CSS funktionieren. renderSideBySide(): beide PNGs nebeneinander als
@@ -13,13 +14,26 @@
 
 import { execFile, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-const BROWSER = "/usr/bin/brave";
+/** Headless-Browser (Chromium-Familie): PI_ARTIFACTS_BROWSER überschreibt,
+ *  sonst erster existierender Kandidat (brave → chromium → chrome; Linux + macOS). */
+const BROWSER = process.env.PI_ARTIFACTS_BROWSER || [
+	"/usr/bin/brave",
+	"/usr/bin/brave-browser",
+	"/usr/bin/chromium",
+	"/usr/bin/chromium-browser",
+	"/usr/bin/google-chrome-stable",
+	"/usr/bin/google-chrome",
+	`${process.env.HOME ?? ""}/.local/bin/google-chrome`,
+	"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+	"/Applications/Chromium.app/Contents/MacOS/Chromium",
+	"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+].find((p) => p && existsSync(p)) || "/usr/bin/brave";
 const SHOT_DIR = join(process.env.HOME ?? "/tmp", ".cache/pi-artifacts");
 
 export interface ShotPair {

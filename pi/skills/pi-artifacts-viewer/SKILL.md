@@ -32,6 +32,7 @@ Viewer via `/artifact <id|pfad>` als Overlay-Side-Sheet rechts).
 
 ## Konventionen für den Agent-Betrieb
 
+- shotdiff-Browser ist eine Kaskade (PI_ARTIFACTS_BROWSER überschreibt; sonst /usr/bin/brave → chromium → google-chrome[-stable] → ~/.local/bin/google-chrome → macOS-App-Pfade) — nie wieder hart codieren; Terminal-Symbolbild braucht zusätzlich chafa (macOS: nix profile install nixpkgs#chafa; Arch: sudo pacman -S chafa).
 - Das `artifact`-Tool expandiert `~` NICHT — Pfade immer absolut übergeben (`/Users/…`),
   sonst „Datei nicht gefunden" obwohl sie existiert.
 - Nach JEDER edit/write-Änderung: `artifact`-Tool OHNE path mit `note` (1–2 Sätze: wozu/Ziel/
