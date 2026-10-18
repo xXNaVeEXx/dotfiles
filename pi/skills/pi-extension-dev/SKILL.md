@@ -68,7 +68,30 @@ Klasse: Extensions für den Pi-Coding-Agent bauen, deren UI-Verhalten testen und
 - Animation in der TUI: beim Umklappen `animAt = Date.now()` setzen; `render()` prüft elapsed und gibt `[]` zurück, bis das Mitglied dran ist; ein `setTimeout(markDirty, wait+16)` liefert den Folge-Frame. Kollabiert-Zustand = erstes Mitglied rendert Gruppenzeile, Rest `[]`.
 - Sequenzgrenzen aus Events ableiten: `message_end` mit assistant-Text oder user-Rolle, `turn_start`, `user_bash` beenden eine Aufruf-Sequenz; `agent_end` ist der Auto-Collapse-Punkt. NUR Calls gruppieren, deren `tool_call`-Event live gesehen wurde (Set) — beim Rebuild historischer Chats feuern keine Events und die Textgrenzen sind nicht ableitbar.
 
+### 10. Extension exportieren (1:1-Nachbau-Paket für Dritte)
+- Eine Extension als EINE HTML-Datei weitergeben, sodass ein fremder Pi-Agent sie exakt
+  nachbauen kann. Wiederverwendbarer Builder: `~/pi-extension-exports/build_exports.py`
+  (Meta je Extension: Dateiliste, Was/Technik/Stolperfallen/Konfig; erzeugt je Extension
+  eine HTML). Quellcode NIEMALS per write/edit ins HTML schleifen (Escaping-Fehler,
+  Token-Burn) — Builder liest `~/.pi/agent/extensions/` und bettet per
+  `html.escape(quote=False)` in `<pre><code>` ein.
+- Codeblock-Div trägt `data-file="<relativer Zielpfad inkl. Unterverzeichnis>"` plus
+  Zeilen/Bytes/SHA-256; ins Dokument ein Extraktions-Skript (Python-Heredoc) einbetten,
+  das Entities dekodiert, per assert Zeilen/Bytes/SHA-256 prüft und mit `write_bytes` +
+  `mkdir(parents=True)` schreibt — zugleich Abnahmevorschrift für den Empfänger-Agenten.
+- Pflicht-Abnahme vor Versand: Roundtrip — Extraktionsskript aus der fertigen HTML
+  ziehen, in leerem Temp-Dir ausführen, SHA-256 aller Dateien gegen Originale vergleichen.
+- Doku-Sektionen: Nachbau-Regeln (Code wörtlich, keine npm-Deps — der jiti-Loader löst
+  `@earendil-works/*` auf; Aktivierung `/reload`), Architektur, Stolperfallen, optionale
+  Konfig. Umgebungsspezifisches (feste Release-Fallback-Pfade, Terminal-Hooks) ausdrücklich
+  als solches kennzeichnen. Keine CDNs: Copy-Button mit clipboard/execCommand-Fallback,
+  Download via Blob — offline/file:// nutzbar.
+- Verify-/Extraktions-Regexen gegen die TATSÄCHLICH generierte Blockstruktur testen:
+  zwischen öffnendem Codeblock-Div und `<pre>` steht die Meta-Zeile → `.*?` mit re.S
+  verwenden, kein `\s*`-Anschluss.
+
 ## Pitfalls
+- edit-Tool-Meldung „File modified since your write"/„Edit without read" ist RETRYABLE, kein Fehlerzustand: Datei einmal kurz readen und den identischen edit erneut senden (mtime-Guard gegen parallele Analyzer-Touches).
 - Type-Assertions (`as unknown as T` etc.) ohne unmittelbar vorausgehenden `SAFETY:`-Kommentar blockieren den write/edit-Write (anti-slop-Lint): die Invariante, die TypeScript nicht prüfen kann, in einem Kommentar über der Assertion benennen.
 - `matchesKey(data, "R")` ist invalide — Shift-Keys heißen `"shift+r"`, weil KeyId-Parser Modifier präfixt.
 - Overlay-Component ohne `invalidate()` wird vom Type der `custom()`-Factory abgelehnt — Component-Interface verlangt es, auch als no-op.

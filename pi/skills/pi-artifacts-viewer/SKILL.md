@@ -32,6 +32,8 @@ Viewer via `/artifact <id|pfad>` als Overlay-Side-Sheet rechts).
 
 ## Konventionen für den Agent-Betrieb
 
+- Das `artifact`-Tool expandiert `~` NICHT — Pfade immer absolut übergeben (`/Users/…`),
+  sonst „Datei nicht gefunden" obwohl sie existiert.
 - Nach JEDER edit/write-Änderung: `artifact`-Tool OHNE path mit `note` (1–2 Sätze: wozu/Ziel/
   Bedeutung) aufrufen — erscheint als 💬 im Diff-Artefakt. Die Notiz hängt sich an das zur Ausführungszeit jüngste
   Diff-Artefakt: nie im selben parallelen Batch mit einer weiteren edit/write aufrufen, sonst landet sie am falschen Diff.
