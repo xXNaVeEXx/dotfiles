@@ -33,7 +33,8 @@ Viewer via `/artifact <id|pfad>` als Overlay-Side-Sheet rechts).
 ## Konventionen für den Agent-Betrieb
 
 - Nach JEDER edit/write-Änderung: `artifact`-Tool OHNE path mit `note` (1–2 Sätze: wozu/Ziel/
-  Bedeutung) aufrufen — erscheint als 💬 im Diff-Artefakt.
+  Bedeutung) aufrufen — erscheint als 💬 im Diff-Artefakt. Die Notiz hängt sich an das zur Ausführungszeit jüngste
+  Diff-Artefakt: nie im selben parallelen Batch mit einer weiteren edit/write aufrufen, sonst landet sie am falschen Diff.
 - Registry ist PRO RUNTIME: nach `/reload` ist sie leer → Demo-Material neu registrieren,
   bevor der User testen kann ("bin bereit zum testen" = Reload passiert).
 - Testmaterial: `~/demo-repo/rechner.js` (Git-Repo, Demo-Funktionen absichtlich ungenutzt =

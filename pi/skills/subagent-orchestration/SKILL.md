@@ -43,7 +43,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    wo RAM ist (Remote-Maschine), immer nur ein eigener Lauf; RAM-schonend lesen (`grep -n`, dann `sed -n 'a,bp'`,
    Ausgaben mit `head`, Logs nur gefiltert); Status-Zeile spätestens alle 3 min (sonst greift der Idle-Watchdog);
    Abschlussbericht ≤ 80 Zeilen als letzte Antwort und als Datei unter docs/reports/.
-4. **Starten**: `acp_delegate` (agent worker, festes Modell, thinkingLevel medium, timeoutMinutes ~180).
+4. **Starten**: `acp_delegate` (agent worker, festes Modell, thinkingLevel medium, timeoutMinutes ~180; große
+   Abschlusspakete wie Gesamttestlauf plus Kriterienprüfung ~300). Grund: Das harte Limit beendet den Worker ohne
+   Abschlussbericht; Bericht, TODO-Abschnitt und letzten Prüflauf muss ich dann selbst nachholen.
    Parallelität nach RAM: jeder Worker-pi lädt alle pi-Pakete des Nutzers (~0,6–0,9 GB); bei knappem RAM genau einer.
    Zwei Worker nur, wenn ihre Pfade disjunkt sind UND sich ihre Build-Läufe nicht blockieren. Grund: Zwei cargo-Läufe
    im selben Target-Verzeichnis warten auf dasselbe Build-Lock; der wartende Worker steht dann minutenlang und belegt
@@ -75,6 +77,8 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - `git write-tree` → genau diesen Baum als Snapshot auf der Remote-Maschine prüfen (eigenes Target-Verzeichnis) →
      `git commit-tree` aus dem geprüften Baum mit Prüfabsatz und „Offen:“-Liste, Betreff ≤ 72 Zeichen → pushen.
    - Offene Punkte aus dem Bericht in Queue/TODO übernehmen.
+   - Was der Bericht als erledigt meldet (TODO-Abschnitt geschrieben, Tests ergänzt, Datei angelegt), vor dem Stagen
+     per grep/diff im Arbeitsbaum prüfen. Grund: Worker melden gelegentlich Arbeit, die fehlt.
    - Pfade des Pakets außerhalb des Filters des Staging-Skripts (z. B. CI-Workflows im Repo-Wurzelordner) von Hand
      stagen. Grund: Das Skript filtert auf den App-Ordner und lässt sie sonst still weg.
    - Pakete, die nur Skripte, Workflows oder Doku ändern, brauchen keinen Snapshot-Build. Beleg sind dann die Linter
@@ -97,7 +101,9 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
      öffne ich von Hand wieder. Neue Befunde und Wartepunkte des Nutzers trage ich sofort ein.
    - Dem Nutzer den Pfad im Repo, den Web-Link und das Artefakt nennen.
    - Eine Zeile „Voraussichtlich fertig: …“ mitführen, die das Skript bei jedem Lauf neu rechnet: Paketgröße
-     (S/M/L → Stunden), laufende Pakete halb, geteilt durch die übliche Parallelität, plus Zuschlag für Abbrüche.
+     (S/M/L/XL → Stunden), laufende Pakete halb, geteilt durch die übliche Parallelität, plus Zuschlag für Abbrüche.
+     Bleibt nur EIN Paket offen, nicht durch die Parallelität teilen, und ein Abschlusspaket mit Gesamttestlauf
+     eine Größe höher einstufen. Grund: Ein einzelner Worker arbeitet allein, sonst nennt die Prognose eine zu frühe Zeit.
      Eine Spanne nennen statt Scheingenauigkeit; Wartepunkte des Nutzers getrennt ausweisen.
    - Zeilen ohne Paket zählen in der Prognose nicht mit. Darum vor einer Fertig-Aussage alle diese Zeilen von einem
      Text-Worker ohne Compiler einordnen lassen: erledigt (mit Beleg), neues Paket (Aufgabe gleich schreiben),

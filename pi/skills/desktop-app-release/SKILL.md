@@ -21,6 +21,9 @@ references/tauri-v2.md.
    - Dem Release-Workflow zusätzlich `workflow_dispatch` mit einer Eingabe für die Plattformen geben.
    - Ohne Tag lädt er die Pakete als Workflow-Artefakte hoch und legt keinen Release-Entwurf an.
    - Stand auf einen `ci/<name>`-Zweig pushen, den Lauf per REST starten, den Zweig danach löschen.
+   - `workflow_dispatch` startet nur Workflows, deren Datei schon auf dem Standard-Branch liegt. Einen NEUEN Workflow
+     vor dem Merge testen: im Wegwerf-Commit zusätzlich `push: branches: [ci/<name>]` eintragen, auf diesen Zweig
+     pushen, Lauf beobachten, Zweig löschen.
    - Erst taggen, wenn alle Plattformen grün sind. Grund: Jeder Tag-Lauf hinterlässt einen Release-Entwurf und
      kostet eine halbe Stunde.
 3. **Beobachten:**
