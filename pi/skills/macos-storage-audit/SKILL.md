@@ -32,9 +32,11 @@ Klasse: Festplattenbelegung auf macOS transparent machen — welche Ordner/Datei
    - Kreuzcheck zweier Ebenen: df (belegte Blöcke) gegen die Summe aus du (existierende Dateien) + System + purgeable/Snapshots rechnen. du zählt nur vorhandene Dateien — gelöschte Dateien können du nicht erhöhen. Ohne den Hauptfresser muss die Restsumme zu df passen; tut sie es nicht, existieren die Dateien.
    - Papierkorb via Finder messen (TCC!), Snapshots als Restdifferenz erklären. Ergebnis als Tabellen-/Kreuzrechnung präsentieren, plus die größten Einzeldateien mit vollem Pfad.
 5. **System-Snapshots richtig deuten:** `com.apple.os.update-*` und `MSUPrepareUpdate`-Snapshots sind macOS-Update-Reste bzw. ein VORBEREREITETES Update — kein User-Müll, aber relevant vor OS-Wechsel-/Partitions-Aktionen (macOS vorher aktualisieren und neu starten).
+   - CLI-Update: `softwareupdate -l` → Label; Installation als `bg_run` OHNE `--restart` (Reboot killt die Agent-Session — User startet selbst neu). Übergibt der User das sudo-Passwort: nur als stdin an `echo '<pw>' | sudo -S softwareupdate -i '<label>' 2>&1 | grep -v '^Password:'` — nie in Dateien/env speichern, nie in Kommandozeilen-Logs belassen.
 
 ## Pitfalls
 - `2>/dev/null` bei du verschluckt die TCC-Verweigerung komplett — die Ordner tauchen dann als „0" auf und die Analyse sieht falsch aus. Immer mit stderr filtern und Sperrung melden.
 - df auf `/` zeigt das falsche Volume (System, nicht Data) — Belegungsfragen immer gegen `/System/Volumes/Data` beantworten.
 - Finder/osascript-Größen sind Byte-Zahlen (awk nach GB konvertieren) und leicht veraltet (Metadatenindex) — für Plausibilität gut, für den Beweis die du/find-Einzelpfade nutzen.
 - `~/Library/Containers/<bundle>` nach App-Deinstallation per `rm -rf`: scheitert an `.com.apple.containermanagerd.metadata.plist` (Operation not permitted) — der INHALT (z. B. Docker.raw) wird trotzdem freigegeben, nur die Bytes-kleine Hülle bleibt und braucht sudo. Erfolg am df-Platzgewinn messen, nicht am Verzeichnis-Vorhandensein.
+- `softwareupdate -i '<label>' --no-scan` kann „No updates are available" melden, obwohl `-l` das Update eben noch listete — `--no-scan` sieht nur vollständig vorgestagte Updates. Dann ohne `--no-scan` (frischer Scan) erneut installieren, nicht den Fehler glauben.
