@@ -29,5 +29,10 @@
     "provider": {
       "maxRetryDelayMs": 16000
     }
+  },
+  "coding": {
+    "compat": true,
+    "piProviders": true,
+    "devTools": true
   }
 }
