@@ -28,6 +28,14 @@ dem x86_64-Upstream hinterher — viele Failure-Modes sind dort strukturell.
   und das Log per Poll überwachen (Abschlusszeile abwarten, nicht nur Exit-Code).
 - Temporäre NOPASSWD-Sudoers-Datei (chmod 440) für den Install anlegen und
   UNBEDINGT danach löschen.
+- PACHT/yay über SSH ohne TTY: sudo verlangt ein Terminal („a terminal is
+  required") — AUR-Installationen als `runuser -u <user> --` mit temporärer
+  NOPASSWD-Sudoers-Datei starten und die Datei IM SELBEN Command wieder
+  entfernen. Nie runuser innerhalb eines runuser aufrufen („may not be used
+  by non-root users").
+- Vor AUR-Annahmen offizielle Repos prüfen: `pacman -Ss <name>` zuerst —
+  Regierungs-/Mainstream-Apps liegen oft in [extra] unter leicht anderem
+  Namen als im AUR-Wiki vermutet.
 
 ## 3. Netz: Distro-SSH-Härtung
 - Basis-Images haben oft UFW mit `Default deny incoming` — ICMP geht, TCP-Timeouts
@@ -73,3 +81,39 @@ dem x86_64-Upstream hinterher — viele Failure-Modes sind dort strukturell.
   ob helle Text-Pixel existieren (monoton dunkel = kein Text gerendert).
 - QS-TypeErrors beim Start sind der schnellste Root-Cause-Indikator — Kette
   lesen (erste Zeile = erste tote Bindung), nicht symptommäßig pkill-en.
+- User-Units über SSH: `runuser -u <user> -- env XDG_RUNTIME_DIR=/run/user/<uid> systemctl --user …` (ohne XDG_RUNTIME_DIR: „Failed to connect to user scope bus").
+
+## 7. Nutzdaten von macOS-APFS nach Linux
+- apfs-fuse (letzter Stand alt) lädt Sequoia-Nutzerdaten-Container nicht:
+  „Initialization of KeyManager failed / Unable to load container", auch mit
+  korrekter FileVault-Passphrase (`-r`). p1/p6 im Asahi-Layout sind nur Apple-
+  System-/Boot-Container (root zeigt Volume-UUIDs, SFR, SystemRecovery) — dort
+  liegen KEINE Nutzerdaten. FUSE-Weg = Sackgasse, nicht weiter vertiefen.
+- Kernel-Modul-Variante (linux-apfs-rw, baut gegen linux-asahi + headers)
+  scheitert an FileVault-Volumes ebenso: dmesg „PFK is not supported" —
+  Per-File-Keys werden von keinem Linux-APFS-Treiber entschlüsselt.
+- Arbeitsweg (Umkehr-Handoff): macOS-Partition booten, dort Remote Login
+  (SSH) aktivieren; von einem zweiten Rechner per `ssh <user>@<mac>` +
+  rsync auf Staging ziehen; zurück in Linux booten, Staging per rsync ins
+  Home befördern. Passphrase/FileVault-PW = normales User-Login-PW.
+- Einmal-Boot macOS ohne Picker-Interaktion: `asahi-bless --set-boot-macos
+  --next -y && systemctl reboot` — bootet macOS genau einmal, danach greift
+  wieder der Linux-Default (Rückweg per `shutdown -r` über SSH oder Power).
+  Remote Login muss auf der macOS-Seite bereits aktiv sein, sonst hängt die
+  Maschine am FDE-Login — Zustand vorher unbekannt ⇒ Boot-Versuch erst als
+  letzten Schritt einplanen.
+- macOS bringt am Login-Screen KEIN WLAN hoch (WLAN-Profil ist User-scope):
+  sshd/Tailscale/LAN-IP existieren erst NACH User-Login. Ein macOS-Boot ohne
+  anschließende Anmeldung ist aus der Ferne tot — Poll-Kette darauf legen und
+  den User zur Anmeldung bitten, statt den Port endlos zu warten.
+- Netz-Fallback: läuft auf macOS eine Tailscale-Session (User eingeloggt),
+  ist die 100.x-IP oft der zuverlässigere Weg als WLAN über Repeater-Strecken
+  (`tailscale status` auf dem Steuerrechner zeigt sie).
+- Transfer-Skripte über rsync+ssh: ssh-Optionen gehören in `-e "ssh …"`, nie
+  als eigene rsync-Argumente (sonst „Unexpected remote arg"); Kopierphase mit
+  `set -e` absichern, damit ein Fehlzug NIE in die Reboot-Phase läuft.
+- Port-Checks ohne nc (nicht überall installiert — exit 127 sieht aus wie
+  „Port zu"): `timeout 6 bash -c "</dev/tcp/<ip>/<port>"`.
+- Vorsicht bei gleichzeitigem Betrieb: Linux und macOS teilen die Maschine
+  abwechselnd — mDNS hält stale Einträge; IP per SSH-Login-Hostname oder
+  frischer DHCP-Antwort beweisen, nicht über ARP-OUI raten.

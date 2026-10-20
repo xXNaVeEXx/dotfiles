@@ -105,6 +105,14 @@ der Agent es übernehmen kann.
   Ziel IMMER per `hostname`-Ausgabe im Probe-Command identifizieren; ein
   passender Username oder eine „Please login as the user X“-Nachwort sind
   KEIN Beweis (fremde Server im selben Netz können denselben User haben).
+  Sind beide Geräte im selben Overlay-Netz (Tailscale o. ä.), zeigt
+  `tailscale status` beim aktiven Peer `direct <lan-ip>:<port>` — die
+  aktuelle LAN-IP direkt ablesen statt zu scannen; OS-Wechsel auf
+  Dual-Boot-Maschinen vergibt oft unterschiedliche DHCP-Leases pro OS,
+  beide Kandidaten-IPs pollen.
+- Exit-Codes von bg-Ketten prüfen: ein `skript.sh | tail -5` liefert den
+  Exit-Code von tail (immer 0) — Fehlschläge sehen „completed“ aus. Ketten
+  ohne Pipe starten oder `set -o pipefail` im Skript.
 - Distrosetups härten SSH oft am Ende (PermitRootLogin no + Hinweis-Banner):
   Key auf den USER-Account legen und `sudo -n` testen; funktionierendes
   root-Login von vor der Installation ist nach dem ersten System-Setup

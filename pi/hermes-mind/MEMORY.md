@@ -8,8 +8,8 @@ Pi-Lifecycle: Sessions resumable (pi --continue/--resume <id>); jede Session spa
 §
 Extension error-hub (~/.pi/agent/extensions/error-hub.ts): F/W/I-Ringpuffer (30) als Widget „⚠ error-hub · alt+e" + Overlay (alt+e //errors); Details/Lektionen: Skill pi-extension-dev.
 §
-Artefakt-Extension (~/.pi/agent/extensions/artifacts/, selbstgebaut): Auto-Diff-Artefakte + 💬-Notes bei jeder Agent-Änderung, Viewer /artifact N mit Typ-Renderern (HTML/Bild/MD/JSON/CSV). Wartung/Konventionen siehe Skill pi-artifacts-viewer; Testmaterial ~/demo-repo + ~/artifact-demo. Pakete: 14 installiert inkl. pi-antigravity (Provider, braucht /login antigravity); Live-Stand via Skill pi-pkg-report.
+Artefakt-Extension (~/.pi/agent/extensions/artifacts/, selbstgebaut): Auto-Diff-Artefakte + 💬-Notes, Viewer /artifact N mit Typ-Renderern. Wartung: Skill pi-artifacts-viewer; Paketübersicht via Skill pi-pkg-report.
 §
 bigpowers-Patch: omp-hooks.ts:162 stdio:["ignore","pipe","ignore"] setzen, sonst git-stderr-Echo im TUI; nach npm-Update neu setzen (Skill pi-extension-dev §8).
 §
-Pi-Verteilung: nix-conf myHome.pi (Flake github:earendil-works/pi/stable; pi-sync-Timer; dotfiles pi/-Subtree: settings/skills/extensions ohne node_modules/hermes-mind-3-Dateien; auth.json nicht gesynct → 1× /login je Machine).
+Pi-Verteilung: nix-conf myHome.pi (Flake earendil-works/pi/stable; pi-sync-Timer; dotfiles pi/-Subtree: settings/skills/extensions, ohne node_modules/hermes-mind; auth.json nicht gesynct → 1× /login je Machine). Maschinen: macOS-MBP, maga (Arch), omarchy (Asahi-MBP, ssh root@192.168.178.91, sudo-PW 1234), cachydeck = Steuer-Host mit hermes-mind-MASTER (sessions.db lebt NUR dort — Memory/DB-Migrationen von dort ziehen).
