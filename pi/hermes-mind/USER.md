@@ -1,4 +1,4 @@
-Speaks German; ALWAYS German, also in reports, concise and technical — but no unexplained internal jargon/codenames (e.g. „Vertrag“, package codes like G1): say it in plain words.
+Speaks German; ALWAYS German, also in reports, concise and technical — but no unexplained jargon/codenames, also in open-decision lists (what, why, options): say it in plain words.
 §
 Wants an autonomous, self-improving agent (Hermes-style): persistent memory, self-written skills, learning across sessions.
 §
@@ -8,7 +8,7 @@ Will dauerhafte Einmal-Lösungen statt wiederkehrender manueller Schritte — z.
 §
 Bei Nebenthemen (z. B. Tool-Störung) in jeder Zwischenmeldung auch den Stand des Hauptauftrags nennen; lange stille Diagnosen ohne Meldung stören ihn.
 §
-Desktop-Fensterregeln: Omarchy-Defaults NICHT dauerhaft ändern, wenn ein manueller Toggle existiert (z. B. mpv-Floating per SUPER+T) — Nutzer will Standards behalten und situativ selbst schalten (Rückbau-Feedback 25.10.2026). Einmal-Lösungen gelten für Credentials/Prozesse, nicht für Desktop-Look-Defaults.
+Desktop-Fensterregeln: Omarchy-Defaults NICHT dauerhaft ändern, wenn ein manueller Toggle existiert (z. B. mpv-Floating per SUPER+T); Einmal-Lösungen gelten für Credentials/Prozesse, nicht für Desktop-Look-Defaults.
 §
 PR-Politik: CI-grüne Bot-/Update-PRs (z. B. Dependabot) sofort selbst mergen; wartende grüne PRs gelten als Versäumnis.
 §
