@@ -40,6 +40,11 @@ const LOCK_FILE = path.join(BASE, ".lock");
 
 const ENTRY_DELIM = "\n§\n";
 const CT_REVIEW = "hermes-review";
+// Delegate-Kinder (acp_delegate aus billion-context setzt PI_ACP_DELEGATE_DEPTH >= 1) bekommen keinen automatischen
+// Review-Turn: Er verlängert den Worker-Lauf, kostet Tokens und schreibt parallel zu anderen Sitzungen in
+// Memory/Skills, obwohl der Auftrag des Elternteils das oft verbietet. Gelernt wird in der Eltern-Sitzung, wie in
+// Hermes, wo Kind-Agenten kein memory-Werkzeug haben.
+const IST_DELEGATE_KIND = Number(process.env.PI_ACP_DELEGATE_DEPTH ?? "0") > 0;
 
 const DEFAULT_CONFIG = {
   enabled: true,
@@ -287,7 +292,7 @@ function applyMemoryOps(
         return {
           text: `old_text occurs ${occurrences} times in the matched entry — provide a longer, unique span. (nothing was written)`,
         };
-      entries[idx] = target.replace(oldText, newText);
+      entries[idx] = target.replace(oldText, () => newText); // Funktions-Ersatz: kein $&/$'-Expandieren
     } else if (op.action === "remove") {
       const oldText = op.old_text ?? "";
       if (!oldText) throw new Error("remove: old_text is required (any substring of the entry).");
@@ -540,9 +545,77 @@ function parseFrontmatter(text: string): { fm: Record<string, string>; body: str
   const fm: Record<string, string> = {};
   for (const line of m[1].split("\n")) {
     const kv = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(line.trim());
-    if (kv) fm[kv[1]] = kv[2].replace(/^["']|["']$/g, "");
+    if (kv) fm[kv[1]] = unquoteYamlScalar(kv[2]);
   }
   return { fm, body: m[2] };
+}
+function unquoteYamlScalar(v: string): string {
+  if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+    try {
+      return JSON.parse(v) as string;
+    } catch {
+      return v.slice(1, -1);
+    }
+  }
+  if (v.length >= 2 && v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1).replace(/''/g, "'");
+  return v;
+}
+
+/* Pi parst SKILL.md-Frontmatter mit dem npm-Paket `yaml` und überspringt Skills mit YAML-Fehler stillschweigend
+ * (z. B. ungequotete description mit „: “). Deshalb: description immer gequotet schreiben und jede Änderung mit
+ * demselben Parser prüfen; ist er nicht auffindbar, greift eine Heuristik für Plain-Scalars. */
+let yamlParseFn: ((src: string) => unknown) | null | undefined;
+function getYamlParse(): ((src: string) => unknown) | null {
+  if (yamlParseFn !== undefined) return yamlParseFn;
+  yamlParseFn = null;
+  const bases: string[] = [];
+  try {
+    if (process.argv[1]) bases.push(fs.realpathSync(process.argv[1]));
+  } catch {
+    /* Einstiegsskript nicht auflösbar */
+  }
+  bases.push(path.join(os.homedir(), ".pi", "agent", "npm", "package.json"));
+  for (const base of bases) {
+    try {
+      const mod = createRequire(base)("yaml") as { parse?: (src: string) => unknown };
+      if (typeof mod?.parse === "function") {
+        yamlParseFn = mod.parse;
+        break;
+      }
+    } catch {
+      /* nächster Kandidat */
+    }
+  }
+  return yamlParseFn;
+}
+/** Warum pi das Frontmatter ablehnen (und den Skill still überspringen) würde, oder null. */
+function frontmatterYamlError(text: string): string | null {
+  const norm = text.replace(/\r\n?/g, "\n");
+  if (!norm.startsWith("---")) return null;
+  const end = norm.indexOf("\n---", 3);
+  if (end === -1) return "frontmatter has no closing '---' line";
+  const src = norm.slice(4, end);
+  const parse = getYamlParse();
+  if (parse) {
+    try {
+      parse(src);
+      return null;
+    } catch (e) {
+      return (e instanceof Error ? e.message : String(e)).split("\n")[0];
+    }
+  }
+  for (const line of src.split("\n")) {
+    const kv = /^([A-Za-z0-9_-]+):[ \t]+(.+)$/.exec(line);
+    if (!kv) continue;
+    const v = kv[2].trim();
+    if (/^["']/.test(v)) {
+      if (v.length < 2 || v[v.length - 1] !== v[0]) return `${kv[1]}: unterminated quoted value`;
+      continue;
+    }
+    if (/: |\s#/.test(v) || /^[[\]{}&*!|>%@`]|^[-?] /.test(v))
+      return `${kv[1]}: plain value contains YAML syntax (': ', ' #' or a leading indicator)`;
+  }
+  return null;
 }
 function validateSkillMeta(name: string, description: string): string | null {
   if (!VALID_NAME_RE.test(name) || name.length > MAX_NAME_LENGTH)
@@ -766,8 +839,11 @@ export default function hermesMind(pi: {
               if (!ent.isDirectory()) continue;
               const f = path.join(SKILLS_ROOT, ent.name, "SKILL.md");
               if (!fs.existsSync(f)) continue;
-              const { fm } = parseFrontmatter(fs.readFileSync(f, "utf8"));
-              out.push(`- ${ent.name}: ${fm.description ?? "(no description)"}`);
+              const raw = fs.readFileSync(f, "utf8");
+              const { fm } = parseFrontmatter(raw);
+              const yamlErr = frontmatterYamlError(raw);
+              const warn = yamlErr ? ` ⚠ YAML-Fehler, pi lädt diesen Skill NICHT (${yamlErr}) — description in doppelte Anführungszeichen setzen.` : "";
+              out.push(`- ${ent.name}: ${fm.description ?? "(no description)"}${warn}`);
             }
             return {
               content: [{ type: "text", text: out.length ? out.join("\n") : "(skill library is empty)" }],
@@ -809,11 +885,12 @@ export default function hermesMind(pi: {
             if (threat) throw new Error(`[BLOCKED] ${threat}.`);
             const dir = skillDir(name);
             if (fs.existsSync(path.join(dir, "SKILL.md"))) throw new Error(`Skill '${name}' already exists — patch it instead.`);
+            // description als JSON-String = gültiger YAML-Double-Quoted-Scalar (sonst bricht z. B. „: “ das Frontmatter).
+            const skillText = `---\nname: ${name}\ndescription: ${JSON.stringify(description.replace(/\n/g, " "))}\n---\n\n# ${name}\n\n${content.trim()}\n`;
+            const yamlErr = frontmatterYamlError(skillText);
+            if (yamlErr) throw new Error(`Frontmatter would not parse in pi: ${yamlErr}. Nothing was written.`);
             fs.mkdirSync(dir, { recursive: true });
-            atomicWrite(
-              path.join(dir, "SKILL.md"),
-              `---\nname: ${name}\ndescription: ${description.replace(/\n/g, " ")}\n---\n\n# ${name}\n\n${content.trim()}\n`,
-            );
+            atomicWrite(path.join(dir, "SKILL.md"), skillText);
             return {
               content: [
                 {
@@ -837,13 +914,18 @@ export default function hermesMind(pi: {
             const occurrences = text.split(oldText).length - 1;
             if (occurrences === 0) throw new Error("old_text not found in SKILL.md — quote it exactly (use action=view first).");
             if (occurrences > 1) throw new Error(`old_text occurs ${occurrences} times — provide a longer, unique span.`);
-            const next = text.replace(oldText, newText);
+            const next = text.replace(oldText, () => newText); // Funktions-Ersatz: kein $&/$'-Expandieren
             if (next.length > MAX_SKILL_CONTENT_CHARS + 2048) throw new Error(`Resulting SKILL.md too large (>${MAX_SKILL_CONTENT_CHARS} chars).`);
             const { fm } = parseFrontmatter(next);
             if (fm.description !== undefined) {
               const err = validateSkillMeta(name, fm.description);
               if (err) throw new Error(`Patch would break frontmatter: ${err} Nothing was written.`);
             }
+            const yamlErr = frontmatterYamlError(next);
+            if (yamlErr && !frontmatterYamlError(text))
+              throw new Error(
+                `Patch would break frontmatter: pi's YAML parser would reject it and silently skip the skill (${yamlErr}). Wrap the description in double quotes. Nothing was written.`,
+              );
             const threat = threatScan(newText);
             if (threat) throw new Error(`[BLOCKED] ${threat}.`);
             atomicWrite(file, next);
@@ -1116,7 +1198,7 @@ export default function hermesMind(pi: {
 
   pi.on("agent_end", () => {
     guard("agent_end", () => {
-      if (st.inReviewRun || !cfg.reviewEnabled) return;
+      if (st.inReviewRun || !cfg.reviewEnabled || IST_DELEGATE_KIND) return;
       const memDue = st.userTurns >= cfg.memoryNudgeInterval;
       const skillDue = st.skillIters >= cfg.skillNudgeInterval;
       if (!memDue && !skillDue) return;

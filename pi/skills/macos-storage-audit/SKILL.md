@@ -3,13 +3,6 @@ name: macos-storage-audit
 description: macOS-Festplattenplatz analysieren und belegbar machen — df/du-Kreuzcheck, TCC-gesperrte Ordner via Finder-AppleScript messen, Snapshots/Papierkorb/purgeable prüfen, lange Scans als Hintergrundlauf. Use when der User Speicherplatz auf dem Mac auditieren, aufgeräumten Platz verifizieren oder „warum ist die Platte voll"-Fragen klären will.
 ---
 
-# macos-storage-audit
-
----
-name: macos-storage-audit
-description: macOS-Festplattenplatz analysieren und belegbar machen — df/du-Kreuzcheck, TCC-gesperrte Ordner via Finder-AppleScript messen, Snapshots/Papierkorb/purgeable prüfen, lange Scans als Hintergrundlauf. Use when der User Speicherplatz auf dem Mac auditieren, aufgeräumten Platz verifizieren oder „warum ist die Platte voll"-Fragen klären will.
----
-
 # macOS-Storage-Audit (Platzanalyse & Belegungsbeweis)
 
 Klasse: Festplattenbelegung auf macOS transparent machen — welche Ordner/Dateien halten den Platz, welche Quellen zeigen es, und wie man eine vom User angezweifelte Belegung beweist.

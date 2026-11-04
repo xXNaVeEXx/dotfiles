@@ -1,6 +1,6 @@
 ---
 name: desktop-app-release
-description: Use when packaging or releasing a cross-platform desktop app (Tauri v2 + GitHub Actions) for Linux, Windows and macOS: cheap pre-checks, test runs without a tag, tag-triggered draft releases, sidecars and bundled runtimes, reading failed bundle jobs, and handing the right installer to the user for testing.
+description: "Use when packaging or releasing a cross-platform desktop app (Tauri v2 + GitHub Actions) for Linux, Windows and macOS: cheap pre-checks, test runs without a tag, tag-triggered draft releases, sidecars and bundled runtimes, reading failed bundle jobs, and handing the right installer to the user for testing."
 ---
 
 # desktop-app-release

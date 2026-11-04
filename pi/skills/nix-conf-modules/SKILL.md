@@ -1,6 +1,6 @@
 ---
 name: nix-conf-modules
-description: Features in das nix-conf-Flake einbauen (Option + mkIf-Modul + Host-Flag) und sicher verifizieren: git-add-Falle bei neuen Dateien, activationPackage-Build statt interaktivem rebuild.sh. Use when editing the nix-conf repo, adding home-manager or NixOS modules/flags, or verifying flake changes without switching.
+description: "Features in das nix-conf-Flake einbauen (Option + mkIf-Modul + Host-Flag) und sicher verifizieren: git-add-Falle bei neuen Dateien, activationPackage-Build statt interaktivem rebuild.sh. Use when editing the nix-conf repo, adding home-manager or NixOS modules/flags, or verifying flake changes without switching."
 ---
 
 # nix-conf-modules
