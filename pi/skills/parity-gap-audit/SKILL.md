@@ -191,6 +191,13 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
      Ein Worker, dessen `.activity` seit Längerem still ist, dessen Prozess aber 100 % CPU mit wachsendem RSS zeigt
      (`ps -o pid,etime,pcpu,rss -p <pid>`), hängt im Prozess und nicht im Modell: `acp_delegate_cancel`, nach 2 min
      `kill -9 <pid>`, KEIN resume (es erbte den Hänger), sondern frischer Worker mit dem vorhandenen Bericht als Basis.
+     **Katalog-Konsolidierung (Teile je Bereich in eine gemeinsame YAML):** Teil n erst starten, wenn Teil n-1 per
+     Abnahmeskript (Prüfskript `check` Exit 0, Stichproben, Commit, Queue „fertig“) abgenommen ist, weil alle Teile
+     dieselbe Datei erweitern. Im Task verbieten, die YAML per `yaml.dump` komplett neu zu schreiben (nur anhängen oder
+     gezielt ändern), da das riesige Diffs erzeugt und Umformatierungen mitcommittet. Die Modellwahl erst beim Start
+     treffen und in die Modellspalte der Queue schreiben; Style-Meldungen des Editors zu YAML (Zeilenlänge, Tippfehler)
+     ignorieren, maßgeblich ist das Prüfskript. Beim Wechsel in diese Phase den Herzschlag auf die Queue der neuen
+     Phase umstellen (siehe subagent-orchestration).
    - Sektionen C/E lesen. Jede hoch-Lücke selbst im eigenen Code bestätigen (`rg`, Zeilen lesen) und in der
      Konsolidierung als „im Code bestätigt“ kennzeichnen. Bewusste Architekturentscheide (anderer Standard, anderes
      Konzept) als fehlenden Hinweis einordnen, nicht als Kernlücke.
