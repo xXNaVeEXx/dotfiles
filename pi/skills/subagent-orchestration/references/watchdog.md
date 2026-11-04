@@ -12,8 +12,9 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   lebendig aus.
 - Laufende bg_run-Tasks der Sitzung zählen als Warten mit Weckruf und verlängern die Idle-Frist (≈ 150 min statt 55):
   `<cwd>/.pi/tasks/<SID>-<PID>/*.json` mit status running und lebender pid (`kill -0`). `<cwd>` ist der Startordner
-  der pi-Sitzung, nicht zwingend das Repo. Grund: Wartet der Orchestrator auf eine CI-Wache, ist er idle ohne Worker,
-  und ein Anstoß unterbricht ihn nur.
+  der pi-Sitzung, nicht zwingend das Repo; im Skript je Sitzung aus env bilden (`${WD_TASKS:-$WD_CWD/.pi/tasks}`),
+  nie fest auf den Leitstand-Checkout. Grund: Wartet der Orchestrator auf eine CI-Wache, ist er idle ohne Worker,
+  und ein Anstoß unterbricht ihn nur. Ein fest verdrahteter Pfad lieferte für eine Spur immer bg=0.
 - Steht eine Sitzung trotz eines solchen Tasks lange idle, das Ausgabe-Ende des Tasks lesen (`<task>.output`). Steht
   dort schon ein Ergebnis (`ERGEBNIS`, `rc=`, „fertig“) und danach nur noch `[hb]`, hängt der Task an einem nicht
   beendeten Herzschlag. Dann die Sitzung anweisen, ihn per `bg_kill` zu beenden und mit dem Ergebnis weiterzumachen.
@@ -52,8 +53,10 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   Leerlauf-Prüfung zählen gerade fertig gewordene Worker noch als aktive Kinder, die Frist steigt auf 150 min, und die
   Spur steht mit freien Worker-Plätzen über eine Stunde, während ein anderer, noch laufender Worker der Aufsicht
   Fortschritt vortäuscht. Ein bg_run-Ende weckt die Spur dagegen sicher, genau beim Fertigwerden und ohne Token-Kosten.
+- Den Herzschlag immer mit `surviveReload true` starten. Grund: Ohne das beendet ein Neuladen der Sitzung (Lernpass,
+  Erweiterungs-Reload) ihn per SIGTERM, und die Spur wartet danach ohne Wecker.
 
-## 5. Rückfall auf `sleep` im Watchdog erkennen
+## 5. Rückfall auf `sleep` und fehlenden Wecker im Watchdog erkennen
 - Eine laufende Spur ahmt Muster aus ihrem eigenen Verlauf nach und fällt auch nach Prompt und Bestätigung wieder auf
   `sleep` zurück, oft Stunden später. Je größer die Sitzung, desto stärker wirken frühe Beispiele. Darum die Prüfung
   nicht dem nächsten Wecken des Leitstands überlassen, sondern in den Watchdog legen. Grund: Der Leitstand wird oft
@@ -67,6 +70,13 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   neuer Spuren schreibt, setzt die Vorlage mit, damit jede neue Spur den Schutz von Anfang an hat.
 - Von Hand beim Wecken, z. B. direkt nach einer Regeländerung: `jq -c '{name,command,status}'
   <cwd>/.pi/tasks/<SID>-<PID>/*.json`. Steht dort `sleep`, die Spur anweisen.
+- Auch einen FEHLENDEN Wecker erkennen: Sitzung nicht working, kein laufender bg_run mit lebender pid, dessen command
+  auf `WD_WECKER` passt (z. B. `warte\.sh|^ *sleep +[0-9]`), aber aktive oder frisch fertige Kinder → Anstoß mit
+  `WD_WECKER_MSG` (printf, `%s` = Kinderzahl; nennt Abnahme, nächste Worker und den vollen warte.sh-Befehl mit
+  surviveReload), höchstens alle 15 min, erst ab 3 min Sitzungsalter, danach Leerlauf-Uhr auf 0. Ohne gesetztes
+  `WD_WECKER` (Leitstand ohne Herzschlag-Pflicht) entfällt die Prüfung. Grund: Jedes aktive Kind hebt die Idle-Frist
+  auf 150 min; nach einem SIGTERM des Herzschlags lagen fertige Worker 20–35 min ohne Abnahme, und der Watchdog
+  protokollierte nur `status=done`.
 
 ## 6. Bei jedem Wecken des Leitstands
 - Jede Queue-Zeile `läuft <runId>` gegen das Fertig-Signal halten und auf Stillstand prüfen, auch auf einen

@@ -1,6 +1,6 @@
 ---
 name: linux-gui-computer-use
-description: GUI-Apps auf dem Linux-Desktop des Nutzers selbst steuern für automatisierte Handtests — XWayland erzwingen, xdotool/import/tesseract über nix shell, fensterscharfe Screenshots, isolierte App-Datenordner, RAM-Regeln. Use when the user asks the agent to run GUI handtests or control the computer itself on their Linux machine.
+description: GUI-Apps auf dem Linux-Desktop des Nutzers selbst steuern für automatisierte Handtests — Pixel-Route (XWayland erzwingen, xdotool/import/tesseract über nix shell, fensterscharfe Screenshots, isolierte App-Datenordner, RAM-Regeln) als Fallback, wenn die App kein AT-SPI anbietet oder Pixel-Beweise nötig sind; für semantische Steuerung zuerst Skill agent-computer-use (agent-desktop/AT-SPI) nutzen. Use when the user asks the agent to run GUI handtests or control the computer itself on their Linux machine.
 ---
 
 # linux-gui-computer-use
@@ -46,4 +46,4 @@ Use when the user asks to run GUI handtests / control the computer yourself (sta
 
 ## Eskalation
 
-Klappt die Steuerung nicht (kein X11-Backend möglich, native Wayland-only App), ofere der Nutzer kein Einlenken: dann Pi-Extension „computer use" bauen (Screenshot via GNOME-Shell-D-Bus-Screenshot-API oder Portal, Eingabe via ydotool/libei) — nur auf ausdrücklichen Auftrag, wie vom Nutzer formuliert.
+Native Wayland-only-Steuerung ohne AT-SPI: zuerst Skill agent-computer-use prüfen (agent-desktop semantisch; python-gi-Selection-Route; GDK_BACKEND=x11 als XWayland-Escape). Erst wenn die App wirklich kein Accessibility-Interface anbietet, bleibt diese Pixel-Route — oder, auf ausdrücklichen Auftrag, ein eigener Eingabe-/Screenshot-Daemon (ydotool/libei).
