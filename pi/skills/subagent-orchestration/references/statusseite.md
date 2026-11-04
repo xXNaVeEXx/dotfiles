@@ -79,25 +79,37 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   `{{queue:<Spur>-<Phase>}}` verwenden. Die abgeschlossene Phase im selben Schritt abhaken („fertig <Datum>,
   <Uhrzeit>“). Grund: Der Platzhalter der alten Sektion zählt die neue Phase sonst gar nicht oder mischt sie mit der
   fertigen.
-- Nach jeder Textänderung die Seite sofort neu erzeugen (`systemctl --user start <lauf>-status.service`) und im HTML
-  prüfen, dass kein `{{` übrig ist (`grep -c '{{' <seite>.html` ergibt 0) und jeder Platzhalter Zahlen statt
-  „keine Aufträge“ zeigt. Grund: Ein falscher Sektionsname ergibt still „keine Aufträge“, ein kaputter Platzhalter
-  bleibt als Rohtext stehen, und beides sieht sonst erst der Nutzer.
+- Nach jeder Textänderung die Seite sofort neu erzeugen und erst prüfen, wenn sie wirklich neu geschrieben ist:
+  `touch <stempel>; systemctl --user start <lauf>-status.service; timeout 30 bash -c 'until [ <seite>.html -nt
+  <stempel> ]; do sleep 1; done'`. Grund: Die Unit aus `systemd-run` ist vom Typ simple, `start` kehrt vor dem
+  Rendern zurück, und eine sofortige Prüfung liest noch die alte Seite. Dann prüfen, dass kein `{{` übrig ist
+  (`grep -c '{{' <seite>.html` ergibt 0), jeder Platzhalter Zahlen statt „keine Aufträge“ zeigt und die neuen Sätze
+  da sind (`grep -c '<Schlüsselsatz>'`). Grund: Ein falscher Sektionsname ergibt still „keine Aufträge“, ein kaputter
+  Platzhalter bleibt als Rohtext stehen, und beides sieht sonst erst der Nutzer.
 - Übersicht, `ERLEDIGT.md` und `NUTZER.md` bei jedem Meilenstein und bei jedem Wecken mit neuem Stand nachziehen: je
   Phase „erledigt / fehlt genau / nächster Schritt“, Engpass, Zeitrahmen. Hat der Nutzer die Seite gewünscht, bleibt
   das eine Daueraufgabe bis zum Abschluss. Veraltete Übersicht ist schlimmer als keine.
 - Zeitrahmen und Sperrzeitpunkte nur aus Messwerten schreiben (references/kontingent.md §9). Laufen die Teile einer
   Gruppe nacheinander, endet die Queue frühestens nach max(längste Restkette × Minuten je Teil, alle offenen Teile ×
-  Minuten je Teil ÷ Plätze); Minuten je Teil aus den letzten Abschlüssen. Die längste Kette in der Übersicht nennen
-  und beim Wecken prüfen, dass die Spur ihr einen frei werdenden Platz zuerst gibt. Grund: Sonst läuft diese Kette am
-  Ende allein, und die übrigen Plätze stehen leer.
-- Bleibt dem Nutzer eine Aufgabe (z. B. ein angekündigtes Zurücksetzen eines Kontingents), steht sie als erster
-  Punkt der Übersicht und in `NUTZER.md`: woran er den Zeitpunkt erkennt (etwa eine Desktop-Benachrichtigung), was er
-  tut und was danach von selbst passiert. Ein „Du musst nichts tun“ an dieser Stelle ersetzen. Grund: Zwischen vielen
-  Statuszeilen geht eine einzelne Bitte sonst unter.
+  Minuten je Teil ÷ Plätze); Minuten je Teil getrennt je Modell aus den letzten Abschlüssen. Die längste Kette in der
+  Übersicht nennen. Sind die Modelle verschieden schnell, die Plätze des schnellen Modells fest den längsten
+  Restketten zuordnen (Platz 1 = längste, Platz 2 = zweitlängste, dazu eine Nachfolgeliste, danach die Kette mit den
+  meisten offenen Teilen ohne laufenden Teil) und einen solchen Platz freihalten, solange der laufende Teil seiner
+  Kette noch auf dem langsamen Modell läuft. Beim Wecken prüfen, dass die Spur das einhält. Grund: Eine Regel „die
+  längste Kette zuerst“ allein reicht nicht, denn die Spur füllt einen frei werdenden Platz mit dem nächsten bereiten
+  Teil, oft aus einer kurzen Kette; die lange Kette läuft dann auf dem langsamen Modell und am Ende allein.
+- Bleibt dem Nutzer eine Aufgabe oder Entscheidung (z. B. ein angekündigtes Zurücksetzen eines Kontingents oder eine
+  höhere Grenze freigeben), steht sie als erster Punkt der Übersicht und in `NUTZER.md`: woran er den Zeitpunkt
+  erkennt (etwa eine Desktop-Benachrichtigung), was er tut, was danach von selbst passiert und was ohne Antwort gilt.
+  Ein „Du musst nichts tun“ an dieser Stelle ersetzen. Grund: Zwischen vielen Statuszeilen geht eine einzelne Bitte
+  sonst unter.
 - Uhrzeiten für den Kopf („Text vom …“) und für Journal-, Stand- und Entscheidungszeilen vor dem Schreiben per
   `date '+%d.%m %H:%M'` holen, nie aus dem Verlauf hochrechnen. Grund: Geschätzte Uhrzeiten liegen leicht 5–10 min
   daneben, und das zusammengeführte Journal wird nach Zeit sortiert, steht dann also in falscher Reihenfolge.
+- Zeilen mit Backticks, `$` oder `$(…)` nur mit gequotetem Heredoc anhängen, die Uhrzeit davor per printf:
+  `{ printf -- '- %s [L0] ' "$T"; cat <<'EOF'` … `EOF` `} >> <datei>`. Danach `tail -n 2 <datei>` lesen. Grund: Ein
+  ungequotetes `<<EOF` führt Backticks und `$(…)` als Befehle aus; der Text landet dann verstümmelt oder gar nicht in
+  der Datei, und nur eine „command not found“-Zeile verrät es.
 
 ## Lagefrage des Nutzers („hängt etwas? geht es voran?“)
 1. In einem parallelen Block lesen: Pane-Status aller Spuren (`herdr pane list`), die letzten Journalzeilen je Spur,
@@ -111,7 +123,8 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
    Wartens unterbricht nur, und ein voreiliges „hängt“ beunruhigt den Nutzer grundlos.
 3. Antworten: erster Satz das Urteil, dann „Was gerade passiert“ (letzte Abschlüsse, neu gestartete Worker, kurze
    Pausen mit Grund), „Fortschritt“ (n von m, Tempo je Stunde, grobe Restzeit, was danach automatisch folgt), „Was
-   bremst“ (Tor mit Zahlen und Freigabezeit), „Überwachung“ (welche Wächter laufen).
+   bremst“ (Tor mit Zahlen und Freigabezeit), „Überwachung“ (welche Wächter laufen). Hat eine neue Ablesung eine
+   frühere Prognose widerlegt, das offen sagen, mit Grund, und Übersicht sowie Entscheidungsfrage gleich anpassen.
 
 ## Prüfen nach Änderungen am Renderer oder Wrapper
 - Änderungen in `.new`-Kopien schreiben und den Renderer erst gegen eine Kopie des Statusordners laufen lassen

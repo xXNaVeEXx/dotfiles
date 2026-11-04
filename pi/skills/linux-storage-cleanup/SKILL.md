@@ -26,8 +26,13 @@ Autonomes Disk-Cleanup auf den Linux-Maschinen der Fleet: nur nachweislich ungen
 - Caches: `~/.thunderbird-import`, `~/.cache/{yay,tracker3,go-build,chromium,mise,omarchy-build,pnpm}`, `npm cache clean --force`, Trash, alte `konfig-*-pruefung`.
 - Flutter/Dart: `.dart_tool` + `build` löschen, Quellen behalten. Alte SDK-Duplikate nur nach Referenz-Check (grep in fish/bash-Config + Projekten; `-l`-Treffer in generierten `*_export_environment.sh` einer stale Sandbox sind kein Nutzungsnachweis).
 
+## Home-Root-Aufräumungen (Unordnung im $HOME)
+- Log-Flut direkt in `~/` (`<prefix>*.log/.out/.jsonl`) = Ausgaben von Orchestrierungs-Workern, deren cwd $HOME war. Älter als die aktuelle Build-Welle und referencing-frei → löschbar; beim Ordnen neuer Wellen Worker-Logs ins Projekt-`.tmp/` schreiben lassen statt nach `~/`.
+- Verdächtige Ordner klassifizieren: SDK-Klone (Flutter-SDK-git, JDK mit Quellen) und Build-Cache-Arbeitsplätze (`target/`-Monster) sind die Großverbraucher; Ordner ohne `.git` sind Kopien → gegen das kanonische Repo (remote/GitHub) abgleichen, dann löschbar. GUI-Handtest-Stub-Homes (`~/lumi-test-home-*`) sind Artefakte.
+- Persönliche Dokumente im Home (Anleitungs-MD/HTML) beim Aufräumen nach `~/Documents/` verschieben statt löschen; Geheimnis-/Dump-Dateien (sops/age-Keys, *.dump) NIEMALS autonom löschen — User-Entscheidung.
+- Lösch-Stapel >1 GB als bg_run mit Abschlussmarker (`echo DONE; df -h /home`) starten; kleine Löschungen sofort.
+
 ## Keep-Liste (NIE autonom löschen)
-- `~/lumi-remote/{repo,target,target-win}` solange Builds laufen (lumi-desktop-Orchestrator baut dort laufend); `~/projects/lumi`, `mag-tech-monorepo` = aktive Dev.
-- `~/migration` (SSH-, SOPS-Keys, Docker-Volumes — unersetzlich), `~/Downloads` (persönliche Dokumente/Medien).
-- `flutter-lumi` (referenziert von `lumi-mobile-remote/apps/lumi/install_iphone.sh`), `.cargo/registry`, Caches laufender Prozesse (Brave, opengrep).
+- `~/projects/lumi`, `mag-tech-monorepo` = aktive Dev. (Frühere Keep-Einträge `~/lumi-remote/{repo,target,target-win}`, `flutter-lumi`, `lumi-mobile-remote` wurden nach Stilleitungs-Check gelöscht: kein Prozess/kein Git/im GitHub redundant — Bedingung „solange Builds laufen" war entfallen; bei wieder aufgenommenem lumi-mobile-Iphone-Bau SDK + Repo neu klonen.)
+- `~/migration` (SSH-, SOPS-Keys, Docker-Volumes, DB-Dumps — unersetzlich; über Deletion entscheidet nur der User), `~/Downloads` (persönliche Dokumente/Medien).
 - Nix-Store-GC + journalctl-Vacuum brauchen root ohne Passwort-Sudo → überspringen und erwähnen.

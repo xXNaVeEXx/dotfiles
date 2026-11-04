@@ -139,10 +139,15 @@ Grund: Eine beim Ausweichen umgeschriebene offene Zeile wartet nach dem Umschlag
 Anbieter, obwohl ihr Grundmodell wieder frei ist. Beim Wecken deshalb offene Zeilen prüfen, deren Modell gerade
 gesperrt ist, und sie auf das freie Modell zurückstellen.
 Bedingte Grenzen (z. B. „solange Anbieter A gesperrt ist, bis zu 4 Läufe bei B“) zusätzlich in den Ablauf jeder
-Kontrollrunde der Startdatei schreiben, nicht nur in den Regelabschnitt. Grund: Die Spur rechnet sonst mit der
-Grundgrenze weiter, die ihr Journal Runde für Runde wiederholt. Beim Wecken nach einem Reset oder zu Beginn einer
-Sperre die laufenden Worker je Anbieter gegen die Grenze samt Ausnahmen halten (`grep -n -i ausnahme <START.md>`);
-liegt die Zahl darunter und ist ein Auftrag offen, die Spur mit Verweis auf die Regel anstoßen.
+Kontrollrunde der Startdatei schreiben, nicht nur in den Regelabschnitt, und in jedem Phasen-Brief wiederholen, der
+eine neue Queue anlegt: Grenzen je Anbieter, Ausnahmen nur bei NEIN des anderen Tors, dazu der Satz „Modell erst beim
+Start wählen, die Modell-Spalte ist nur das Grundmodell“. Grund: Die Spur rechnet sonst mit der Grundgrenze weiter,
+die ihr Journal Runde für Runde wiederholt. Trägt eine neue Queue nur ein Grundmodell (z. B. weil der andere Anbieter
+beim Anlegen gesperrt war), folgt die Spur dieser Spalte wörtlich und startet nach dem Umschlagen weiter alles auf
+diesem Anbieter. Beim Wecken nach einem Reset, beim Umschlagen eines Kurzfensters (frei oder voll) und zu Beginn
+einer Sperre die laufenden Worker je Anbieter gegen die Grenze samt Ausnahmen halten (`grep -n -i ausnahme
+<START.md>`). Liegt die Zahl darunter (Auftrag offen) oder darüber, die Spur mit Verweis auf die Regel anstoßen:
+laufende Worker nie wegen der Grenze abbrechen, nur die nächsten Starts umlenken.
 
 Danach diese Reihenfolge einhalten und die gewählten Hebel als selbst verfallende Regeln umsetzen:
 1. Verfallender Wochenrest: Endspurt-Rampe, Nachtausnahme.
@@ -209,7 +214,18 @@ Tarif-Doku des Anbieters).
    Rampe ohne Sperre. Die älteren Tests mit Schalter aus fahren, sonst hängen sie von der Uhrzeit ab.
 4. Die neuen Regeln in die Start-Datei der Spur schreiben, der laufenden Spur per Prompt mitteilen und mit den
    Messwerten ins Entscheidungs-Log eintragen. Beim nächsten Wecken prüfen, ob die Spur sie anwendet, weil laufende
-   Spuren auf Muster aus ihrem eigenen Verlauf zurückfallen.
+   Spuren auf Muster aus ihrem eigenen Verlauf zurückfallen. Gilt die Regel bei jedem Start (z. B. Modellgrenzen,
+   feste Plätze für lange Ketten), zusätzlich eine Regelwache als `bg_run` ohne Auto-Wecken starten
+   (`triggerOnCompletion: false`, `surviveReload: true`):
+   - Sie liest alle 2 min die Queue und bewertet nur neu gestartete Läufe (runIds gegen die bisher gesehene Menge).
+     So zählen Läufe, die vor der Regel gestartet wurden, nicht als Verstoß.
+   - Für Ausnahmen fragt sie das Tor des anderen Anbieters ab (z. B. `quota.sh <anbieter>` Exit ≠ 0 → höhere Grenze).
+   - Beim ersten Verstoß stößt sie die Spur mit Regel und Zahlen an, beim zweiten weckt sie den Leitstand per Prompt
+     und endet mit Exit ≠ 0. Sie endet auch bei DONE der Spur oder nach einer Frist bis zum nächsten eigenen Wecken.
+   - Vorher mit Test-Queue, DRY-Schalter (Prompt nur ins Log), Schlaf 1 s und per env erzwungenem Torzustand testen:
+     erlaubter Wechsel, erster Verstoß, kein neuer Lauf, zweiter Verstoß, Ausnahme bei gesperrtem Tor, DONE.
+   Grund: Der Leitstand schläft zwischen seinen Kontrollen, ein Rückfall fiele erst Stunden später auf; ein
+   Weckruf je Prüfung kostet dagegen jedes Mal seinen ganzen Kontext.
 
 ## 8. Konto, das auch die Anwendung des Nutzers bedient
 Bedient dasselbe Abo die KI der Anwendung, die der Nutzer gerade testet (z. B. die App-KI auf dem Testcluster),
@@ -247,12 +263,18 @@ mehr verbraucht, darum in Worker-Stunden rechnen:
    Stunden, genauer aus Start und Ende der Läufe im Journal, Modell aus der Queue-Zeile). Punkte je Worker-Stunde =
    Δ% ÷ Worker-Stunden, getrennt für Woche und Kurzfenster. Der Kontowert enthält Leitstand und andere Sitzungen
    desselben Kontos; darum als Spanne angeben (ganzer Anstieg / Anstieg ohne geschätzten Leitstand-Anteil).
-3. Restbedarf: offene Einheiten × Worker-Minuten je Einheit (Mittel der letzten Abschlüsse) plus die Folgeschritte
-   der Phase.
+3. Restbedarf: offene Einheiten × Worker-Minuten je Einheit plus die Folgeschritte der Phase. Minuten und Prozent je
+   Einheit getrennt je Modell aus den letzten Abschlüssen nehmen. Grund: Ein langsameres Modell braucht je Einheit
+   leicht doppelt so lange und kann je Einheit mehr Prozent seines Kontos kosten, als seine Laufzeit vermuten lässt.
 4. Kapazität bis zur Sperre je Anbieter = (Grenze − Ist) ÷ Punkte je Worker-Stunde. Beim Anbieter mit kleinem
    Kurzfenster zusätzlich die nutzbaren Fenster bis zur Wochengrenze zählen (Fenster-Enden, Hochlast-Sperre §7
    Punkt 3) und den kleineren Wert nehmen. Daraus Sperrzeitpunkt je Anbieter und Pausenbeginn (alle gesperrt)
-   ableiten und in die Übersicht schreiben.
+   ableiten und in die Übersicht schreiben. Abschnittsweise rechnen: bis zum nächsten Umschlagen eines Kurzfensters
+   mit der laufenden Modellverteilung, danach mit der Verteilung, die die Ausweichregel dann vorgibt (volles
+   Kurzfenster → der andere Anbieter trägt mehr Plätze); den Verbrauch des Leitstands auf seinem Konto je Stunde
+   dazurechnen. Nach jeder neuen Ablesung die Prognose prüfen; liegt sie daneben, Übersicht und Meldung sofort
+   korrigieren und dem Nutzer den Grund nennen. Grund: Eine Prognose mit fester Modellverteilung unterschätzt den
+   teuren Anbieter, sobald das Kurzfenster des billigen voll ist.
 5. Reicht die Kapazität nicht bis zum Phasenende oder einer sinnvollen Bruchstelle, den Nutzer früh fragen, nicht
    erst beim Sperren: eine konkrete Grenze vorschlagen (z. B. Wochen-Tor 75 statt 55) und die Rechnung in einem Satz
    nennen (Bedarf, Kapazität mit alter und neuer Grenze, Pausenzeitraum ohne Erhöhung). Grund: Die Wochenreserve
