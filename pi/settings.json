@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.4.0",
+  "lastChangelogVersion": "1.5.0",
   "defaultProvider": "zai-coding-cn",
   "defaultModel": "glm-5.3",
   "hideThinkingBlock": true,
@@ -34,5 +34,14 @@
     "compat": true,
     "piProviders": true,
     "devTools": true
+  },
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-mcp-adapter\",\"scope\":\"user\"}": "7.0.1",
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.46.0",
+    "{\"source\":\"npm:pi-subagents\",\"scope\":\"user\"}": "0.84.0",
+    "{\"source\":\"npm:bigpowers\",\"scope\":\"user\"}": "2.93.3",
+    "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.22.0",
+    "{\"source\":\"npm:pi-lens\",\"scope\":\"user\"}": "4.4.8",
+    "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.69.2"
   }
 }

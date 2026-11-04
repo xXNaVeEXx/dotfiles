@@ -89,6 +89,16 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
 - Übersicht, `ERLEDIGT.md` und `NUTZER.md` bei jedem Meilenstein und bei jedem Wecken mit neuem Stand nachziehen: je
   Phase „erledigt / fehlt genau / nächster Schritt“, Engpass, Zeitrahmen. Hat der Nutzer die Seite gewünscht, bleibt
   das eine Daueraufgabe bis zum Abschluss. Veraltete Übersicht ist schlimmer als keine.
+- Endet die Spur-Phase und arbeitet der Leitstand Folgeaufträge selbst ab (eigene Worker, Releases, Datenarbeiten),
+  dafür sofort eine eigene Zeile anlegen: Steuerordner mit `PLAN.md` (eine Paketzeile je Auftrag mit Issue-Nummer und
+  PRs, eine Logzeile je Meilenstein) und alle neuen Issue-Nummern in der Konfiguration zuordnen (z. B. `mag_weitere`),
+  dazu Titel und Nutzer-To-dos umschreiben. Abgeschlossenen Spuren den Stop-Marker setzen. Grund: Der Zeitstempel
+  im Kopf erneuert sich mit jedem Timerlauf und täuscht Aktualität vor, während Text, Spuren und PR-Zuordnung beim
+  Phasenwechsel stehen bleiben; der Nutzer liest dann einen Stand von vor Tagen als „jetzt“.
+- Die PR-Abfrage des Renderers muss alle PRs seit Laufbeginn umfassen (`gh pr list --limit` größer als die Zahl der
+  PRs seit Start, Zählprobe `gh pr list --state all --limit 500 --json createdAt` gegen `pr_seit`). Grund: Mit zu
+  kleinem Limit fallen die ältesten PRs still heraus, und früh fertige Spuren springen auf „in Arbeit“ zurück, weil
+  ihnen die gemergten PRs fehlen.
 - Zeitrahmen und Sperrzeitpunkte nur aus Messwerten schreiben (references/kontingent.md §9). Laufen die Teile einer
   Gruppe nacheinander, endet die Queue frühestens nach max(längste Restkette × Minuten je Teil, alle offenen Teile ×
   Minuten je Teil ÷ Plätze); Minuten je Teil getrennt je Modell aus den letzten Abschlüssen. Die längste Kette in der
@@ -125,6 +135,10 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
    Pausen mit Grund), „Fortschritt“ (n von m, Tempo je Stunde, grobe Restzeit, was danach automatisch folgt), „Was
    bremst“ (Tor mit Zahlen und Freigabezeit), „Überwachung“ (welche Wächter laufen). Hat eine neue Ablesung eine
    frühere Prognose widerlegt, das offen sagen, mit Grund, und Übersicht sowie Entscheidungsfrage gleich anpassen.
+- Fragt der Nutzer, ob die Statusseite aktuell ist, den Inhalt prüfen, nicht den Zeitstempel: Text der Seite ohne
+  Tags auslesen (`re.sub` über Script/Style und Tags, Zeilen ausgeben) und gegen den tatsächlichen Stand halten
+  (offene PRs, letzte Merges, offene Nutzer-Aufgaben, Änderungszeit der Quelldateien per `ls -la`). Veraltetes
+  sofort korrigieren, neu erzeugen, prüfen und dann in einer Tabelle „vorher → jetzt“ antworten.
 
 ## Prüfen nach Änderungen am Renderer oder Wrapper
 - Änderungen in `.new`-Kopien schreiben und den Renderer erst gegen eine Kopie des Statusordners laufen lassen
