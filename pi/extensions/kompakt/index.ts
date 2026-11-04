@@ -6,10 +6,12 @@
  * - ctrl+o (app.tools.expand): höchstens 15 Zeilen Ausgabe, ohne Kasten.
  * - Klick auf eine Zeile: Overlay mit voller Ausgabe; Klick auf "[Diff #id]": Diff-Betrachter von artifacts.
  * - /details [n] bzw. alt+o: Overlay für den n-letzten Aufruf (Tastatur-Alternative).
- * - Werkzeuggruppen: aufeinanderfolgende Aufrufe (ohne Text dazwischen) bilden eine Gruppe.
- *   Am Ende eines Agent-Durchlaufs klappt sie automatisch zu: „▸ 4 Aufrufe · Befehl ×2 · … · Klick: aufklappen“.
+ * - Werkzeuggruppen: aufeinanderfolgende Aufrufe (ohne Text dazwischen) bilden eine Gruppe,
+ *   dargestellt als „▸ 4 Aufrufe · Befehl ×2 · … · Klick: aufklappen“.
  *   Klick auf die Gruppenzeile (oder alt+g für die letzte) klappt gestaffelt animiert auf/zu; ▾-Spalte klappt zu.
- *   /kompakt gruppen auto|an|aus; gespeichert in ~/.pi/agent/kompakt.json (Standard: auto).
+ *   /kompakt gruppen zu|auto|an|aus; gespeichert in ~/.pi/agent/kompakt.json (Standard: zu = immer zugeklappt).
+ *   Bei Sitzungsstart/Reload werden Gruppen zusätzlich aus der Sitzungshistorie neu aufgebaut
+ *   (zugeklappt) – alter Verlauf, auch Review-Durchläufe, erscheint damit als Gruppenzeilen.
  * - Eingeklapptes Denken: Label „✦ Gedanken · Klick zum Aufklappen“ über ctx.ui.setHiddenThinkingLabel;
  *   das global zugeklappte Denken kommt aus der pi-Einstellung hideThinkingBlock (Klick-Toggle von pi bleibt).
  * - /kompakt an|aus|status – gespeichert in ~/.pi/agent/kompakt.json (Standard: an).
@@ -55,14 +57,18 @@ function dbg(msg: string): void {
 	}
 }
 
-type GroupMode = "auto" | "an" | "aus";
+type GroupMode = "zu" | "auto" | "an" | "aus";
+
+function parseGroupMode(v: unknown): GroupMode | undefined {
+	return v === "zu" || v === "auto" || v === "an" || v === "aus" ? v : undefined;
+}
 
 function loadConfig(): { enabled: boolean; groups: GroupMode } {
 	try {
 		const j = JSON.parse(readFileSync(CONFIG_FILE, "utf8")) as { enabled?: unknown; groups?: unknown };
-		return { enabled: j.enabled !== false, groups: j.groups === "an" || j.groups === "aus" ? j.groups : "auto" };
+		return { enabled: j.enabled !== false, groups: parseGroupMode(j.groups) ?? "zu" };
 	} catch {
-		return { enabled: true, groups: "auto" };
+		return { enabled: true, groups: "zu" };
 	}
 }
 
@@ -167,7 +173,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		if (!liveCalls.has(callId)) return dbg(`add ${callId}: skip (nicht live)`);
 		if (groupOf.has(callId)) return dbg(`add ${callId}: skip (schon gruppiert)`);
 		if (!openGroup) {
-			const g: Group = { id: ++groupSeq, members: [], collapsed: false };
+			const g: Group = { id: ++groupSeq, members: [], collapsed: groupMode === "zu" };
 			groups.set(g.id, g);
 			openGroup = g;
 			if (groups.size > 80) {
@@ -180,6 +186,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		}
 		openGroup.members.push(callId);
 		groupOf.set(callId, openGroup);
+		if (groupMode === "zu") lastGroup = openGroup;
 		dbg(`add ${callId} → g${openGroup.id} (n=${openGroup.members.length})`);
 	}
 
@@ -192,7 +199,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 	function collapseAll(): void {
 		closeGroupBoundary();
 		dbg(`agent_end: groups=${groups.size} mode=${groupMode}`);
-		if (groupMode !== "auto") return;
+		if (groupMode === "an" || groupMode === "aus") return;
 		for (const g of groups.values()) {
 			if (!g.collapsed && g.members.length >= 2) {
 				g.collapsed = true;
@@ -208,6 +215,67 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 		g.animAt = Date.now();
 		lastGroup = g;
 		repaintGroup(g);
+	}
+
+	/** Sitzungshistorie: vergangene Aufrufe zu (zugeklappten) Gruppen formen – alter Verlauf bleibt kompakt. */
+	function rebuildHistory(ctx: ExtensionContext): void {
+		if (groupMode === "aus") return;
+		type Block = { type?: string; id?: string; name?: string; arguments?: Record<string, unknown> };
+		type Msg = { role?: string; toolCallId?: string; content?: unknown; isError?: boolean; durationMs?: number };
+		let msgs: Msg[] = [];
+		try {
+			msgs = (ctx.sessionManager.getEntries() as { type?: string; message?: Msg }[]).filter((e) => e.type === "message" && e.message).map((e) => e.message as Msg);
+		} catch (err) {
+			return dbg(`rebuild: getEntries fehlgeschlagen: ${(err as Error).message}`);
+		}
+		if (msgs.length > 4000) msgs = msgs.slice(-4000);
+		const results = new Map<string, { output?: string; isError: boolean; durationMs?: number }>();
+		const calls: { seq: number; id: string; toolName: string; args: Record<string, unknown> }[] = [];
+		let seq = 0;
+		for (const m of msgs) {
+			if (m.role === "toolResult") {
+				if (m.toolCallId) results.set(m.toolCallId, { output: textOf({ content: m.content }), isError: !!m.isError, durationMs: m.durationMs });
+				continue;
+			}
+			if (closesGroup(m as { role?: string; content?: unknown })) {
+				seq++;
+				continue;
+			}
+			if (m.role !== "assistant" || !Array.isArray(m.content)) continue;
+			for (const b of m.content as Block[]) {
+				if (b?.type === "toolCall" && typeof b.id === "string") calls.push({ seq, id: b.id, toolName: String(b.name ?? ""), args: (b.arguments ?? {}) as Record<string, unknown> });
+			}
+		}
+		let cwd = process.cwd();
+		try {
+			cwd = ctx.sessionManager.getCwd() ?? cwd;
+		} catch {
+			// ältere pi-API ohne getCwd
+		}
+		const bySeq: (typeof calls)[] = [];
+		for (const c of calls) {
+			(bySeq[c.seq] ??= []).push(c);
+		}
+		let built = 0;
+		for (let i = bySeq.length - 1; i >= 0; i--) {
+			const arr = bySeq[i];
+			if (!arr || arr.length < 2) continue;
+			if (++built > 80) break; // gleiche Obergrenze wie live
+			const g: Group = { id: ++groupSeq, members: [], collapsed: groupMode !== "an" };
+			for (const c of arr) {
+				if (!records.has(c.id)) {
+					const r = results.get(c.id);
+					records.set(c.id, { toolName: c.toolName, args: c.args, cwd, running: false, isError: r?.isError ?? false, durationMs: r?.durationMs, output: r?.output });
+					order.push(c.id);
+					if (order.length > 500) records.delete(order.shift() as string);
+				}
+				g.members.push(c.id);
+				groupOf.set(c.id, g);
+			}
+			groups.set(g.id, g);
+			lastGroup ??= g;
+		}
+		dbg(`rebuild: ${msgs.length} Nachrichten → ${built} Gruppen (${groupMode})`);
 	}
 
 	const remember = (ctx: ExtensionContext | undefined) => {
@@ -291,7 +359,12 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 			if (g && g.members.length >= 2 && groupMode !== "aus") {
 				const idx = g.members.indexOf(this.callId);
 				if (g.collapsed) {
-					if (idx !== 0) return [];
+					if (idx !== 0) {
+						// Versteckte Mitglieder: Gruppenzeile (Mitglied 0) aktuell halten (Neuzugang, Dauer, Status)
+						const first = g.members[0];
+						queueMicrotask(() => invalidateCall.get(first)?.());
+						return [];
+					}
 					const fresh = g.animAt !== undefined && Date.now() - g.animAt < 220;
 					if (fresh && !this.animScheduled) {
 						this.animScheduled = true;
@@ -347,7 +420,11 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 			if (this.info.running) return [];
 			const g = groupOf.get(this.callId);
 			if (g && g.members.length >= 2 && groupMode !== "aus") {
-				if (g.collapsed) return [];
+				if (g.collapsed) {
+					const first = g.members[0];
+					queueMicrotask(() => invalidateCall.get(first)?.());
+					return [];
+				}
 				if (g.animAt !== undefined) {
 					const wait = (g.members.indexOf(this.callId) + 2) * STAGGER - (Date.now() - g.animAt);
 					if (wait > 0) {
@@ -450,8 +527,9 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_start", (e, ctx) => {
-		remember(ctx);
-		if ((e as { reason?: string })?.reason !== "reload") resetGroups();
+	remember(ctx);
+	resetGroups();
+	rebuildHistory(ctx);
 		// Eingeklapptes Denken hübsch beschriften (pi-eigener Klick-Toggle bleibt aktiv).
 		try {
 			ctx.ui.setHiddenThinkingLabel("✦ Gedanken · Klick zum Aufklappen");
@@ -536,18 +614,26 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 	pi.registerCommand("kompakt", {
 		description: "Kompakte Werkzeugzeilen: an | aus | status | gruppen auto|an|aus",
 		getArgumentCompletions: (prefix: string) =>
-			["an", "aus", "status", "gruppen auto", "gruppen an", "gruppen aus"].filter((s) => s.startsWith(prefix.trim())).map((s) => ({ value: s, label: s })),
+			["an", "aus", "status", "gruppen zu", "gruppen auto", "gruppen an", "gruppen aus"].filter((s) => s.startsWith(prefix.trim())).map((s) => ({ value: s, label: s })),
 		handler: async (args, ctx) => {
 			remember(ctx);
 			const a = String(args ?? "").trim().toLowerCase();
 			if (a.startsWith("gruppen")) {
-				const m = a.split(/\s+/)[1];
-				if (m !== "auto" && m !== "an" && m !== "aus") {
-					ctx.ui.notify("Aufruf: /kompakt gruppen auto | an | aus", "warning");
+				const m = parseGroupMode(a.split(/\s+/)[1]);
+				if (!m) {
+					ctx.ui.notify("Aufruf: /kompakt gruppen zu | auto | an | aus", "warning");
 					return;
 				}
 				groupMode = m;
 				if (m === "aus") resetGroups();
+				else if (m === "zu")
+					for (const g of groups.values()) {
+						if (!g.collapsed && g.members.length >= 2) {
+							g.collapsed = true;
+							g.animAt = Date.now();
+							lastGroup = g;
+						}
+					}
 				try {
 					saveConfig(enabled, groupMode);
 				} catch (err) {
@@ -571,7 +657,7 @@ export default function kompaktExtension(pi: ExtensionAPI) {
 			}
 			const where = existsSync(CONFIG_FILE) ? relPath(CONFIG_FILE, ctx.cwd) : "Standard";
 			ctx.ui.notify(
-				`kompakt ist ${enabled ? "an" : "aus"} · Gruppen: ${groupMode === "auto" ? "auto (klappt nach jedem Durchlauf zu)" : groupMode === "an" ? "an (nur Klick/alt+g)" : "aus"} (${where})`,
+				`kompakt ist ${enabled ? "an" : "aus"} · Gruppen: ${groupMode === "zu" ? "zu (immer zugeklappt)" : groupMode === "auto" ? "auto (klappt nach jedem Durchlauf zu)" : groupMode === "an" ? "an (bleiben auf, Klick/alt+g)" : "aus"} (${where})`,
 				"info",
 			);
 		},
