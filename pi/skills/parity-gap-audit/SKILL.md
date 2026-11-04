@@ -196,7 +196,13 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
      dieselbe Datei erweitern. Im Task verbieten, die YAML per `yaml.dump` komplett neu zu schreiben (nur anhängen oder
      gezielt ändern), da das riesige Diffs erzeugt und Umformatierungen mitcommittet. Die Modellwahl erst beim Start
      treffen und in die Modellspalte der Queue schreiben; Style-Meldungen des Editors zu YAML (Zeilenlänge, Tippfehler)
-     ignorieren, maßgeblich ist das Prüfskript. Beim Wechsel in diese Phase den Herzschlag auf die Queue der neuen
+     ignorieren, maßgeblich ist das Prüfskript. Endet ein Worker ohne Schlusszeile und seine `.activity` bleibt still,
+     zuerst die YAML mit `python3 -c 'import yaml,sys;yaml.safe_load(open(sys.argv[1]))' <datei>` prüfen: Typische
+     Ursache sind unmaskierte `"` innerhalb doppelt gequoteter Strings (deutsche Zitate stattdessen „…“ mit
+     Schlusszeichen “). Selbst reparieren, `check` laufen lassen und die gemeldeten unzugeordneten F-IDs einem frischen
+     Fortsetzer-Worker (ohne resumeFrom) als Liste geben. Zählt das RAM-Tor alle `pi`-Prozesse mit cwd im Projekt,
+     zählen Orchestrator-Sitzung und fremde Sitzungen mit (ein Worker weniger nutzbar): freie Plätze erst nach dem
+     Ende eines Workers belegen, nichts Fremdes beenden. Beim Wechsel in diese Phase den Herzschlag auf die Queue der neuen
      Phase umstellen (siehe subagent-orchestration).
    - Sektionen C/E lesen. Jede hoch-Lücke selbst im eigenen Code bestätigen (`rg`, Zeilen lesen) und in der
      Konsolidierung als „im Code bestätigt“ kennzeichnen. Bewusste Architekturentscheide (anderer Standard, anderes
