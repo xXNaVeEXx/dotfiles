@@ -27,13 +27,19 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
 - Dann anstoßen, auch während einer Kontingent-Pause: frühestens 3 min nach dem Abbruch, mit ≥ 10 min Abstand,
   höchstens 4× in 2 h, danach ALARM.
 
-## 3. Kontext-Überlauf
+## 3. Kontext-Überlauf und unbrauchbarer Verlauf
 - Erkennen an `prompt is too long`, `context length`, `too many tokens` (Muster als Variable im Skript). Die
   Fehlermeldung dafür nicht unter ~600 Zeichen kürzen, weil die Ursache hinten im JSON steht und die gekürzte Meldung
   wie ein gewöhnlicher Fehler aussieht.
 - Anstoßen und `--session` helfen nie, weil jede Anfrage wieder die volle Historie schickt. pi beenden, eine frische
   Sitzung mit Start-Prompt und Hinweis auf die alte Sitzungsdatei starten und die alte im Zustand merken (`fresh=`),
   damit spätere Neustarts sie nicht fortsetzen. Höchstens 3 solche Neustarts in 6 h, danach ALARM.
+- Genauso behandeln: Der Anbieter lehnt den Lauf NACH einem Anstoß erneut als ungültige Anfrage ab (HTTP 400
+  `invalid_request_error`, Muster als env-Variable, z. B. `WD_KAPUTT_RE`). Typisch kurz vor einem Überlauf, wenn der
+  Kontext-Proxy nicht mehr falten kann: „This model does not support assistant message prefill“ oder „final assistant
+  content cannot end with trailing whitespace“. Den ersten solchen Abbruch normal anstoßen; frisch starten erst, wenn
+  der Abbruch jünger ist als der letzte Anstoß. Grund: Der Verlauf selbst ist dann kaputt, jeder weitere Anstoß
+  scheitert gleich, und ohne diese Regel stand der Leitstand, bis der Nutzer von Hand /new machte.
 - Vorbeugen: Die Stand-Datei an jedem Phasenübergang vollständig nachziehen, damit der frische Start nichts verliert.
   Wechselnde Kennungen (Aufsicht-Task, runIds) dort nur in der Zeile zum aktuellen Stand ändern und den Wechsel als
   neue Zeile anhängen, nie per `sed -i 's/<alt>/<neu>/g'` über die ganze Datei, weil das auch die Verlaufszeilen
@@ -48,6 +54,11 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   eine Schlusszeile der `.out`, weil Worker sie oft nicht am Zeilenanfang schreiben.
 - Die Ende-Zeile (`WARTE-ENDE fertig|frei|herzschlag`) und was die Spur darauf tut, gehört in ihre Startdatei und in
   Vorlagen, die Startdateien erzeugen.
+- Wechselt die Spur in eine Phase mit eigener Queue-Datei (eigener warte.sh-Alias), den Warte-Befehl überall
+  mitziehen: Startdatei, Phasen-Doku, Watchdog-env-Texte (`WD_SLEEP`, `WD_WECKER_MSG`) samt ihren Verweisen auf den
+  gültigen Abschnitt. Danach `grep -n 'warte\.sh <spur>' <startdatei> <phasen-doku> <watchdog-env>` gegen den Alias
+  halten. Grund: Ein Herzschlag auf der alten Queue sieht die Worker der neuen Phase nicht und endet erst nach
+  `--max`, und die Spur übernimmt den Befehl aus dem Abschnitt, auf den ein Anstoß verweist.
 - Grund: Eine acp-Abschlussmeldung, die während eines automatischen Turns ohne Arbeitsauftrag eintrifft (Review- oder
   Lernpass, Kontext-Hinweis des Proxys), bleibt liegen, und eine idle Spur weckt sie nicht zuverlässig. Bei der
   Leerlauf-Prüfung zählen gerade fertig gewordene Worker noch als aktive Kinder, die Frist steigt auf 150 min, und die
@@ -89,10 +100,16 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
 - Änderungen in eine Kopie schreiben (Shell-Skripte: `<skript>.new` daneben; Python: siehe unten), mit `DRY=1` und
   Test-STATE/-LOG proben und per `mv` atomar einsetzen. Grund: Ein laufender Timer liest sonst halb geschriebene
   Skripte.
+- Die Sicherung (`cp -p`) und die erste Änderung derselben Datei nie im selben parallelen Tool-Block absetzen, sondern
+  nacheinander. Grund: Parallel läuft das Editieren oft zuerst, und die Sicherung enthält dann schon die neue Fassung.
 - Das Testskript nimmt den Pfad des geprüften Skripts aus einer env-Variable (`bash "${WD_SCRIPT:-<pfad>}"`,
   `Q=${WPQ_PY:-<pfad>}`). Den neuen Testfall zuerst gegen die alte Fassung laufen lassen (er muss rot sein), dann gegen
   die Kopie (alles grün), erst dann `mv`. Grund: Nur ein Test, der die alte Fassung rot zeigt, belegt, dass er den
   Fehler wirklich fängt.
+- Test-Attrappen für Prozesse (`sleep 300 &` als „pi“, den der Watchdog beenden soll) immer mit `>/dev/null 2>&1`
+  starten und am Ende des Falls selbst beenden. Grund: Beim Rot-Lauf beendet die alte Fassung sie nicht; sie halten
+  dann die Ausgabe-Pipe offen, und der Testlauf hängt bis zum Ablauf der Attrappe (Tool-Timeout).
+- shellcheck ist nicht installiert: `nix shell nixpkgs#shellcheck -c shellcheck -S warning <skript>`.
 - Python-Steuerskripte (Queue, Phasen, Plan-Prüfer) als Testkopie unter GLEICHEM Dateinamen in einen eigenen Ordner
   legen (`test-<skript>/neu/<skript>.py`), nicht als `<skript>_new.py` oder `<skript>.py.new`. Grund: Skripte, die
   ihren eigenen Namen in `/proc/<pid>/cmdline` suchen (Lebend-Prüfung laufender Instanzen), scheitern unter anderem
