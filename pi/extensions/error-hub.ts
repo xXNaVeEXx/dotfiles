@@ -342,6 +342,20 @@ function resolveInteractiveModePath(): string | undefined {
 	} catch {
 		/* Fallback unten */
 	}
+	// Nix-Store-Fallback: Pi kommt hier per nix (Pfad wechselt je Update) —
+	// neueste /nix/store/*-pi-*/lib/pi/…-Installation nehmen.
+	try {
+		const rel = "lib/pi/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/interactive-mode.js";
+		const hits = fs
+			.readdirSync("/nix/store")
+			.filter((d) => d.includes("-pi-") && !d.endsWith(".drv"))
+			.map((d) => `/nix/store/${d}/${rel}`)
+			.filter((p) => fs.existsSync(p));
+		hits.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+		if (hits[0]) return hits[0];
+	} catch {
+		/* Fallback unten */
+	}
 	const home = process.env.HOME ?? "";
 	const known = `${home}/.pi/agent/install/releases/1.2.0/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/interactive-mode.js`;
 	return fs.existsSync(known) ? known : undefined;

@@ -3,6 +3,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@earendil-works/pi-coding-agent": ["./.pi-types/@earendil-works/pi-coding-agent"],
+      "@earendil-works/pi-tui": ["./.pi-types/@earendil-works/pi-tui"]
+    },
     "lib": ["ES2023"],
     "types": ["node"],
     "strict": true,

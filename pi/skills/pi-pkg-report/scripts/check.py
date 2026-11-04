@@ -58,6 +58,10 @@ ROLES: dict[str, set[str]] = {
     "eigenbau:error-hub": {"diagnostics"},
     "eigenbau:hermes-mind": {"self-improvement"},
     "eigenbau:kompakt": {"terminal-ui"},
+    "eigenbau:herdr-agent-state": {"extern-integration"},
+    "eigenbau:ht-onti": {"test-logging"},
+    "eigenbau:image-paste": {"input-handling"},
+    "eigenbau:turn-weiter": {"session-continuation"},
 }
 
 # Bewertung bekannter Überlappungspaare (Sortierung egal, Key = frozenset).
