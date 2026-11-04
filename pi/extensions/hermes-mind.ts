@@ -77,7 +77,7 @@ function rotateErrorLog(): void {
       const buf = fs.readFileSync(LOG_FILE);
       const tail = buf.subarray(buf.length - 64 * 1024);
       const nl = tail.indexOf(10); // resume at next line boundary
-      fs.writeFileSync(LOG_FILE, nl >= 0 ? tail.subarray(nl + 1) : tail);
+      fs.writeFileSync(LOG_FILE, new Uint8Array(nl >= 0 ? tail.subarray(nl + 1) : tail));
     }
   } catch {
     /* first run / missing file */
@@ -355,6 +355,25 @@ let indexing = false;
 function loadSqlite(): SqliteDb | null {
   if (db) return db;
   if (dbBroken) return null;
+  // Kandidat 0: node:sqlite-Built-in — ABI-fest, überlebt nix-Node-Wechsel
+  // (better-sqlite3s native Bindung bricht bei jedem Node-Update mit NODE_MODULE_VERSION-Mismatch).
+  try {
+    // SAFETY: node:sqlite bringt im Extension-Kontext keine Typdeklarationen mit; wir nutzen
+    // nur die strukturell identische Teilmenge prepare/run/get/all/exec/close von DatabaseSync.
+    const { DatabaseSync } = createRequire(__filename)("node:sqlite") as {
+      DatabaseSync: new (p: string) => Omit<SqliteDb, "pragma">;
+    };
+    const d = new DatabaseSync(DB_FILE);
+    db = initSchema({
+      prepare: (s) => d.prepare(s),
+      exec: (s) => d.exec(s),
+      pragma: (s) => d.exec(`PRAGMA ${s}`),
+      close: () => d.close(),
+    });
+    return db;
+  } catch {
+    /* weiter mit better-sqlite3 */
+  }
   const candidates = [
     () => createRequire(__filename).resolve("better-sqlite3"),
     () => path.join(HOME, ".pi/agent/npm/node_modules/better-sqlite3"),
@@ -367,21 +386,26 @@ function loadSqlite(): SqliteDb | null {
       // SAFETY: better-sqlite3 is CJS; some jiti interop shapes expose the constructor on .default.
       const mod = req(modPath) as { default?: new (p: string) => SqliteDb } & (new (p: string) => SqliteDb);
       const Database = mod.default ?? mod;
-      db = new Database(DB_FILE);
-      db.pragma("journal_mode = WAL");
-      db.exec(`CREATE TABLE IF NOT EXISTS files (
-        path TEXT PRIMARY KEY, mtime INTEGER, session_id TEXT, title TEXT,
-        started TEXT, last_activity TEXT, cwd TEXT, msg_count INTEGER)`);
-      db.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS msgs USING fts5(
-        content, role UNINDEXED, file UNINDEXED, entry_id UNINDEXED, ts UNINDEXED)`);
+      db = initSchema(new Database(DB_FILE));
       return db;
     } catch {
       /* try next candidate; log only when ALL fail */
     }
   }
-  logError("loadSqlite", "all candidates failed: better-sqlite3 not loadable from any known path");
+  logError("loadSqlite", "all candidates failed: neither node:sqlite nor better-sqlite3 loadable");
   dbBroken = true;
   return null;
+}
+
+/** WAL + Schema anlegen — gemeinsam für beide SQLite-Backends. */
+function initSchema(raw: SqliteDb): SqliteDb {
+  raw.pragma("journal_mode = WAL");
+  raw.exec(`CREATE TABLE IF NOT EXISTS files (
+        path TEXT PRIMARY KEY, mtime INTEGER, session_id TEXT, title TEXT,
+        started TEXT, last_activity TEXT, cwd TEXT, msg_count INTEGER)`);
+  raw.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS msgs USING fts5(
+        content, role UNINDEXED, file UNINDEXED, entry_id UNINDEXED, ts UNINDEXED)`);
+  return raw;
 }
 
 function textFromContent(c: unknown): string {
