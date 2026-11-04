@@ -1,6 +1,6 @@
 Environment: Pi coding agent; default provider zai-coding-cn (glm-5.3). Extensions laden via jiti aus ~/.pi/agent/extensions/*.ts; 'typebox'-Imports werden vom Pi-Loader aliased.
 §
-Self-improvement stack lives in hermes-mind: extension ~/.pi/agent/extensions/hermes-mind.ts; memory files ~/.pi/agent/hermes-mind/MEMORY.md + USER.md (this file, §-separated entries, frozen snapshot per session); skill_manage tool over ~/.pi/agent/skills; session_search (FTS5, ~/.pi/agent/hermes-mind/sessions.db); autonomous review turns arrive as custom message 'hermes-review' every N user turns / tool iterations.
+Self-improvement stack lives in hermes-mind: extension ~/.pi/agent/extensions/hermes-mind.ts; MEMORY.md + USER.md in ~/.pi/agent/hermes-mind (§-getrennt, Snapshot je Session eingefroren); skill_manage über ~/.pi/agent/skills (patch nur SKILL.md, references/* nur per write_file als ganze Datei); session_search (FTS5, hermes-mind/sessions.db); Review-Turns = Custom-Message 'hermes-review'.
 §
 Hermes design lessons: 'nudges' are post-turn background review passes, not injected text; the memory snapshot is frozen at session start to protect the provider prefix cache; skills must be class-level umbrellas (SKILL.md + references/ depth), never session artifacts; task-learnings belong in skills, only every-session facts belong in memory.
 §

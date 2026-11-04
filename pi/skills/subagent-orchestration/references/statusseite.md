@@ -10,7 +10,7 @@
 ## Abschnitte und Quellen
 | Abschnitt | Quelle | env |
 |---|---|---|
-| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->` |
+| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->`, Klarnamen `STATUS_NAMES='KÜRZEL=Name;…'` |
 | Gesamtplan n von m | Checkliste unter `## Steps` im Plan, erster offener Schritt = „jetzt“ | `STATUS_STEPS_MD`, `STATUS_STEPS_HEAD` |
 | Laufende Arbeit | Queue-Tabellen in `<STATUS_DIR>/PLAN.md`, je Queue `## <Name>`, Zeilen je ID-Gruppe | `STATUS_PKG_RE` oder `STATUS_PKG_PREFIX`, `STATUS_GROUPS='PRÄFIX=Label;…'` |
 | Ressourcen und Kontingent | MemAvailable/Swap + letzte Zeilen von Tor-Befehlen (auch bei Exit ≠ 0) | `STATUS_CMDS='[["Label","Befehl"],…]'` |
@@ -49,13 +49,34 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   die runId zuerst dort, das Journal ist nur Rückfall.
 - Bei jedem Abschluss eines Planschritts (z. B. `plannotator_mark_done`) auch das `[x]` in der Steps-Checkliste des
   Plans setzen, `[~]` für teilweise – der Zähler „Gesamtplan“ liest nur die Datei.
-- Zahlen im Übersichtstext nie von Hand schreiben, sondern als Platzhalter `{{queue:<Sektion>}}` bzw.
-  `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, … offen“ aus derselben Queue wie
-  die Tabelle; Kopf als „Stand in Kürze (Text vom <Datum> – Zahlen live)“. Grund: Von Hand eingetragene Zahlen
-  veralten mit dem nächsten Abschluss und widersprechen dann der Tabelle auf derselben Seite. Fehlt das der Vorlage
-  noch, beim Einrichten ergänzen und in `render()` `read(OVERVIEW_MD)` durch `fill_placeholders(read(OVERVIEW_MD), work)`
-  ersetzen:
+- Zahlen im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei jedem Lauf füllt:
+  - `{{queue:<Sektion>}}` bzw. `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, …
+    offen“ aus derselben Queue wie die Tabelle.
+  - `{{quota:<Name>}}` → „<Name> W % der Woche, 5-Stunden-Fenster K %“, bei Sperre mit „(neue Läufe gesperrt bis …)“,
+    aus der letzten Zeile des `STATUS_CMDS`-Eintrags „Kontingent <Name>“ (`kurz=K%` … `woche=W%`, bei Sperre
+    `NEIN … frei ab <Zeit>`).
+  - `{{ketten:<Sektion>}}` → die vier Bereiche mit den meisten offenen Teilen (IDs `…<KÜRZEL>-T<n>`), mit Klarnamen
+    aus `STATUS_NAMES`. Damit steht die längste Restkette immer aktuell im Text.
+
+  Kopf als „Stand in Kürze (Text vom <Datum> – Zahlen live)“. Grund: Von Hand eingetragene Zahlen veralten mit dem
+  nächsten Abschluss, Kontingent-Werte schon nach Minuten, und widersprechen dann der Tabelle auf derselben Seite;
+  Kürzel versteht der Nutzer nicht. Jeden Befehl je Lauf nur einmal ausführen (Cache, auch im Ressourcen-Abschnitt),
+  damit Text und Ressourcen dieselbe Ablesung zeigen. Fehlt das der Vorlage noch, beim Einrichten ergänzen und in
+  `render()` `read(OVERVIEW_MD)` durch `fill_placeholders(read(OVERVIEW_MD), work)` ersetzen:
   ```python
+  CMDS = json.loads(os.environ.get("STATUS_CMDS", "[]"))
+  NAMES = dict(x.split("=", 1) for x in os.environ.get("STATUS_NAMES", "").split(";") if "=" in x)
+  _CMD_CACHE = {}
+
+  def cmd_out(cmd):  # je Render-Lauf jeder Befehl nur einmal
+      if cmd not in _CMD_CACHE:
+          try:
+              r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=60)
+              _CMD_CACHE[cmd] = (r.stdout + r.stderr).strip()
+          except (OSError, subprocess.SubprocessError) as e:
+              _CMD_CACHE[cmd] = f"({e})"
+      return _CMD_CACHE[cmd]
+
   def queue_text(rows, sec, id_re=""):
       try:
           sel = [p for p in rows if p.get("sec") == sec and (not id_re or re.search(id_re, p["id"]))]
@@ -70,9 +91,36 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
               parts.append(f"{c[k]} {w}")
       return ", ".join(parts)
 
+  def quota_text(name):
+      cmd = dict(CMDS).get(f"Kontingent {name}")
+      last = (cmd_out(cmd).splitlines() or [""])[-1] if cmd else ""
+      m = re.search(r"kurz=(\d+)%.*?woche=(\d+)%", last)
+      if not m:
+          return f"{name}: keine Ablesung"
+      t = f"{name} {m.group(2)} % der Woche, 5-Stunden-Fenster {m.group(1)} %"
+      if "NEIN" in last:
+          f = re.search(r"frei ab ([^)]+)", last)
+          t += f" (neue Läufe gesperrt bis {f.group(1).strip()})" if f else " (neue Läufe gesperrt)"
+      return t
+
+  def chains_text(rows, sec, top=4):
+      cnt = {}
+      for p in rows:
+          m = re.search(r"([A-Z0-9]+)-T\d+$", p["id"])
+          if m and p.get("sec") == sec and p.get("kind") not in ("merged", "done"):
+              cnt[m.group(1)] = cnt.get(m.group(1), 0) + 1
+      best = sorted(cnt.items(), key=lambda kv: -kv[1])[:top]
+      return ", ".join(f"„{NAMES.get(k, k)}“ ({n})" for k, n in best) or "keine offenen Teile"
+
   def fill_placeholders(md, rows):
-      return re.sub(r"\{\{queue:([^:}]+)(?::([^}]+))?\}\}",
-                    lambda m: queue_text(rows, m.group(1), m.group(2) or ""), md)
+      def sub(m):
+          kind, arg, extra = m.group(1), m.group(2), m.group(3) or ""
+          if kind == "quota":
+              return quota_text(arg)
+          if kind == "ketten":
+              return chains_text(rows, arg)
+          return queue_text(rows, arg, extra)
+      return re.sub(r"\{\{(queue|quota|ketten):([^:}]+)(?::([^}]+))?\}\}", sub, md)
   ```
 - Beginnt eine Spur eine neue Phase mit eigener Queue-Datei, diese als eigene Sektion einhängen, so wie der Wrapper
   Queues findet (z. B. Alias-Ordner `spuren/<Spur>-<Phase>/` mit Symlink `QUEUE.md` auf die neue Datei), und im Text
@@ -83,12 +131,13 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   `touch <stempel>; systemctl --user start <lauf>-status.service; timeout 30 bash -c 'until [ <seite>.html -nt
   <stempel> ]; do sleep 1; done'`. Grund: Die Unit aus `systemd-run` ist vom Typ simple, `start` kehrt vor dem
   Rendern zurück, und eine sofortige Prüfung liest noch die alte Seite. Dann prüfen, dass kein `{{` übrig ist
-  (`grep -c '{{' <seite>.html` ergibt 0), jeder Platzhalter Zahlen statt „keine Aufträge“ zeigt und die neuen Sätze
-  da sind (`grep -c '<Schlüsselsatz>'`). Grund: Ein falscher Sektionsname ergibt still „keine Aufträge“, ein kaputter
-  Platzhalter bleibt als Rohtext stehen, und beides sieht sonst erst der Nutzer.
+  (`grep -c '{{' <seite>.html` ergibt 0), jeder Platzhalter Zahlen statt „keine Aufträge“ bzw. „keine Ablesung“ zeigt
+  und die neuen Sätze da sind (`grep -c '<Schlüsselsatz>'`). Grund: Ein falscher Sektions- oder Kontingent-Name ergibt
+  still einen Leertext, ein kaputter Platzhalter bleibt als Rohtext stehen, und beides sieht sonst erst der Nutzer.
 - Übersicht, `ERLEDIGT.md` und `NUTZER.md` bei jedem Meilenstein und bei jedem Wecken mit neuem Stand nachziehen: je
   Phase „erledigt / fehlt genau / nächster Schritt“, Engpass, Zeitrahmen. Hat der Nutzer die Seite gewünscht, bleibt
-  das eine Daueraufgabe bis zum Abschluss. Veraltete Übersicht ist schlimmer als keine.
+  das eine Daueraufgabe bis zum Abschluss, auch für jede Nachfolge-Sitzung nach Überlauf oder `/new`. Veraltete
+  Übersicht ist schlimmer als keine.
 - Endet die Spur-Phase und arbeitet der Leitstand Folgeaufträge selbst ab (eigene Worker, Releases, Datenarbeiten),
   dafür sofort eine eigene Zeile anlegen: Steuerordner mit `PLAN.md` (eine Paketzeile je Auftrag mit Issue-Nummer und
   PRs, eine Logzeile je Meilenstein) und alle neuen Issue-Nummern in der Konfiguration zuordnen (z. B. `mag_weitere`),
@@ -101,13 +150,14 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   ihnen die gemergten PRs fehlen.
 - Zeitrahmen und Sperrzeitpunkte nur aus Messwerten schreiben (references/kontingent.md §9). Laufen die Teile einer
   Gruppe nacheinander, endet die Queue frühestens nach max(längste Restkette × Minuten je Teil, alle offenen Teile ×
-  Minuten je Teil ÷ Plätze); Minuten je Teil getrennt je Modell aus den letzten Abschlüssen. Die längste Kette in der
-  Übersicht nennen. Sind die Modelle verschieden schnell, die Plätze des schnellen Modells fest den längsten
-  Restketten zuordnen (Platz 1 = längste, Platz 2 = zweitlängste, dazu eine Nachfolgeliste, danach die Kette mit den
-  meisten offenen Teilen ohne laufenden Teil) und einen solchen Platz freihalten, solange der laufende Teil seiner
-  Kette noch auf dem langsamen Modell läuft. Beim Wecken prüfen, dass die Spur das einhält. Grund: Eine Regel „die
-  längste Kette zuerst“ allein reicht nicht, denn die Spur füllt einen frei werdenden Platz mit dem nächsten bereiten
-  Teil, oft aus einer kurzen Kette; die lange Kette läuft dann auf dem langsamen Modell und am Ende allein.
+  Minuten je Teil ÷ Plätze); Minuten je Teil getrennt je Modell aus den letzten Abschlüssen. Die längsten Restketten
+  live per `{{ketten:<Sektion>}}` in der Übersicht nennen. Sind die Modelle verschieden schnell, die Plätze des
+  schnellen Modells fest den längsten Restketten zuordnen (Platz 1 = längste, Platz 2 = zweitlängste, dazu eine
+  Nachfolgeliste, danach die Kette mit den meisten offenen Teilen ohne laufenden Teil) und einen solchen Platz
+  freihalten, solange der laufende Teil seiner Kette noch auf dem langsamen Modell läuft. Beim Wecken prüfen, dass die
+  Spur das einhält. Grund: Eine Regel „die längste Kette zuerst“ allein reicht nicht, denn die Spur füllt einen frei
+  werdenden Platz mit dem nächsten bereiten Teil, oft aus einer kurzen Kette; die lange Kette läuft dann auf dem
+  langsamen Modell und am Ende allein.
 - Bleibt dem Nutzer eine Aufgabe oder Entscheidung (z. B. ein angekündigtes Zurücksetzen eines Kontingents oder eine
   höhere Grenze freigeben), steht sie als erster Punkt der Übersicht und in `NUTZER.md`: woran er den Zeitpunkt
   erkennt (etwa eine Desktop-Benachrichtigung), was er tut, was danach von selbst passiert und was ohne Antwort gilt.

@@ -2,7 +2,7 @@ Speaks German; ALWAYS German, also in reports, concise and technical — but no 
 §
 Wants an autonomous, self-improving agent (Hermes-style): persistent memory, self-written skills, learning across sessions.
 §
-Likes proactive execution: research → build → verify in one go, without constant check-ins; for big builds wants me to only orchestrate sub-agents (they do the work) and stay reachable with short turns.
+Likes proactive execution: research → build → verify in one go, without constant check-ins; for big builds wants me to only orchestrate sub-agents (they do the work) and stay reachable with short turns; neue Coding-Aufgaben IMMER in eigenem Worktree (wt/worktrunk, Skill worktree-task-isolation).
 §
 Will dauerhafte Einmal-Lösungen statt wiederkehrender manueller Schritte — z. B. Credentials nur einmal einrichten (SSH-Key/Keyring), nie pro Pull/Push erneut.
 §

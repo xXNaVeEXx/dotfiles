@@ -10,6 +10,7 @@ description: "Use when the user hands over a large multi-part build to run auton
 Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während ich nur orchestriere.
 
 ## Grundregeln (Vorgaben des Nutzers)
+- Worktree-Basis: Für EINZELNE neue Aufgaben außerhalb großer Läufe gilt Skill worktree-task-isolation (wt/worktrunk, `wt switch -c`). In diesem Mehr-Ebenen-Flow bleibt rohes `git worktree add` Standard (Snapshot-Stände, Spur-Pfade, PR-Vorpush-Worktrees sind an Commits gebunden).
 - Ich orchestriere nur: Worker recherchieren und implementieren; ich schreibe Aufgaben, starte, integriere, committe,
   pushe und berichte. Selbst eingreifen nur bei akutem RAM-Mangel oder bei kleinen Integrationsfixes.
 - Eigene Turns kurz halten (lange Läufe als Hintergrundtask), damit der Nutzer mich jederzeit erreicht.
