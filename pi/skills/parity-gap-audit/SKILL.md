@@ -200,7 +200,9 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
      zuerst die YAML mit `python3 -c 'import yaml,sys;yaml.safe_load(open(sys.argv[1]))' <datei>` prüfen: Typische
      Ursache sind unmaskierte `"` innerhalb doppelt gequoteter Strings (deutsche Zitate stattdessen „…“ mit
      Schlusszeichen “). Selbst reparieren, `check` laufen lassen und die gemeldeten unzugeordneten F-IDs einem frischen
-     Fortsetzer-Worker (ohne resumeFrom) als Liste geben. Zählt das RAM-Tor alle `pi`-Prozesse mit cwd im Projekt,
+     Fortsetzer-Worker (ohne resumeFrom) als Liste geben. Vorher den stillen Worker mit `acp_delegate_cancel <runId>`
+     beenden und prüfen, dass die Zahl der Projekt-`pi` im RAM-Tor sinkt: Ein „toter“ Worker kann als Prozess weiterlaufen
+     und einen Platz belegen (dann `ps`/cwd prüfen, nur den eigenen Worker per `kill` beenden). Zählt das RAM-Tor alle `pi`-Prozesse mit cwd im Projekt,
      zählen Orchestrator-Sitzung und fremde Sitzungen mit (ein Worker weniger nutzbar): freie Plätze erst nach dem
      Ende eines Workers belegen, nichts Fremdes beenden. Beim Wechsel in diese Phase den Herzschlag auf die Queue der neuen
      Phase umstellen (siehe subagent-orchestration).
