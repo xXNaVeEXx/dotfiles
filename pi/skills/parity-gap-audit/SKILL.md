@@ -191,6 +191,12 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
      Ein Worker, dessen `.activity` seit Längerem still ist, dessen Prozess aber 100 % CPU mit wachsendem RSS zeigt
      (`ps -o pid,etime,pcpu,rss -p <pid>`), hängt im Prozess und nicht im Modell: `acp_delegate_cancel`, nach 2 min
      `kill -9 <pid>`, KEIN resume (es erbte den Hänger), sondern frischer Worker mit dem vorhandenen Bericht als Basis.
+     Die PID findet man nicht über die Kommandozeile (leer, `title` nur `pi`): `pgrep -x pi` und je PID `/proc/<pid>/cwd`
+     sowie `ps -o etime,pcpu,rss` ansehen; der Prozess mit Startzeit passend zum Lauf, ~100 % CPU und ~1 GB RSS ist der
+     Hänger. Auch der Wächter des Delegierens (12 min ohne Ausgabe) greift dann oft nicht, weil der Prozess „arbeitet“.
+     Danach beim Fortsetzer eines teilweise geschriebenen Katalogs die Datei NICHT neu anlegen, sondern im Task sagen:
+     Check laufen lassen, unzugeordnete IDs per Skript ermitteln (der Check zeigt nur Beispiele), neue Einträge ab
+     letzter Nummer + 1 anhängen oder F-IDs an bestehende anfügen, nach jedem Block `yaml.safe_load` prüfen.
      **Katalog-Konsolidierung (Teile je Bereich in eine gemeinsame YAML):** Teil n erst starten, wenn Teil n-1 per
      Abnahmeskript (Prüfskript `check` Exit 0, Stichproben, Commit, Queue „fertig“) abgenommen ist, weil alle Teile
      dieselbe Datei erweitern. Im Task verbieten, die YAML per `yaml.dump` komplett neu zu schreiben (nur anhängen oder
