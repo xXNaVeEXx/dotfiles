@@ -1,4 +1,4 @@
-# Kontingent: Tor-Skript, Ausnahmen, Endspurt, Notbremse, Pause, Verbrauch messen, Reichweite
+# Kontingent: Tor-Skript, Ausnahmen, Endspurt, Notbremse, Pause, Verbrauch messen, Reichweite, Anbieter-Verbot
 
 Gilt für lange autonome Läufe auf Abo-Konten (z. B. anthropic + zai-coding-cn). Ziel: Fortschritt ohne den Nutzer
 leerlaufen zu lassen, und kein Wochenrest verfällt ungenutzt.
@@ -61,6 +61,13 @@ leerlaufen zu lassen, und kein Wochenrest verfällt ungenutzt.
   bis zum Morgen eine höhere Schwelle setzen.
 - Gibt der Nutzer für den Rest der Woche eine höhere Grenze frei (§9 Punkt 5), läuft die Zeile bis zum
   Wochenwechsel (`bis-epoch` = Reset der Woche); danach gilt der Standard ohne Rückbau.
+- Gibt er mehr frei, ohne eine Zahl zu nennen, die Schwelle auf Notbremse (§4) minus Reserve legen. Reserve =
+  höchste Zahl gleichzeitig laufender Worker × gemessene Kosten je Paket (§9 Punkt 3), auf ganze Punkte aufgerundet.
+  Grund: Das Tor sperrt nur neue Starts, laufende Worker verbrauchen bis zu ihrem Ende weiter. Reißen sie die
+  Notbremse, lässt diese sie abbrechen (§4), und die Pakete liegen halb fertig bis nach dem Reset. Liegt die Decke
+  der Endspurt-Rampe (§3) unter der neuen Schwelle, wirkt die Rampe nicht mehr: Ist die Schwelle erreicht, steht der
+  Anbieter bis zum Reset. Dann je aktiver Spur eine PAUSE-Datei bis zum Reset schreiben (§5) und die Sparstufe mit
+  Rückbau-Timer setzen (§6 Punkt 4). Den Rest für den Nutzer (100 − Schwelle) in der Meldung nennen.
 - Hängt das Ende der Ausnahme an einem Ereignis statt an einer Uhrzeit (z. B. ein angekündigtes Zurücksetzen), den
   Grund mit einer eindeutigen Marke beginnen. Ein Melder löscht dann genau diese Zeile, sobald das Ereignis eintritt
   (§5); der Ablauf bleibt als Sicherheitsnetz.
@@ -113,9 +120,9 @@ leerlaufen zu lassen, und kein Wochenrest verfällt ungenutzt.
   4. Ein Reset kann das Wochenfenster verschieben. Endspurt-Rampe, Termine und Übersicht mit dem neuen `resetsAt`
      nachziehen.
 - Kündigt der Nutzer an, dass er ein Kontingent zurücksetzen wird, sobald es voll ist, so vorgehen:
-  1. Das Wochen-Tor dieses Anbieters per Ausnahme (§2) bis knapp unter die Notbremse heben (z. B. 85 → 92 % bei
-     Notbremse 96 %), Grund mit Marke (z. B. `[L0 <Datum Zeit>]`), Ablauf etwa ein Tag. Grund: Beim Zurücksetzen
-     verfällt der Rest der alten Woche, er soll vorher verbraucht werden.
+  1. Das Wochen-Tor dieses Anbieters per Ausnahme (§2) bis knapp unter die Notbremse heben (Reserve wie in §2,
+     z. B. 85 → 92 % bei Notbremse 96 %), Grund mit Marke (z. B. `[L0 <Datum Zeit>]`), Ablauf etwa ein Tag. Grund:
+     Beim Zurücksetzen verfällt der Rest der alten Woche, er soll vorher verbraucht werden.
   2. `scripts/kontingent-melder.sh` in den Steuerordner kopieren und als eigene User-Unit starten (Aufruf, Probe-
      Benachrichtigung und Testfälle im Skriptkopf). Er benachrichtigt den Nutzer genau einmal, wenn die erhöhte
      Schwelle erreicht ist. Springt danach `resetsAt`, löscht er die Zeile mit der Marke und endet. Grund: Endet er
@@ -132,7 +139,8 @@ Kurzfenster / Credits je Woche“ der Woche (z. B. 12 000 / 60 000 = 20 %; Rabat
 weil beide Fenster gleich abrechnen). Daraus folgt, wann das Wochen-Tor schließt. Vorher in der Startdatei der Spur
 prüfen, ob eine Ausweichregel jede noch offene Arbeitsart auf den anderen Anbieter verlagern darf, sobald nur dort
 Plätze frei sind. Den Zeitpunkt in die Übersicht für den Nutzer schreiben. Grund: Fehlt die Regel, steht die Spur
-beim Schließen des Tors still, obwohl der andere Anbieter frei ist.
+beim Schließen des Tors still, obwohl der andere Anbieter frei ist. Hat der Nutzer den anderen Anbieter verboten,
+entfällt die Regel (§10).
 Die Ausweichregel muss in beide Richtungen wirken: Das Modell eines Auftrags erst beim Start gegen die aktuellen Tore
 wählen und erst dann in die Queue schreiben (`läuft <runId> <modell>`); offene Zeilen behalten ihr Grundmodell.
 Grund: Eine beim Ausweichen umgeschriebene offene Zeile wartet nach dem Umschlagen der Sperre auf den nun gesperrten
@@ -194,8 +202,8 @@ Tarif-Doku des Anbieters).
    Fensters in der Usage-JSON halten → Credits je Prozentpunkt → Tarif bestätigen. Hochlast und Nebenzeit getrennt
    messen, denn der abgerechnete Anteil an der Nominal-Formel kann deutlich vom Rabatt in der Doku abweichen. Passt
    ein Abschnitt nicht, liegt es meist an Rabattzeiten oder an weiterem Verbrauch am Konto (Leitstand, andere
-   Sitzungen). Wirkung einer Sparregel als Ertrag je Prozentpunkt (fertige Einheiten je Fenster-Prozent) vor und
-   nach der Regel belegen.
+   Sitzungen; den Verbraucher findet §10 Punkt 6). Wirkung einer Sparregel als Ertrag je Prozentpunkt (fertige
+   Einheiten je Fenster-Prozent) vor und nach der Regel belegen.
 2. Läufe kurz halten. Bei langen Tool-Schleifen machen Cache-Lesungen meist über 80 % der Credits aus, denn jeder
    Aufruf liest den ganzen bisherigen Kontext erneut. Die Kosten eines Laufs wachsen damit etwa quadratisch mit
    seiner Länge, mehrere kurze Läufe kosten weniger als ein langer. Darum die Arbeit je Worker-Lauf deckeln
@@ -293,3 +301,33 @@ mehr verbraucht, darum in Worker-Stunden rechnen:
 8. Prognosen nur aus diesen Messwerten schreiben und die Grundlage (Zeitraum, Worker-Zahl, Δ%) in STAND.md
    festhalten. Eine geschätzte Aussage in Übersicht oder Meldung, die sich so nicht belegen lässt, sofort ersetzen.
    Grund: Der Nutzer entscheidet über Grenzen und Pausen nach diesen Zahlen.
+
+## 10. Anbieter-Verbot des Nutzers
+Verbietet der Nutzer einen Anbieter für den Rest des Projekts (z. B. „nur noch Anbieter A“), gilt das für jeden neuen
+Lauf: Worker, Prüfer, Fortsetzer und die Spuren selbst. So vorgehen:
+1. Automatik zuerst stoppen: Wecker und Regeln, die bei einer Schwelle auf den verbotenen Anbieter umschalten
+   (z. B. eine Tor-Schleife, die das Modell einer Spur wechselt), per `bg_kill` oder `systemctl --user stop`
+   beenden. Grund: Sie schalten sonst kurz nach der Umstellung wieder zurück.
+2. Schalter-Datei im Steuerordner anlegen (z. B. `nur-<anbieter>`), die das Queue-Werkzeug liest; eine env-Variable
+   (`0|1`) hat für Tests Vorrang. Das Werkzeug bildet schon beim Laden des Paketplans jedes Modell des verbotenen
+   Anbieters auf das Standardmodell des erlaubten ab, damit Brief, Queue-Zeile und Startdatei dasselbe Modell zeigen.
+   Grund: Spuren folgen der Modell-Spalte wörtlich (§6); ein nur im Brief geändertes Modell startet sonst weiter auf
+   dem verbotenen Anbieter.
+3. Ausweichregeln auf den verbotenen Anbieter aus Werkzeug, Brief-Vorlage und Startdatei streichen. Ist das Tor des
+   erlaubten Anbieters zu oder sind seine Plätze voll, wartet die Spur (Herzschlag mit `--quota` nur für den
+   erlaubten Anbieter), statt auszuweichen. Prüfer laufen auf einem anderen Modell desselben Anbieters.
+   Testfälle ergänzen: Der nächste Start nennt nur erlaubte Modelle; bei gesperrtem Tor meldet das Werkzeug
+   „wartet“ und gibt keinen Start-Befehl aus. Einsetzen wie in §1 (`.new` gegen die Tests, dann `mv`).
+4. Laufende Spuren per Prompt informieren; offene Queue-Zeilen und schon geschriebene Briefe nachziehen. Laufende
+   Läufe des verbotenen Anbieters bricht die Spur ab und startet sie mit dem erlaubten Modell neu.
+5. Nachweis nach den nächsten Starts: `find /tmp/acp-delegate -name '*.session.jsonl' -newermt '<Umstellzeit>'
+   -exec grep -ho '"provider":"[^"]*"' {} + | sort | uniq -c` zeigt nur noch den erlaubten Anbieter.
+6. Steigt das Konto des verbotenen Anbieters trotzdem, den Verbraucher suchen, bevor die eigene Umstellung
+   angezweifelt wird: `pgrep -x pi`, je PID `readlink /proc/<pid>/cwd`, dann die zuletzt geänderten Dateien im
+   Sitzungsordner dieses cwd unter `~/.pi/agent/sessions/` (Name: `--` + cwd ohne den führenden `/`, mit `-` statt
+   `/`, + `--`; für `/home/u` also `--home-u--`) per `grep -o '"provider":"[^"]*","model":"[^"]*"' <datei> | tail -1`
+   prüfen. Worker-Sitzungen liegen unter `/tmp/acp-delegate` (Punkt 5). Gehört die Sitzung dem Nutzer, sie nicht
+   anfassen und den Anstieg in der Meldung als seinen Verbrauch nennen.
+7. Kostenfolge rechnen: Der erlaubte Anbieter trägt jetzt alle Pakete. Kapazität und Restzeit nach §9 neu rechnen,
+   in die Übersicht schreiben und die Grenzfrage früh stellen (§9 Punkt 5). Gibt der Nutzer daraufhin ohne Zahl
+   mehr frei, gilt §2.

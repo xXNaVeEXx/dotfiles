@@ -37,6 +37,10 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 - Rot (a) in einer Datei, die laut Pfadliste einem Nachbar-Paket gehört, aber vom neuen Typ erzwungen wird (z. B. ein
   `Record<Mode, …>` braucht den neuen Enum-Wert): kleiner Selbst-Fix ≤ 20 Zeilen im Paket-Worktree mit `git add <Pfad>` +
   `git commit`, statt einen Worker für eine Zeile zu starten. Das Nachbar-Paket zieht die Basis vor seinem Start ohnehin nach.
+- Rot durch genau EINEN Bestandstest, den das Paket nicht berührt (Fehlermeldung ohne Bezug zu den geänderten Dateien, alle
+  anderen Tests grün): zuerst `git diff <Basis>...HEAD --stat` auf Berührung prüfen, dann den Endlauf einmal wiederholen
+  (Zustands-/Reihenfolge-Flake im Parallellauf); bleibt er rot, im Bericht/Journal als fremder Bestandsfehler melden statt
+  das Paket zu blockieren. Der Wiederholungslauf gehört ohnehin hinter einen Reviewer-Fix.
 
 ## Abnahme „Dateien außerhalb der eigenen Pfade“
 - Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
@@ -52,11 +56,12 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   Entscheidungsdatei-Eintrag selbst nachtragen (der Worker tut es nicht). Zusätzlich `git diff <Basis>...HEAD -- <Manifest>`
   lesen: nur additive Zeilen, Normalbau bleibt unverändert (Netz-/Test-Features nur optional bzw. in dev-dependencies).
 - Die Freigabe muss VOR dem Selbst-Fix/`integ` stehen; `integ` prüft die Pfade erneut und bricht sonst mit Exit 1 ab.
-- Endet der Worker-Bericht mit `ERGEBNIS: teilweise – … Pfadfreigabe fehlt`, besteht `abnahme` noch, aber `integ` bricht mit
-  „MANGEL Bericht: ERGEBNIS: teilweise“ (Exit 1) ab, weil es die Schlusszeile strikt auf `fertig` prüft. Nach bestätigter
-  Freigabe die Schlusszeile im Bericht des Pakets auf `ERGEBNIS: fertig – …` ändern, committen (Doku-Pfad gehört dem Paket) und
-  `integ` neu starten; diese Änderung löst im `integ` einen vollen Neu-Endlauf aus (rund 10 min) – besser gleich beim
-  Bestätigen der Freigabe erledigen, noch vor dem Endlauf.
+- Endet der Worker-Bericht mit `ERGEBNIS: teilweise – … Pfadfreigabe fehlt` (oder fehlt die Schlusszeile ganz: `abnahme` warnt
+  „Bericht ohne Schlusszeile“), besteht `abnahme` noch, aber `integ` bricht mit „MANGEL Bericht: ERGEBNIS: teilweise“
+  (Exit 1) ab, weil es die Schlusszeile strikt auf `fertig` prüft. Nach bestätigter
+  Freigabe die Schlusszeile im Bericht des Pakets auf `ERGEBNIS: fertig – …` ändern/anhängen, committen (Doku-Pfad gehört dem
+  Paket) und `integ` neu starten; diese Änderung löst im `integ` einen vollen Neu-Endlauf aus (rund 10 min) – besser gleich
+  beim Bestätigen der Freigabe erledigen, noch vor dem Endlauf.
 
 ## Integration (`integ`) in mehreren Runden
 - `integ` merged feat in den Paket-Worktree und prüft neu, sobald eigene Änderungen seit dem letzten Endlauf oder fremde
@@ -81,7 +86,11 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   als die eigene Prüfung), nach Feature-Gating-Lücken und nach Wegen am Tor vorbei (öffentliche Funktionen, die den rohen
   Client/Builder herausgeben, Test-Nähte ohne `cfg(test)`/Feature, Umgebungs-Proxys). Bei UI-/Transportpaketen nach
   Reconnect-Wettläufen fragen (spätes `onclose` des alten Sockets kappt den neuen; `send` wirft → Anfrage bleibt in
-  `pending` hängen) und danach, ob Test-Doubles synchron schließen und damit den Fehler verdecken. Echte Funde mit kleinem
+  `pending` hängen) und danach, ob Test-Doubles synchron schließen und damit den Fehler verdecken. Bei Generator-/Scan-Paketen
+  (Build-Skripte, die Module/Dateien einsammeln) nach Textsuche statt Parsing (`contains("fn register(")` trifft Methoden,
+  Kommentare, private Funktionen), Symlink-Folgen (`is_dir()` folgt Links → Schleifen/fremde Ordner), ungültigen Bezeichnern,
+  fehlendem `rerun-if-changed`, unbegrenzt hängenden dynamischen Importen und Fehlerisolierung je Gruppe fragen; `--check`-Modi
+  müssen rot werden können. Echte Funde mit kleinem
   Fix (z. B. Race beim Abonnieren: Startwert vor dem Anlegen des Abos lesen; Server-Task ohne Abort bei Drop; ungeprüfter
   Index; Redirect-Ziel nach Client-Regeln normalisieren; Socket-Generationsprüfung `this.current === ws`; Tor-Umgehung durch
   eigenen Anfrage-Typ ohne `send`) selbst im Worktree beheben, einen Test für den Fund ergänzen (Test-Double mit
@@ -109,3 +118,5 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 - Bricht der Test-Schritt auf dem Build-Host mit Exit 255 ab (Speicherlimit, kein Testfehler), mit weniger parallelen Jobs
   wiederholen (z. B. `LUMI_REMOTE_JOBS=2`), nicht den Worker nacharbeiten lassen. Laufen zwei Endläufe gleichzeitig, beide mit
   2 Jobs starten.
+- Pakete, die das große Desktop-Crate im Test mitbauen, brauchen zusätzlich einen größeren Speicherdeckel für den Bau
+  (Worker melden das im Bericht, z. B. `CLAW_MEM=14G`); Endlauf dann mit dieser Variable starten, nicht mit weniger Jobs allein.
