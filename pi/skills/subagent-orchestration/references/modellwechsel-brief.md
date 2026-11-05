@@ -7,3 +7,9 @@ Steht das Modell im Auftragsbrief (Satz „Dein Modell: …“) und die Queue ha
 3. Modell-Spalte in der Queue anpassen, dann erst starten (`model`-Parameter passend zum Brief).
 4. Wechsel mit Grund (Platzlage in Prozent) in die Entscheidungsdatei und ins Journal eintragen.
 5. Teile derselben Kette (Teil n+1) tragen ihr eigenes „Dein Modell“; bei Wechsel der ganzen Kette alle Teil-Briefe mitziehen, sonst springt die Kette zurück.
+6. Lange Ketten (viele Teile, strikt nacheinander) belegen einen Platz fast den ganzen Lauf: Sind die Plätze des teuren Anbieters von zwei langen Ketten belegt, die übrigen Ketten und Einzelläufe geschlossen auf den freien Anbieter legen, statt jeden Teil einzeln zu verschieben.
+
+# Abnahme-Commit bei parallelen Planer-Läufen
+
+- Mehrere Läufe schreiben gleichzeitig in verschiedene Dateien desselben Worktrees: je Abnahme nur die Datei des fertigen Laufs hinzufügen (`git add <pfad>/<BEREICH>.yaml`), nie den ganzen Doku-Ordner — sonst landen halbfertige Dateien laufender Worker im falschen Commit.
+- Commit-Nachricht mit Zahlen vorab berechnen und als einfachen String übergeben; verschachtelte `$(…)`-Ersetzung in der Nachricht ging schon schief (Nachricht „(1 )“). Verfälschte Nachricht nie per amend/reset korrigieren (Historie bleibt unangetastet), sondern mit leerem Folge-Commit (`--allow-empty`) nachtragen.
