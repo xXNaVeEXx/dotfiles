@@ -11,6 +11,19 @@ Steht das Modell im Auftragsbrief (Satz „Dein Modell: …“) und die Queue ha
 7. Belegung je Anbieter vor JEDEM Start aus der Queue zählen (`grep "| läuft" QUEUE.md | awk -F'|' '{print $5}' | awk '{print $NF}' | sort | uniq -c`), nicht aus dem Gedächtnis: Das Kontingent-Skript zählt keine laufenden Plätze, und ein gerade fertig gewordener Lauf kann einen Platz des anderen Anbieters vortäuschen. Wurde die Obergrenze doch überschritten, den frisch gestarteten Lauf sofort mit `acp_delegate_cancel` beenden, Brief und Queue auf den freien Anbieter umstellen (Schritte 2–4) und neu starten.
 8. Ist nach einer Abnahme genau ein Platz je Anbieter frei und der nächste Teil einer Kette gehört dem jeweils anderen Anbieter, beide parallel in EINEM Aufruf-Block starten (unabhängige acp_delegate-Aufrufe), danach Queue und Journal gemeinsam nachziehen.
 9. Ketten mit Folgeteilen blockieren freie Plätze: Sind alle offenen Zeilen Folgeteile laufender Vorgänger, bleibt ein Platz leer — das ist kein Fehler, sondern Kettenlogik. Dann nur Kontrollrunde und Herzschlag, keinen Teil vorzeitig starten (Teil n+1 baut auf der Datei von Teil n auf).
+10. Gesperrter Anbieter (Hochlast-/Kontingentsperre mit Wiederfreigabe-Zeit): laufende Läufe weiterlaufen lassen, keine Neustarts dort; Folgeschritte auf dem freien Anbieter (z. B. Abgleich) normal starten und Schritte, die den gesperrten Anbieter brauchen (zweiter Prüfer), erst nach der Freigabezeit neu prüfen — die Sperrzeit im Journal und in der Meldung an den Nutzer nennen.
+
+# Start des Gesamt-Abgleichs nach den Teilplänen
+
+- Vor dem Start den Gesamtprüfbefehl einmal ausführen und die Mängel nach Kategorie zählen (offene Fundament-Bedarfe, Wellen-/Spurabhängigkeiten, Pfadüberschneidungen); diese Zählung und die bevorzugte Lösungsrichtung als Satz in den Start-Task schreiben (z. B. bei vielen Paketen, die dieselbe Gruppen-Datei beschreiben: `abhaengig`-Ketten oder Fundament-Gerüste mit Scan/Glob statt Paket-Aufteilung; Testformat erhalten). Grund: Der Abgleich-Worker wählt sonst die aufwendigste Lösung (Pakete aufspalten), die neue Überschneidungen erzeugt.
+- Vor dem Start prüfen, dass der Worktree sauber ist (`git status --short` leer), damit der Abgleich-Commit nur seine Änderungen enthält.
+
+# Abnahme des Gesamt-Abgleichs und Start der Prüfer
+
+- Abnahme: Gesamtprüfbefehl, Schnitt-/Architekturprüfung selbst nachlaufen lassen (alle Exit 0), `git status --short` zeigt nur erwartete Dateien, dann ein Commit über den ganzen Doku-Ordner (jetzt laufen keine anderen Worker mehr). Ziele des Auftrags, die nicht erreichbar waren (z. B. Wellenlast), im Journal nennen und den Prüfern als Merkpunkt mitgeben.
+- Vor dem Prüfer-Start den Plan-Build ausführen und committen (`wp.py build` o. ä.): Die Prüfer lesen die gebauten Gesamtdateien (z. B. `wps.json`), die erst der Build erzeugt; read-only-Läufe können sie sonst nicht lesen.
+- Reviewer-Läufe schreiben keine Dateien: Die Befundliste steht in `/tmp/acp-delegate/<runId>.out` (zwischen den `📦 [ACP]`-Zeilen); mit `grep -v "^📦"` nach `PRUEFUNG-<n>.md` kopieren. Sperrt ein Anbieter, laufen beide Prüfer auf dem freien Anbieter (Queue-Zeile mit beiden runIds).
+- Prüferbefunde sind teils Heuristik (aus Titel-/Zieltext, nicht gelesen): in der Zusammenführung Einzelfälle gegen die Datei prüfen, bevor ein Befund „übernehmen“ oder „ablehnen“ bekommt.
 
 # Abnahme-Commit bei parallelen Planer-Läufen
 
