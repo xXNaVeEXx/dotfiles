@@ -25,6 +25,13 @@ Steht das Modell im Auftragsbrief (Satz „Dein Modell: …“) und die Queue ha
 - Reviewer-Läufe schreiben keine Dateien: Die Befundliste steht in `/tmp/acp-delegate/<runId>.out` (zwischen den `📦 [ACP]`-Zeilen); mit `grep -v "^📦"` nach `PRUEFUNG-<n>.md` kopieren. Sperrt ein Anbieter, laufen beide Prüfer auf dem freien Anbieter (Queue-Zeile mit beiden runIds).
 - Prüferbefunde sind teils Heuristik (aus Titel-/Zieltext, nicht gelesen): in der Zusammenführung Einzelfälle gegen die Datei prüfen, bevor ein Befund „übernehmen“ oder „ablehnen“ bekommt.
 
+# Korrektur-Lauf nach den Prüfern
+
+- Befundliste mit eindeutigen Nummern (B01…) schreiben, je Befund „übernehmen / ablehnen (Grund) / eingeschränkt“; nur diese Liste ist Eingabe des Korrektur-Workers.
+- Start-Task: Hinweis, dass Befunde teils Heuristik sind (Listen per Skript aus der yaml erzeugen, Pakete vor der Änderung lesen), Testformat/Quotierung erneut nennen und ein zeilenweise geschriebenes Korrektur-Log verlangen (eine Zeile je Befund). Grund: Das Log ist der einzige Beleg für die Abnahme und zeigt in Kontrollrunden Fortschritt, bevor der Lauf endet.
+- Kontrollrunde während des Laufs: `git status --short` (geänderte yaml) und Zeilenzahl des Logs genügen als Lebenszeichen neben der `.activity`-mtime; das Log entsteht erst nach einigen Minuten — fehlt es früh, ist das kein Mangel.
+- Abnahme: alle Prüf-/Build-Befehle selbst nachlaufen lassen, je Befund eine Zeile im Log gegenprüfen, 3 übernommene Befunde stichprobenartig in der yaml nachsehen, dann ein Commit über den ganzen Doku-Ordner.
+
 # Abnahme-Commit bei parallelen Planer-Läufen
 
 - Mehrere Läufe schreiben gleichzeitig in verschiedene Dateien desselben Worktrees: je Abnahme nur die Datei des fertigen Laufs hinzufügen (`git add <pfad>/<BEREICH>.yaml`), nie den ganzen Doku-Ordner — sonst landen halbfertige Dateien laufender Worker im falschen Commit.
