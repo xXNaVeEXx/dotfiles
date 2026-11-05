@@ -3,7 +3,9 @@
 Gilt für eine L1-Spur, die Pakete einer Queue der Reihe nach über ein gemeinsames Queue-Werkzeug (Status, Worktree, Abnahme,
 Endlauf `check`, Integration `integ`) abarbeitet. Ablauf: Kontrollrunde → `next` → `wt` → Worker → `abnahme` → `check` → `integ`.
 Laufende Taktung: nach jedem Wecken `next` erneut aufrufen (frei gewordene Abhängigkeiten starten sofort, max. 2 Worker je Spur);
-ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei parallel, nie keinen.
+ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei parallel, nie keinen. Die Zählung per
+`pgrep -af "warte.sh <Spur>"` NACH dem Start prüfen: unmittelbar nach der Benachrichtigung zeigt sie den gerade endenden Prozess
+noch mit (Zähler 1 vor dem Start ist kein zweiter Herzschlag).
 
 ## Modellvorgaben des Leitstands wechseln mitten im Lauf
 - Der Leitstand kann während der Spur ändern, welche Modelle erlaubt sind (z. B. „nur noch Claude“). Dann: sofort laufende
@@ -19,6 +21,8 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   Reihenfolge: erst `wt` und Ausgabe prüfen, dann in einem eigenen Block `acp_delegate`. Scheitert ein Start dennoch sofort
   (`FAILED` ohne Aktivität), einmal allein wiederholen, bevor das Modell gewechselt wird. Die Status-Zeile `läuft <runId> <modell>`
   erst setzen, wenn der Worker nach ~20 s Aktivität zeigt.
+- Dem Worker-Auftrag die Journal-Hinweise früherer Pakete an dieses Paket (Reihenfolge von CI-Schritten, offene Anschlüsse) und
+  die Pflicht „Schlusszeile exakt `ERGEBNIS: fertig – …`“ sowie den Ort für Pfadfreigaben (`vorgaben/<WP>.pfade`) mitgeben.
 
 ## Lebenszeichen eines frisch gestarteten Workers
 - Im neu angelegten Paket-Worktree taugen `find -newermt` und `git log -1` nicht (der Baum ist beim Start identisch zur Basis,
@@ -41,6 +45,8 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   anderen Tests grün): zuerst `git diff <Basis>...HEAD --stat` auf Berührung prüfen, dann den Endlauf einmal wiederholen
   (Zustands-/Reihenfolge-Flake im Parallellauf); bleibt er rot, im Bericht/Journal als fremder Bestandsfehler melden statt
   das Paket zu blockieren. Der Wiederholungslauf gehört ohnehin hinter einen Reviewer-Fix.
+- Sehr kurze Endlauf-Schritte (0,0 min) sind bei gecachten Builds normal, aber nie blind glauben: bei Test-/E2E-Schritten
+  den Logschwanz lesen (`Summary … N tests run`, `E2E <Name> ok`), damit „0 Treffer = grün“ auffällt.
 
 ## Abnahme „Dateien außerhalb der eigenen Pfade“
 - Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
@@ -67,6 +73,8 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 - `integ` merged feat in den Paket-Worktree und prüft neu, sobald eigene Änderungen seit dem letzten Endlauf oder fremde
   Dateien im Spiel sind; ist feat währenddessen durch eine andere Spur weitergelaufen, folgt „nächste Runde“ mit erneutem
   Endlauf. Das ist normal (Minuten bis über eine Viertelstunde), kein Hänger: nicht abbrechen, Herzschlag weiterlaufen lassen.
+  War der Endlauf für genau diesen Stand schon grün und feat unverändert, entfällt der Neu-Endlauf („Endlauf keiner“) und
+  `integ` pusht nach Sekunden.
   Mehrere `integ` verschiedener Pakete dürfen gleichzeitig gestartet werden; das Werkzeug serialisiert den Push. Bei Speicherlimit
   `LUMI_REMOTE_JOBS=2` auch für `integ` setzen, weil dessen Neu-Endlauf sonst ebenfalls mit 255 abbricht.
 
@@ -90,7 +98,10 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   (Build-Skripte, die Module/Dateien einsammeln) nach Textsuche statt Parsing (`contains("fn register(")` trifft Methoden,
   Kommentare, private Funktionen), Symlink-Folgen (`is_dir()` folgt Links → Schleifen/fremde Ordner), ungültigen Bezeichnern,
   fehlendem `rerun-if-changed`, unbegrenzt hängenden dynamischen Importen und Fehlerisolierung je Gruppe fragen; `--check`-Modi
-  müssen rot werden können. Echte Funde mit kleinem
+  müssen rot werden können. Bei Prüfwerkzeug-/E2E-Paketen nach fälschlich grünen Läufen fragen (0 Treffer = Erfolg,
+  verschluckte Exit-Codes, Pipes ohne pipefail, Schritt ohne Assertion), nach Prozess-Lecks im Läufer (Kindprozess bei
+  Fehler/Drop, Neustart auf gleichem Datenordner: Port-/Lock-Race, Wartezeiten ohne Timeout) und nach Parser-Lücken eigener
+  YAML-/Katalog-Leser. Echte Funde mit kleinem
   Fix (z. B. Race beim Abonnieren: Startwert vor dem Anlegen des Abos lesen; Server-Task ohne Abort bei Drop; ungeprüfter
   Index; Redirect-Ziel nach Client-Regeln normalisieren; Socket-Generationsprüfung `this.current === ws`; Tor-Umgehung durch
   eigenen Anfrage-Typ ohne `send`) selbst im Worktree beheben, einen Test für den Fund ergänzen (Test-Double mit
@@ -105,6 +116,10 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   `git log -1`; ein Hook lehnt Betreffzeilen > 72 Zeichen ab (der Block bricht ab, die Änderung bleibt ungestaged/uncommittet:
   nach einem Fehlschlag `git status` prüfen und `git add` + `commit` mit kürzerer Zeile wiederholen, Endlauf nie vor
   bestätigtem Commit starten).
+- Verschärft ein Fix eine Erkennungsregel eines Generators/Scans (z. B. nur noch `pub fn` statt Textsuche), vorher mit
+  `grep -rn` alle realen Eingaben auf andere Schreibweisen prüfen (`pub(crate) fn`, `pub(super)`): Der Verteiler ruft sie sonst
+  nicht mehr auf, und clippy meldet massenhaft „function … is never used“ erst im Endlauf. Das Muster im Fehlerlog
+  (`sort | uniq -c`: eine Meldung × viele Treffer) deutet auf eine Generator-Regel, nicht auf viele Einzelmängel.
 
 ## Gemeinsames Werkzeug wird von anderen Spuren live bearbeitet
 - Das Queue-Werkzeug liegt in einem Ordner, den alle Spuren editieren. Schlägt ein Aufruf mit `SyntaxError` in einer Datei fehl,
