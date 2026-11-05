@@ -2,6 +2,8 @@
 
 Gilt für eine L1-Spur, die Pakete einer Queue der Reihe nach über ein gemeinsames Queue-Werkzeug (Status, Worktree, Abnahme,
 Endlauf `check`, Integration `integ`) abarbeitet. Ablauf: Kontrollrunde → `next` → `wt` → Worker → `abnahme` → `check` → `integ`.
+Laufende Taktung: nach jedem Wecken `next` erneut aufrufen (frei gewordene Abhängigkeiten starten sofort, max. 2 Worker je Spur);
+ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei parallel, nie keinen.
 
 ## Lebenszeichen eines frisch gestarteten Workers
 - Im neu angelegten Paket-Worktree taugen `find -newermt` und `git log -1` nicht (der Baum ist beim Start identisch zur Basis,
@@ -17,6 +19,26 @@ Endlauf `check`, Integration `integ`) abarbeitet. Ablauf: Kontrollrunde → `nex
 - Rot (a) in einer Datei, die laut Pfadliste einem Nachbar-Paket gehört, aber vom neuen Typ erzwungen wird (z. B. ein
   `Record<Mode, …>` braucht den neuen Enum-Wert): kleiner Selbst-Fix ≤ 20 Zeilen im Paket-Worktree mit `git add <Pfad>` +
   `git commit`, statt einen Worker für eine Zeile zu starten. Das Nachbar-Paket zieht die Basis vor seinem Start ohnehin nach.
+
+## Abnahme „Dateien außerhalb der eigenen Pfade“
+- Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
+  oder ob ein Typ sie erzwingt, die Pfadliste sie aber vergessen hat. Dann nicht den Worker nacharbeiten lassen und die Datei
+  nicht verschieben, sondern die Pfade des Pakets im Queue-Werkzeug zusätzlich freigeben (Freigabe-Datei je Paket, eine Zeile je
+  Pfad, z. B. `vorgaben/<WP>.pfade`), Entscheidung mit Grund an die zentrale Entscheidungsdatei hängen, `abnahme` wiederholen.
+  Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden Paketen.
+  Der Worker darf diese Freigabedatei selbst nicht schreiben und weist im Bericht darauf hin — den Hinweis aus dem
+  Worker-Bericht lesen, nicht erst auf den `abnahme`-Mangel warten.
+- Die Freigabe muss VOR dem Selbst-Fix/`integ` stehen; `integ` prüft die Pfade erneut und bricht sonst mit Exit 1 ab.
+
+## Hinweise aus Worker-Berichten an spätere Pakete weitergeben
+- Worker nennen im Bericht Voraussetzungen für ein späteres Paket (z. B. Reihenfolge der CI-Schritte, die das Prüfpaket
+  einbauen muss). Beim Abnehmen sofort ins Journal der Spur schreiben, sonst geht es vor dem Start des Zielpakets verloren;
+  beim Start des Zielpakets prüfen, ob der Brief es schon enthält.
+
+## Reviewer ja/nein bei großem Diff
+- Die Grenze „~500 geänderte Zeilen“ gilt für echten Code. Besteht der Diff überwiegend aus generierten/gleichförmigen
+  Gerüstdateien (`git diff --numstat | sort -rn | head`), die Größe der nicht-gleichförmigen Dateien zählen; unter der Grenze
+  genügt Stichprobe + grüner Endlauf. Begründung ins Journal.
 
 ## Gemeinsames Werkzeug wird von anderen Spuren live bearbeitet
 - Das Queue-Werkzeug liegt in einem Ordner, den alle Spuren editieren. Schlägt ein Aufruf mit `SyntaxError` in einer Datei fehl,
