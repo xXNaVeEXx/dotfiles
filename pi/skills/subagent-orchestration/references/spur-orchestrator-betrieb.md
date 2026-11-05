@@ -16,6 +16,9 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 - Im neu angelegten Paket-Worktree taugen `find -newermt` und `git log -1` nicht (der Baum ist beim Start identisch zur Basis,
   der erste Commit kommt erst spät). Stattdessen `git status --short` (neue/geänderte Dateien) plus Größe und mtime von
   `/tmp/acp-delegate/<runId>.activity`. Grund: Beides steigt schon in den ersten Minuten, Commits nicht.
+- Meldet der Herzschlag „fertig <runId> (seit N min fertig, Queue sagt noch läuft)“, ist der Worker beendet (SIGTERM nach
+  Abschluss ist normal): sofort Ergebnisdatei (`tail` von `/tmp/acp-delegate/<runId>.out`, letzte Zeile `ERGEBNIS:`) lesen und
+  mit `abnahme` weitermachen, nicht auf eine weitere Benachrichtigung warten.
 
 ## Endlauf rot durch Dateien, die ein späteres Paket liefert
 - Rot im Endlauf trennen in (a) echte Mängel des Pakets und (b) Schritte, die strukturell erst durch ein anderes Paket grün
@@ -30,12 +33,15 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 ## Abnahme „Dateien außerhalb der eigenen Pfade“
 - Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
   oder ob ein Typ/eine Abhängigkeit sie erzwingt, die Pfadliste sie aber vergessen hat (typisch: die Manifest-Datei einer Hülle
-  aus dem Fundament-Paket, die das Folge-Paket mit Abhängigkeiten füllt). Dann nicht den Worker nacharbeiten lassen
+  aus dem Fundament-Paket, die das Folge-Paket mit Abhängigkeiten füllt; oder ein Bestands-Test, den neuer Testcode rot macht).
+  Dann nicht den Worker nacharbeiten lassen
   und die Datei nicht verschieben, sondern die Pfade des Pakets im Queue-Werkzeug zusätzlich freigeben (Freigabe-Datei je Paket,
   eine Zeile je Pfad, z. B. `vorgaben/<WP>.pfade`), Entscheidung mit Grund an die zentrale Entscheidungsdatei hängen, `abnahme`
-  wiederholen. Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden.
-- Worker legen die Freigabedatei teils selbst an (mit Kommentar) oder weisen im Bericht darauf hin: Ergebnisdatei und `vorgaben/`
-  lesen, nicht erst auf den `abnahme`-Mangel warten, und die Freigabe inhaltlich gegenlesen.
+  wiederholen. Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden
+  (prüfbar mit `git diff --name-only <Basis>...HEAD` der anderen Worktrees).
+- Worker legen die Freigabedatei teils selbst an (mit Kommentar „Bestätigung offen“) oder weisen im Bericht darauf hin:
+  Ergebnisdatei und `vorgaben/` lesen, nicht erst auf den `abnahme`-Mangel warten, die Freigabe inhaltlich gegenlesen und den
+  Entscheidungsdatei-Eintrag selbst nachtragen (der Worker tut es nicht).
 - Die Freigabe muss VOR dem Selbst-Fix/`integ` stehen; `integ` prüft die Pfade erneut und bricht sonst mit Exit 1 ab.
 
 ## Hinweise aus Worker-Berichten an spätere Pakete weitergeben
@@ -48,10 +54,14 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   Gerüstdateien (`git diff --numstat | sort -rn | head`), die Größe der nicht-gleichförmigen Dateien zählen; unter der Grenze
   genügt Stichprobe + grüner Endlauf. Begründung ins Journal.
 - Reviewer (anderes Modell, nur lesen, ausdrücklich „keine cargo-Builds“, Antwort ≤ 40 Zeilen mit FAZIT-Zeile) parallel zum
-  Endlauf starten, nicht danach. Echte Funde mit Ein-Zeilen-Fix (z. B. Race beim Abonnieren: Startwert vor dem Anlegen des
-  Abos lesen oder bei „ab jetzt“ gar nicht filtern; Server-Task ohne Abort bei Drop; ungeprüfter Index) selbst im Worktree
-  beheben, committen, `abnahme` + Endlauf wiederholen; gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit
-  muss `WPQ_HEAD` des Endlaufs wieder dem HEAD entsprechen.
+  Endlauf starten, nicht danach. Bei Paketen mit Sicherheits-/Sperr-Charakter (Netz-Tor, Pfadprüfung, URL-/Redirect-Parser)
+  im Auftrag ausdrücklich nach Umgehungen durch Parser-Unterschiede fragen (Schreibweisen, die der echte Client anders liest
+  als die eigene Prüfung) und nach Feature-Gating-Lücken. Echte Funde mit kleinem Fix (z. B. Race beim Abonnieren: Startwert
+  vor dem Anlegen des Abos lesen; Server-Task ohne Abort bei Drop; ungeprüfter Index; Redirect-Ziel nach Client-Regeln
+  normalisieren) selbst im Worktree beheben, einen Test für den Fund ergänzen, committen, `abnahme` + Endlauf wiederholen;
+  gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit muss `WPQ_HEAD` des Endlaufs wieder dem HEAD
+  entsprechen: darum, falls der Endlauf schon grün ist, mit `integ` auf den Reviewer warten und den Endlauf nach dem Fix
+  wiederholen.
 - Ein Fix aus einem Review-Fund wird erst nach dem Endlauf als korrekt gewertet: Fehlertypen und Importe im Paket-Worktree
   nicht raten (`anyhow::anyhow!` statt `format!` bei `#[from] anyhow::Error`), sondern den Endlauf sofort nach dem Commit
   starten und dessen ersten Schritt (`cargo-check`, ~0,2 min) lesen. Fix und Commit in EINEM Block mit `&&` und danach

@@ -10,7 +10,7 @@
 ## Abschnitte und Quellen
 | Abschnitt | Quelle | env |
 |---|---|---|
-| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->`, Klarnamen `STATUS_NAMES='KÜRZEL=Name;…'` |
+| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen und Paketlisten als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->`, Klarnamen `STATUS_NAMES='KÜRZEL=Name;…'` |
 | Gesamtplan n von m | Checkliste unter `## Steps` im Plan, erster offener Schritt = „jetzt“ | `STATUS_STEPS_MD`, `STATUS_STEPS_HEAD` |
 | Laufende Arbeit | Queue-Tabellen in `<STATUS_DIR>/PLAN.md`, je Queue `## <Name>`, Zeilen je ID-Gruppe | `STATUS_PKG_RE` oder `STATUS_PKG_PREFIX`, `STATUS_GROUPS='PRÄFIX=Label;…'` |
 | Ressourcen und Kontingent | MemAvailable/Swap + letzte Zeilen von Tor-Befehlen (auch bei Exit ≠ 0) | `STATUS_CMDS='[["Label","Befehl"],…]'` |
@@ -49,20 +49,24 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   die runId zuerst dort, das Journal ist nur Rückfall.
 - Bei jedem Abschluss eines Planschritts (z. B. `plannotator_mark_done`) auch das `[x]` in der Steps-Checkliste des
   Plans setzen, `[~]` für teilweise – der Zähler „Gesamtplan“ liest nur die Datei.
-- Zahlen im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei jedem Lauf füllt:
+- Zahlen und Paketlisten im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei
+  jedem Lauf füllt:
   - `{{queue:<Sektion>}}` bzw. `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, …
     offen“ aus derselben Queue wie die Tabelle.
+  - `{{fertig:<Sektion>}}` / `{{arbeit:<Sektion>}}` → die fertigen (fertig/gemergt) bzw. laufenden Pakete (in Arbeit,
+    Abnahme, Fehler) als „ID Titel; …“, „keine“ bei leerer Auswahl. Damit nennt der Text immer die richtigen Pakete.
   - `{{quota:<Name>}}` → „<Name> W % der Woche, 5-Stunden-Fenster K %“, bei Sperre mit „(neue Läufe gesperrt bis …)“,
     aus der letzten Zeile des `STATUS_CMDS`-Eintrags „Kontingent <Name>“ (`kurz=K%` … `woche=W%`, bei Sperre
     `NEIN … frei ab <Zeit>`).
   - `{{ketten:<Sektion>}}` → die vier Bereiche mit den meisten offenen Teilen (IDs `…<KÜRZEL>-T<n>`), mit Klarnamen
     aus `STATUS_NAMES`. Damit steht die längste Restkette immer aktuell im Text.
 
-  Kopf als „Stand in Kürze (Text vom <Datum> – Zahlen live)“. Grund: Von Hand eingetragene Zahlen veralten mit dem
-  nächsten Abschluss, Kontingent-Werte schon nach Minuten, und widersprechen dann der Tabelle auf derselben Seite;
-  Kürzel versteht der Nutzer nicht. Jeden Befehl je Lauf nur einmal ausführen (Cache, auch im Ressourcen-Abschnitt),
-  damit Text und Ressourcen dieselbe Ablesung zeigen. Fehlt das der Vorlage noch, beim Einrichten ergänzen und in
-  `render()` `read(OVERVIEW_MD)` durch `fill_placeholders(read(OVERVIEW_MD), work)` ersetzen:
+  Kopf als „Stand in Kürze (Text vom <Datum> – Zahlen live)“. Grund: Von Hand eingetragene Zahlen und Paketlisten
+  veralten mit dem nächsten Abschluss, Kontingent-Werte schon nach Minuten, und widersprechen dann der Tabelle auf
+  derselben Seite; Kürzel versteht der Nutzer nicht. Jeden Befehl je Lauf nur einmal ausführen (Cache, auch im
+  Ressourcen-Abschnitt), damit Text und Ressourcen dieselbe Ablesung zeigen. Fehlt das der Vorlage noch, beim
+  Einrichten ergänzen und in `render()` `read(OVERVIEW_MD)` durch `fill_placeholders(read(OVERVIEW_MD), work)`
+  ersetzen:
   ```python
   CMDS = json.loads(os.environ.get("STATUS_CMDS", "[]"))
   NAMES = dict(x.split("=", 1) for x in os.environ.get("STATUS_NAMES", "").split(";") if "=" in x)
@@ -90,6 +94,11 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
           if c[k]:
               parts.append(f"{c[k]} {w}")
       return ", ".join(parts)
+
+  def names_text(rows, sec, what):  # Lauf-Präfix der IDs (z. B. `XY-WP-`) gern per re.sub kürzen
+      want = ("done", "merged") if what == "fertig" else ("run", "check", "fail")
+      sel = [p for p in rows if p.get("sec") == sec and p.get("kind") in want]
+      return "; ".join(f"{p['id']} {p['inhalt']}" for p in sel) or "keine"
 
   def quota_text(name):
       cmd = dict(CMDS).get(f"Kontingent {name}")
@@ -119,8 +128,10 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
               return quota_text(arg)
           if kind == "ketten":
               return chains_text(rows, arg)
+          if kind in ("fertig", "arbeit"):
+              return names_text(rows, arg, kind)
           return queue_text(rows, arg, extra)
-      return re.sub(r"\{\{(queue|quota|ketten):([^:}]+)(?::([^}]+))?\}\}", sub, md)
+      return re.sub(r"\{\{(queue|quota|ketten|fertig|arbeit):([^:}]+)(?::([^}]+))?\}\}", sub, md)
   ```
 - Beginnt eine Spur eine neue Phase mit eigener Queue-Datei, diese als eigene Sektion einhängen, so wie der Wrapper
   Queues findet (z. B. Alias-Ordner `spuren/<Spur>-<Phase>/` mit Symlink `QUEUE.md` auf die neue Datei), und im Text
@@ -137,7 +148,10 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
 - Übersicht, `ERLEDIGT.md` und `NUTZER.md` bei jedem Meilenstein und bei jedem Wecken mit neuem Stand nachziehen: je
   Phase „erledigt / fehlt genau / nächster Schritt“, Engpass, Zeitrahmen. Hat der Nutzer die Seite gewünscht, bleibt
   das eine Daueraufgabe bis zum Abschluss, auch für jede Nachfolge-Sitzung nach Überlauf oder `/new`. Veraltete
-  Übersicht ist schlimmer als keine.
+  Übersicht ist schlimmer als keine. Prüffrage bei jedem Wecken, bevor die Meldung an den Nutzer geht: Steht jede
+  abgeschlossene Phase auf `[x]`, die laufende auf `[~]` mit ihrem Live-Platzhalter, und stimmt der Kopf („Text vom
+  …“)? Grund: Bei Phasenwechseln (Gate grün, Merge, neue Spur) bleibt der Text sonst eine Phase zurück, während die
+  Live-Zahlen weiterlaufen – die Seite wirkt aktuell und zeigt doch die falsche Phase.
 - Endet die Spur-Phase und arbeitet der Leitstand Folgeaufträge selbst ab (eigene Worker, Releases, Datenarbeiten),
   dafür sofort eine eigene Zeile anlegen: Steuerordner mit `PLAN.md` (eine Paketzeile je Auftrag mit Issue-Nummer und
   PRs, eine Logzeile je Meilenstein) und alle neuen Issue-Nummern in der Konfiguration zuordnen (z. B. `mag_weitere`),
@@ -158,6 +172,12 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
   Spur das einhält. Grund: Eine Regel „die längste Kette zuerst“ allein reicht nicht, denn die Spur füllt einen frei
   werdenden Platz mit dem nächsten bereiten Teil, oft aus einer kurzen Kette; die lange Kette läuft dann auf dem
   langsamen Modell und am Ende allein.
+- Für die Gesamt-Restzeit eines mehrwöchigen Plans die Kosten je Paket aus der Kontingent-Differenz über mehrere
+  Abschlüsse messen (samt Spur-Steuerung, Prüfern und Leitstand) und mit den normalen Wochengrenzen hochrechnen, nicht
+  mit einer befristet erhöhten. Bietet man dem Nutzer „zuerst die wichtigen Funktionen“ an, die Paketzahl als Hülle
+  über alle transitiven Abhängigkeiten der Pakete mit hoher Priorität zählen (Tiefensuche über die
+  Abhängigkeitsfelder des Plans), nicht nur die Pakete selbst. Grund: Wichtige Funktionen bauen auf weniger wichtigen
+  auf; die bloße Zahl der Pakete mit hoher Priorität unterschätzt den Umfang leicht um die Hälfte.
 - Bleibt dem Nutzer eine Aufgabe oder Entscheidung (z. B. ein angekündigtes Zurücksetzen eines Kontingents oder eine
   höhere Grenze freigeben), steht sie als erster Punkt der Übersicht und in `NUTZER.md`: woran er den Zeitpunkt
   erkennt (etwa eine Desktop-Benachrichtigung), was er tut, was danach von selbst passiert und was ohne Antwort gilt.
