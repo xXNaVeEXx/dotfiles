@@ -22,12 +22,12 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 
 ## Abnahme „Dateien außerhalb der eigenen Pfade“
 - Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
-  oder ob ein Typ sie erzwingt, die Pfadliste sie aber vergessen hat. Dann nicht den Worker nacharbeiten lassen und die Datei
-  nicht verschieben, sondern die Pfade des Pakets im Queue-Werkzeug zusätzlich freigeben (Freigabe-Datei je Paket, eine Zeile je
-  Pfad, z. B. `vorgaben/<WP>.pfade`), Entscheidung mit Grund an die zentrale Entscheidungsdatei hängen, `abnahme` wiederholen.
-  Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden Paketen.
-  Der Worker darf diese Freigabedatei selbst nicht schreiben und weist im Bericht darauf hin — den Hinweis aus dem
-  Worker-Bericht lesen, nicht erst auf den `abnahme`-Mangel warten.
+  oder ob ein Typ/eine Abhängigkeit sie erzwingt, die Pfadliste sie aber vergessen hat. Dann nicht den Worker nacharbeiten lassen
+  und die Datei nicht verschieben, sondern die Pfade des Pakets im Queue-Werkzeug zusätzlich freigeben (Freigabe-Datei je Paket,
+  eine Zeile je Pfad, z. B. `vorgaben/<WP>.pfade`), Entscheidung mit Grund an die zentrale Entscheidungsdatei hängen, `abnahme`
+  wiederholen. Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden.
+- Worker legen die Freigabedatei teils selbst an (mit Kommentar) oder weisen im Bericht darauf hin: Ergebnisdatei und `vorgaben/`
+  lesen, nicht erst auf den `abnahme`-Mangel warten, und die Freigabe inhaltlich gegenlesen.
 - Die Freigabe muss VOR dem Selbst-Fix/`integ` stehen; `integ` prüft die Pfade erneut und bricht sonst mit Exit 1 ab.
 
 ## Hinweise aus Worker-Berichten an spätere Pakete weitergeben
@@ -35,10 +35,14 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   einbauen muss). Beim Abnehmen sofort ins Journal der Spur schreiben, sonst geht es vor dem Start des Zielpakets verloren;
   beim Start des Zielpakets prüfen, ob der Brief es schon enthält.
 
-## Reviewer ja/nein bei großem Diff
+## Reviewer bei großem Diff
 - Die Grenze „~500 geänderte Zeilen“ gilt für echten Code. Besteht der Diff überwiegend aus generierten/gleichförmigen
   Gerüstdateien (`git diff --numstat | sort -rn | head`), die Größe der nicht-gleichförmigen Dateien zählen; unter der Grenze
   genügt Stichprobe + grüner Endlauf. Begründung ins Journal.
+- Reviewer (anderes Modell, nur lesen, ausdrücklich „keine cargo-Builds“, Antwort ≤ 40 Zeilen mit FAZIT-Zeile) parallel zum
+  Endlauf starten, nicht danach. Echte Funde mit Ein-Zeilen-Fix (z. B. Race beim Abonnieren: Startwert vor dem Anlegen des
+  Abos lesen oder bei „ab jetzt“ gar nicht filtern) selbst im Worktree beheben, committen, `abnahme` + Endlauf wiederholen;
+  gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit muss `WPQ_HEAD` des Endlaufs wieder dem HEAD entsprechen.
 
 ## Gemeinsames Werkzeug wird von anderen Spuren live bearbeitet
 - Das Queue-Werkzeug liegt in einem Ordner, den alle Spuren editieren. Schlägt ein Aufruf mit `SyntaxError` in einer Datei fehl,
