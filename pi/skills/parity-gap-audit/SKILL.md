@@ -197,6 +197,16 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
      Danach beim Fortsetzer eines teilweise geschriebenen Katalogs die Datei NICHT neu anlegen, sondern im Task sagen:
      Check laufen lassen, unzugeordnete IDs per Skript ermitteln (der Check zeigt nur Beispiele), neue Einträge ab
      letzter Nummer + 1 anhängen oder F-IDs an bestehende anfügen, nach jedem Block `yaml.safe_load` prüfen.
+     Endet ein Worker mit exit 0 nach nur Lesen (letzte `.activity`-Zeile „ich lese weiter“, keine Schlusszeile
+     `ERGEBNIS:`, YAML unverändert), ist das ein verlorener Turn: frischer Worker mit demselben Task plus „arbeite
+     durch bis zur Schlusszeile, beende den Turn nicht vorher“, kein resume. Abgeschlossene Läufe erkennt man an der
+     Schlusszeile, nicht an exit 0 oder an einer Fertigmeldung der Sitzung; nach einer Meldung deshalb alle
+     Queue-Zeilen `läuft` gegen die `.out`-Enden halten.
+     **Gesamtbau (Katalog → Gesamtdatei + Quellen-Abdeckung):** Meldet der Bau trotz fertiger Bereiche „Quellen 0/n“,
+     liegt der Fehler im Parser des Bau-Skripts, nicht in den Berichten: Einen Bericht von Hand durch den Regex
+     schicken. Typische Ursachen: `re.S` zusammen mit `.*$` im Überschrift-Muster (`.` frisst den Rest der Datei,
+     der Abschnitt wird leer; `[^\n]*` nehmen) und Berichte mit einem leeren Skelett-Abschnitt VOR dem echten
+     (alle gleichnamigen Abschnitte vereinigen statt den ersten zu nehmen). Erst danach einzelne Berichte nachbessern.
      **Katalog-Konsolidierung (Teile je Bereich in eine gemeinsame YAML):** Teil n erst starten, wenn Teil n-1 per
      Abnahmeskript (Prüfskript `check` Exit 0, Stichproben, Commit, Queue „fertig“) abgenommen ist, weil alle Teile
      dieselbe Datei erweitern. Im Task verbieten, die YAML per `yaml.dump` komplett neu zu schreiben (nur anhängen oder
