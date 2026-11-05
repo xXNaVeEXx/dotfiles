@@ -8,6 +8,7 @@ Steht das Modell im Auftragsbrief (Satz „Dein Modell: …“) und die Queue ha
 4. Wechsel mit Grund (Platzlage in Prozent) in die Entscheidungsdatei und ins Journal eintragen.
 5. Teile derselben Kette (Teil n+1) tragen ihr eigenes „Dein Modell“; bei Wechsel der ganzen Kette alle Teil-Briefe mitziehen, sonst springt die Kette zurück.
 6. Lange Ketten (viele Teile, strikt nacheinander) belegen einen Platz fast den ganzen Lauf: Sind die Plätze des teuren Anbieters von zwei langen Ketten belegt, die übrigen Ketten und Einzelläufe geschlossen auf den freien Anbieter legen, statt jeden Teil einzeln zu verschieben.
+7. Belegung je Anbieter vor JEDEM Start aus der Queue zählen (`grep "| läuft" QUEUE.md`, getrennt nach Modellspalte), nicht aus dem Gedächtnis: Das Kontingent-Skript zählt keine laufenden Plätze, und ein gerade fertig gewordener Lauf kann einen Platz des anderen Anbieters vortäuschen. Wurde die Obergrenze doch überschritten, den frisch gestarteten Lauf sofort mit `acp_delegate_cancel` beenden, Brief und Queue auf den freien Anbieter umstellen (Schritte 2–4) und neu starten.
 
 # Abnahme-Commit bei parallelen Planer-Läufen
 
