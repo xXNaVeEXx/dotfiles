@@ -7,7 +7,12 @@ description: "Feature- und Fix-Arbeit an der besichtigungs-app im mag-tech-monor
 
 # mag-tech-app-entwicklung
 
-Klasse: UI-/Textänderungen an `apps/besichtigungs-app` im Worktree-Setup (`/home/gamzat/projects/mag-tech-wt/<spur>`) lokal bauen, prüfen und belegen. Release/PR-Kette siehe `mag-tech-release`, `gh-pr-automation`; Mehr-Worker-Läufe siehe `subagent-orchestration`.
+Klasse: UI-/Textänderungen an `apps/besichtigungs-app` im Worktree-Setup (`/home/gamzat/projects/mag-tech-wt/<spur>`) lokal bauen, prüfen und belegen. Release/PR-Kette siehe `mag-tech-release`, `gh-pr-automation`; Mehr-Worker-Läufe siehe `subagent-orchestration`; Cluster-Installationen/Migrationen siehe `mag-tech-cluster-ops`.
+
+## Issue + PR-Fluss (monorepo-weit, auch zentrio-app)
+- Issue zuerst in der KI-Plattform anlegen, dann Branch/PR darauf beziehen: MCP-Endpoint `https://agents.gamzatlab.net/api/mcp` mit `Authorization: Bearer $(cat ~/.tmp/kip_token.txt)` (der Dateiinhalt IST der Schlüssel `kip_…`), JSON-RPC `tools/call` → `issue_create` mit `{title, bodyMd, projectSlug?, parentNumber?}`; die Antwort liefert die `number` (→ MAG-<n>).
+- Feature-/Fix-PRs NIEMALS direkt auf `main` basieren: Basis ist immer `test`; nach Grün nach `test` mergen und danach über die etablierte Kette `test` → `main` bringen (main-CI baut u. a. kunde-<slug>/deploy-Artefakte, die der Installer braucht — ohne main-Merge bleibt der Installer-Rerun rot).
+- PR-/Commit-Titel: `MAG-<n>: <kurz>` OHNE Conventional-Commits-Typ — der `titel`-Check (scripts/release/pr-titel-pruefen.sh) lehnt `feat:`/`fix:`-Präfixe im PR-Titel ab und verlangt die Issue-Nummer (Branch↔Issue-Verknüpfung).
 
 ## Prüfkette (im Worktree-Root)
 - Jest/tsc/eslint nur über die Wrapper, `pnpm` kommt aus der Devshell:
