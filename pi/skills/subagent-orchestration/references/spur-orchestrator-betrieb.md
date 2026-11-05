@@ -5,6 +5,14 @@ Endlauf `check`, Integration `integ`) abarbeitet. Ablauf: Kontrollrunde → `nex
 Laufende Taktung: nach jedem Wecken `next` erneut aufrufen (frei gewordene Abhängigkeiten starten sofort, max. 2 Worker je Spur);
 ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei parallel, nie keinen.
 
+## Modellvorgaben des Leitstands wechseln mitten im Lauf
+- Der Leitstand kann während der Spur ändern, welche Modelle erlaubt sind (z. B. „nur noch Claude“). Dann: sofort laufende
+  Reviewer des gesperrten Modells per `acp_delegate_cancel` beenden und mit erlaubtem Modell neu starten (Teilausgabe ist wertlos),
+  Queue-Status anpassen, die Änderung mit einer Journalzeile bestätigen, die geänderte START.md/Queue neu lesen.
+  Gilt die Vorgabe „nur Claude“, ist die Paarung Worker opus → Prüfer sonnet, Worker sonnet → Prüfer opus; bei Startfehlern
+  wird zwischen sonnet und opus gewechselt, nie auf ein anderes Modell ausgewichen. Ist das Kontingent-Tor zu, wartet `next`
+  (kein Ausweichen): Herzschlag dann mit `--max 21600 --quota <anbieter>` und nur kurze Turns, damit die Pause wenig kostet.
+
 ## Worker starten
 - `wt <WP>` (Worktree anlegen) und `acp_delegate` NIE im selben Tool-Block abschicken: Beide laufen parallel, der Worker kann vor
   dem fertigen Worktree starten und scheitert sofort mit `spawn …/node ENOENT` (cwd fehlt, Node selbst ist in Ordnung).
@@ -41,24 +49,29 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   (prüfbar mit `git diff --name-only <Basis>...HEAD` der anderen Worktrees).
 - Worker legen die Freigabedatei teils selbst an (mit Kommentar „Bestätigung offen“) oder weisen im Bericht darauf hin:
   Ergebnisdatei und `vorgaben/` lesen, nicht erst auf den `abnahme`-Mangel warten, die Freigabe inhaltlich gegenlesen und den
-  Entscheidungsdatei-Eintrag selbst nachtragen (der Worker tut es nicht).
+  Entscheidungsdatei-Eintrag selbst nachtragen (der Worker tut es nicht). Zusätzlich `git diff <Basis>...HEAD -- <Manifest>`
+  lesen: nur additive Zeilen, Normalbau bleibt unverändert (Netz-/Test-Features nur optional bzw. in dev-dependencies).
 - Die Freigabe muss VOR dem Selbst-Fix/`integ` stehen; `integ` prüft die Pfade erneut und bricht sonst mit Exit 1 ab.
 
 ## Hinweise aus Worker-Berichten an spätere Pakete weitergeben
 - Worker nennen im Bericht Voraussetzungen für ein späteres Paket (z. B. Reihenfolge der CI-Schritte, die das Prüfpaket
-  einbauen muss). Beim Abnehmen sofort ins Journal der Spur schreiben, sonst geht es vor dem Start des Zielpakets verloren;
+  einbauen muss) oder Anschlüsse, die sie wegen fremder Pfade nicht selbst machen konnten (z. B. Registrierung im Gateway-Start).
+  Beim Abnehmen sofort ins Journal der Spur schreiben, sonst geht es vor dem Start des Zielpakets verloren;
   beim Start des Zielpakets prüfen, ob der Brief es schon enthält.
 
 ## Reviewer bei großem Diff
 - Die Grenze „~500 geänderte Zeilen“ gilt für echten Code. Besteht der Diff überwiegend aus generierten/gleichförmigen
   Gerüstdateien (`git diff --numstat | sort -rn | head`), die Größe der nicht-gleichförmigen Dateien zählen; unter der Grenze
   genügt Stichprobe + grüner Endlauf. Begründung ins Journal.
-- Reviewer (anderes Modell, nur lesen, ausdrücklich „keine cargo-Builds“, Antwort ≤ 40 Zeilen mit FAZIT-Zeile) parallel zum
+- Reviewer (anderes Modell, nur lesen, ausdrücklich „keine cargo-/npm-Builds“, Antwort ≤ 40 Zeilen mit FAZIT-Zeile) parallel zum
   Endlauf starten, nicht danach. Bei Paketen mit Sicherheits-/Sperr-Charakter (Netz-Tor, Pfadprüfung, URL-/Redirect-Parser)
   im Auftrag ausdrücklich nach Umgehungen durch Parser-Unterschiede fragen (Schreibweisen, die der echte Client anders liest
-  als die eigene Prüfung) und nach Feature-Gating-Lücken. Echte Funde mit kleinem Fix (z. B. Race beim Abonnieren: Startwert
-  vor dem Anlegen des Abos lesen; Server-Task ohne Abort bei Drop; ungeprüfter Index; Redirect-Ziel nach Client-Regeln
-  normalisieren) selbst im Worktree beheben, einen Test für den Fund ergänzen, committen, `abnahme` + Endlauf wiederholen;
+  als die eigene Prüfung) und nach Feature-Gating-Lücken. Bei UI-/Transportpaketen nach Reconnect-Wettläufen fragen
+  (spätes `onclose` des alten Sockets kappt den neuen; `send` wirft → Anfrage bleibt in `pending` hängen) und danach, ob
+  Test-Doubles synchron schließen und damit den Fehler verdecken. Echte Funde mit kleinem Fix (z. B. Race beim Abonnieren:
+  Startwert vor dem Anlegen des Abos lesen; Server-Task ohne Abort bei Drop; ungeprüfter Index; Redirect-Ziel nach
+  Client-Regeln normalisieren; Socket-Generationsprüfung `this.current === ws`) selbst im Worktree beheben, einen Test für den
+  Fund ergänzen (Test-Double mit verzögertem `onclose`/werfendem `send`), committen, `abnahme` + Endlauf wiederholen;
   gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit muss `WPQ_HEAD` des Endlaufs wieder dem HEAD
   entsprechen: darum, falls der Endlauf schon grün ist, mit `integ` auf den Reviewer warten und den Endlauf nach dem Fix
   wiederholen.
