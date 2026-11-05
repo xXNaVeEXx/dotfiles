@@ -41,6 +41,10 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   der Abbruch jünger ist als der letzte Anstoß. Grund: Der Verlauf selbst ist dann kaputt, jeder weitere Anstoß
   scheitert gleich, und ohne diese Regel stand der Leitstand, bis der Nutzer von Hand /new machte.
 - Vorbeugen: Die Stand-Datei an jedem Phasenübergang vollständig nachziehen, damit der frische Start nichts verliert.
+  Für die eigene Leitstand-Sitzung zusätzlich eine kurze Übergabe-Notiz pflegen (Rolle und Regeln, übernommene
+  Daueraufträge des Nutzers, Stand, nächste Schritte, Lehren) und den Start-Prompt des Watchdogs (`WD_START`) zuerst
+  auf sie zeigen lassen, danach nur auf das Ende der Stand-Datei (`tail -n 30`). Grund: Die frische Sitzung arbeitet
+  dann weiter, ohne die übergelaufene Sitzung oder die ganze Stand-Datei zu lesen, und verliert keinen Dauerauftrag.
   Wechselnde Kennungen (Aufsicht-Task, runIds) dort nur in der Zeile zum aktuellen Stand ändern und den Wechsel als
   neue Zeile anhängen, nie per `sed -i 's/<alt>/<neu>/g'` über die ganze Datei, weil das auch die Verlaufszeilen
   umschreibt.
@@ -52,6 +56,10 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
 - warte.sh endet, sobald eine Queue-Zeile `läuft|nacharbeit <runId>` zu einem Lauf gehört, dessen Sitzung mit einer
   Assistant-Nachricht mit stopReason stop/length/aborted/error endet und seit 3 min ruht. Den stopReason prüfen, nicht
   eine Schlusszeile der `.out`, weil Worker sie oft nicht am Zeilenanfang schreiben.
+- Auch Einzelschritte außerhalb der Teil-Queue (Dubletten zusammenführen, Bericht bauen, Korrekturrunde) bekommen eine
+  Queue-Zeile `läuft <runId>`, solange ihr Worker arbeitet. Grund: warte.sh erkennt ein Worker-Ende nur an diesen
+  Zeilen. Ohne Zeile wartet der Herzschlag bis `--max`, und eine Fertigmeldung, die in einem Lernpass untergeht,
+  bleibt so lange liegen.
 - Die Ende-Zeile (`WARTE-ENDE fertig|frei|herzschlag`) und was die Spur darauf tut, gehört in ihre Startdatei und in
   Vorlagen, die Startdateien erzeugen.
 - Wechselt die Spur in eine Phase mit eigener Queue-Datei (eigener warte.sh-Alias), den Warte-Befehl überall
@@ -87,14 +95,21 @@ Hier steht, woran der Watchdog eine stehende oder falsch wartende Sitzung erkenn
   surviveReload), höchstens alle 15 min, erst ab 3 min Sitzungsalter, danach Leerlauf-Uhr auf 0. Ohne gesetztes
   `WD_WECKER` (Leitstand ohne Herzschlag-Pflicht) entfällt die Prüfung. Grund: Jedes aktive Kind hebt die Idle-Frist
   auf 150 min; nach einem SIGTERM des Herzschlags lagen fertige Worker 20–35 min ohne Abnahme, und der Watchdog
-  protokollierte nur `status=done`.
+  protokollierte nur `status=done`. Die Vorlage, die die Watchdog-env neuer Spuren schreibt, setzt `WD_WECKER` und
+  `WD_WECKER_MSG` mit, sonst fehlt der Schutz jeder später gestarteten Spur.
 
 ## 6. Bei jedem Wecken des Leitstands
 - Jede Queue-Zeile `läuft <runId>` gegen das Fertig-Signal halten und auf Stillstand prüfen, auch auf einen
   Worker-pi, der den Abbruch überlebt (references/orchestrator-aufsicht.md §4 Punkt 5). Dann die Spur mit runId,
   Fertigzeit und Prüfergebnis anstoßen.
+- Fertigmeldungen ohne Queue-Zeile finden: Gibt es eine `/tmp/acp-delegate/del_*.out` mit einer Zeile `^ERGEBNIS:`,
+  die jünger als das Journal der Spur und mindestens 3 min alt ist, deren Worker-Sitzung im Arbeitsordner des Laufs
+  lief (cwd aus der Sitzungsdatei), und ist die Spur nicht working, dann die Spur mit runId anstoßen. Die Prüfung in
+  das Prüfskript des Leitstands legen, damit seine Wache sie alle paar Minuten fährt.
 - Queue-Zeilen nur im Tabellenkörper zählen, nicht per `grep -c` über die ganze Datei. Grund: Eine Kopf- oder
   Legendenzeile, die alle Statuswörter nennt, zählt sonst bei jedem Status einmal mit.
+- Eine schon fertige Spur wieder öffnen (Korrekturrunde nach einem Gate): references/querschnitt-pflichten.md §6
+  Punkt 3. Grund: Fertig-Signal, Stop-Marker und ein selbst gestoppter transienter Timer halten sie sonst als fertig.
 
 ## 7. Watchdog- und Steuer-Skripte ändern
 - Änderungen in eine Kopie schreiben (Shell-Skripte: `<skript>.new` daneben; Python: siehe unten), mit `DRY=1` und
