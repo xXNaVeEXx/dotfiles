@@ -30,6 +30,10 @@ Eine Pflicht, die nur im Text steht, überliest der erste Worker. Darum an allen
 - Liegen Touren oder Handbuch in einer Sammeldatei (eine JSON mit allen Touren, eine Wissensbasis), schreibt jedes Paket
   eine eigene Fragment-Datei. Das Fundament-Paket baut ein Register, das alle Fragmente per Glob einliest (z. B. Rust per
   `build.rs`, das sie einbettet). Grund: An einer Sammeldatei kollidieren parallele Pakete bei jedem Merge.
+- Jedes Paket schreibt nur sein eigenes Fragment und nennt es mit vollem Pfad in der Akzeptanz. Per Skript zählen:
+  „Pakete, die ein fremdes Fragment als Schreibziel nennen: 0“ (Lese-Verweise zählen nicht) und „ohne vollen
+  Fragmentpfad: 0“. Grund: Ein Zusatz-Schritt „im selben Fragment wie Paket X“ bringt die Kollision zurück, und bei
+  einem bloßen Dateinamen rät der Worker den Ort.
 - Neue IDs je Paket in einem eigenen Bereich (`H-<PAKET>-nnn`). Grund: Die fortlaufenden Nummern sind belegt, und zwei
   Pakete würden sonst dieselbe nächste Nummer vergeben. Eine doppelte ID ist ein Prüffehler.
 - Bestehende Vollständigkeits-Tests (z. B. „jede Wissens-ID hat einen Tour-Schritt“) auf alte und neue Einträge
@@ -52,9 +56,10 @@ Eine Pflicht, die nur im Text steht, überliest der erste Worker. Darum an allen
   Pakete still, etwa als zweite Sicherung oder zweite Diagnose.
 - Lernweg der Touren: Im Code nachsehen, wo die Reihenfolge wirklich entsteht (Datendatei, Erste-Schritte-Modul, Leser),
   und dort den Einfügepunkt neuer Touren und einen Reihenfolge-Test festlegen. Die Anzeige-Komponente zeigt meist nur die
-  gelieferte Folge. Die Sortier-Regel des Lesers ausschreiben (Sortierschlüssel, Platz der Bestandstouren, Präfix der
-  neuen); der Reihenfolge-Test prüft genau diese Regel. Grundlagen (Einstieg, Modelle, Freigaben) kommen vor den
-  Funktionen, die darauf aufbauen.
+  gelieferte Folge. Die Sortier-Regel des Lesers ausschreiben: Sortierschlüssel, Platz der Bestandstouren und
+  Präfix-Bereiche, getrennt für neue Touren und für Anhänge an Bestandstouren. Vorher per Skript zählen, welche Präfixe
+  die Pakete schon verwenden. Der Reihenfolge-Test prüft genau diese Regel und lehnt nichts ab, was sie erlaubt.
+  Grundlagen (Einstieg, Modelle, Freigaben) kommen vor den Funktionen, die darauf aufbauen.
 - Die Lernweg-Tabelle im Plan bekommt eine Spalte „Voraussetzung“. Im Produkt steht die Voraussetzung dort, wo der
   vorhandene Leser schon Text trägt (z. B. als erster Satz im Kopftext der Tour), nicht als neues Feld im Datenvertrag.
   Grund: Ein neues Vertragsfeld ändert die erzeugten Typen in allen Schichten, und ohne diese Festlegung verlangt der
@@ -85,6 +90,15 @@ Eine Pflicht, die nur im Text steht, überliest der erste Worker. Darum an allen
   einen Test mit ausgeschaltetem Schalter: mit Oberfläche „Hinweis mit Weg zur Einstellung“, ohne Oberfläche „Fehler
   ‚blockiert‘, kein Verbindungsversuch“. Die Zahl der Netz-Pakete per Skript aus dem Plan zählen. Grund: Pauschal an
   alle Pakete gehängt, sagt der Baustein nichts mehr, und ohne Schalter-aus-Test je Paket ist die Zusage nicht belegt.
+- Als Netzzugriff zählt Produktcode (App, Kommandozeile, Bibliotheken), der ausgehende Verbindungen aufbaut. Nur lokale
+  Arbeit und nur eingehendes Lauschen (etwa ein LAN-Dienst mit eigenem Schalter) zählen nicht, Werkzeuge außerhalb des
+  Produkts (CI, Release) auch nicht; das steht dann als ein Satz im Paket. Grund: Ohne Regel markieren Planer nach
+  Stichworten wie „Download“ oder „Medien“, und es entstehen Fehl- und fehlende Markierungen in beide Richtungen.
+- Schalter-aus-Tests schalten nie den globalen Schalter um. Das Tor bekommt eine Naht für einen eigenen Schalter
+  (öffentlicher Konstruktor für einen isolierten Schalter), und der Test-Helfer nimmt diesen. Kennt eine Komponente nur
+  das globale Tor, hält der Helfer für seine Lebensdauer eine prozessweite Test-Sperre, die alle Tests mit globalem
+  Schalter nehmen. Grund: `cargo test` lässt die Tests eines Test-Binärs parallel in Threads laufen, nur nextest trennt
+  Prozesse. Ein umgeschalteter globaler Zustand macht lokale Läufe zufällig rot, während CI grün bleibt.
 - Der Brief-Generator bindet den Architektur-Abschnitt zum Tor automatisch ein, wenn das Schlüsselwort des Abschnitts
   im Lese-Verweis oder in der Akzeptanz des Pakets steht. Er nimmt die erste `## `-Überschrift mit dem Wort und kürzt
   auf höchstens 40 Zeilen. Solange der Abschnitt im Integrationsstand fehlt, setzt er eine kurze Ersatzregel ein.
@@ -106,7 +120,7 @@ Nur-Lese-Prüfer, der den echten Code liest. Grund: Die Plan-Prüfer im Lauf seh
    - Am Ende ein Satz, wie die Stichprobe gezogen wurde.
 2. Bei blockierenden Mängeln kein Merge. Die Korrekturrunde läuft in derselben Spur, wenn ihr Kontext klein ist, weil
    sie ihre Werkzeuge kennt. Sonst in einer frischen Spur. Die Spur bekommt:
-   - die Befunde als Datei im Spur-Ordner;
+   - die Befunde als Datei im Spur-Ordner (die Prüfer-Ausgabe ohne Markerzeilen des Kontext-Proxys);
    - einen Brief mit den verbindlichen Leitstand-Entscheidungen, die auch ins Entscheidungs-Log kommen. Führt eine
      Entscheidung ein neues gemeinsames Bauteil ein, nennt sie dessen Ort und Abhängigkeitsrichtung (§5);
    - eine neue Queue-Zeile;
@@ -124,15 +138,23 @@ Nur-Lese-Prüfer, der den echten Code liest. Grund: Die Plan-Prüfer im Lauf seh
 
    Grund: Watchdog und Aufsicht melden FERTIG, solange das Signal da ist. Ein transienter Timer, der sich bei
    FERTIG selbst stoppt, verschwindet samt Unit, und `systemctl start` meldet dann „Unit … not found“.
-4. Danach das Gate-Skript erneut laufen lassen und nachprüfen lassen. Eingaben sind die Befund- und die Antwortdatei und
-   der Diff seit dem Stand vor der Korrektur. Die erste Zeile lautet `<GATE>-NACHPRÜFUNG: ok|Mängel`.
+4. Danach das Gate-Skript erneut laufen lassen und nachprüfen lassen; beides parallel starten. Der Prüfer startet die
+   Plan-Werkzeuge dann nicht selbst, weil sie dieselben Ausgaben schreiben, und zählt mit eigenen Einzeilern. Eingaben
+   sind die Befund- und die Antwortdatei und der Diff seit dem Stand vor der Korrektur. Die erste Zeile lautet
+   `<GATE>-NACHPRÜFUNG: ok|Mängel`.
    - Der Prüfer ordnet jeden alten Befund als erledigt, teilweise oder offen ein.
    - Er sucht neue Fehler, die die Korrektur selbst eingeführt hat, etwa Abhängigkeitszyklen, pauschal verteilte
      Bausteine oder widersprüchliche Zahlen.
    - Er zählt die Behauptungen der Antwort nach.
+   - Für jede Markierung (z. B. Netz) zieht er zwei Stichproben mit festem Startwert: markierte Pakete (wirklich
+     betroffen?) und unmarkierte, deren Text nach dem Merkmal klingt (fehlt die Markierung?).
 
    Teilweise erledigte und neue blockierende Befunde gehen in die nächste Runde, mit eigener Befunddatei, eigenem Brief
-   und eigener Queue-Zeile. Höchstens 3 Runden; danach entscheidet der Leitstand selbst.
+   und eigener Queue-Zeile. Auch eine Nachprüfung mit `ok` löst eine letzte Runde aus, wenn ihre nicht blockierenden
+   Punkte Pakete der ersten Welle betreffen. Grund: Deren Worker-Aufträge entstehen nach dem Merge aus dem Plan, und
+   ein Fehler dort zieht sich in alle späteren Pakete. Höchstens 3 Runden. Nach der letzten Runde prüft der Leitstand
+   selbst: Er zählt die Belege der Antwort per Skript nach und lässt einen schmalen Prüfer nur über den Diff dieser Runde
+   laufen (die offenen Punkte und neu eingeführte Fehler). Was dann noch offen ist, entscheidet er selbst.
 
 ## 7. Gesamtheitsprüfung vor dem Abschluss
 - Eigenes Gate nach dem letzten Bauabschnitt, vor Nachanalyse und Abschluss.
