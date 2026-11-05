@@ -5,6 +5,13 @@ Endlauf `check`, Integration `integ`) abarbeitet. Ablauf: Kontrollrunde → `nex
 Laufende Taktung: nach jedem Wecken `next` erneut aufrufen (frei gewordene Abhängigkeiten starten sofort, max. 2 Worker je Spur);
 ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei parallel, nie keinen.
 
+## Worker starten
+- `wt <WP>` (Worktree anlegen) und `acp_delegate` NIE im selben Tool-Block abschicken: Beide laufen parallel, der Worker kann vor
+  dem fertigen Worktree starten und scheitert sofort mit `spawn …/node ENOENT` (cwd fehlt, Node selbst ist in Ordnung).
+  Reihenfolge: erst `wt` und Ausgabe prüfen, dann in einem eigenen Block `acp_delegate`. Scheitert ein Start dennoch sofort
+  (`FAILED` ohne Aktivität), einmal allein wiederholen, bevor das Modell gewechselt wird. Die Status-Zeile `läuft <runId> <modell>`
+  erst setzen, wenn der Worker nach ~20 s Aktivität zeigt.
+
 ## Lebenszeichen eines frisch gestarteten Workers
 - Im neu angelegten Paket-Worktree taugen `find -newermt` und `git log -1` nicht (der Baum ist beim Start identisch zur Basis,
   der erste Commit kommt erst spät). Stattdessen `git status --short` (neue/geänderte Dateien) plus Größe und mtime von
@@ -22,7 +29,8 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
 
 ## Abnahme „Dateien außerhalb der eigenen Pfade“
 - Meldet `abnahme` (oder `integ`) diesen Mangel, erst klären, ob der Brief die Datei ausdrücklich verlangt (z. B. ein Pflicht-Test)
-  oder ob ein Typ/eine Abhängigkeit sie erzwingt, die Pfadliste sie aber vergessen hat. Dann nicht den Worker nacharbeiten lassen
+  oder ob ein Typ/eine Abhängigkeit sie erzwingt, die Pfadliste sie aber vergessen hat (typisch: die Manifest-Datei einer Hülle
+  aus dem Fundament-Paket, die das Folge-Paket mit Abhängigkeiten füllt). Dann nicht den Worker nacharbeiten lassen
   und die Datei nicht verschieben, sondern die Pfade des Pakets im Queue-Werkzeug zusätzlich freigeben (Freigabe-Datei je Paket,
   eine Zeile je Pfad, z. B. `vorgaben/<WP>.pfade`), Entscheidung mit Grund an die zentrale Entscheidungsdatei hängen, `abnahme`
   wiederholen. Kriterium: Datei neu oder nur von bereits integrierten Paketen berührt, also keine Überschneidung mit laufenden.
@@ -41,8 +49,14 @@ ist der Herzschlag-Task beendet, sofort genau einen neuen starten — nie zwei p
   genügt Stichprobe + grüner Endlauf. Begründung ins Journal.
 - Reviewer (anderes Modell, nur lesen, ausdrücklich „keine cargo-Builds“, Antwort ≤ 40 Zeilen mit FAZIT-Zeile) parallel zum
   Endlauf starten, nicht danach. Echte Funde mit Ein-Zeilen-Fix (z. B. Race beim Abonnieren: Startwert vor dem Anlegen des
-  Abos lesen oder bei „ab jetzt“ gar nicht filtern) selbst im Worktree beheben, committen, `abnahme` + Endlauf wiederholen;
-  gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit muss `WPQ_HEAD` des Endlaufs wieder dem HEAD entsprechen.
+  Abos lesen oder bei „ab jetzt“ gar nicht filtern; Server-Task ohne Abort bei Drop; ungeprüfter Index) selbst im Worktree
+  beheben, committen, `abnahme` + Endlauf wiederholen; gering/dokumentierte Funde nur ins Journal. Nach jedem Code-Commit
+  muss `WPQ_HEAD` des Endlaufs wieder dem HEAD entsprechen.
+- Ein Fix aus einem Review-Fund wird erst nach dem Endlauf als korrekt gewertet: Fehlertypen und Importe im Paket-Worktree
+  nicht raten (`anyhow::anyhow!` statt `format!` bei `#[from] anyhow::Error`), sondern den Endlauf sofort nach dem Commit
+  starten und dessen ersten Schritt (`cargo-check`, ~0,2 min) lesen. Fix und Commit in EINEM Block mit `&&` und danach
+  `git log -1`; ein Hook lehnt Betreffzeilen > 72 Zeichen ab, dann bleibt der Fix uncommittet und der Endlauf prüft den
+  alten Stand (Endlauf nie vor bestätigtem Commit starten).
 
 ## Gemeinsames Werkzeug wird von anderen Spuren live bearbeitet
 - Das Queue-Werkzeug liegt in einem Ordner, den alle Spuren editieren. Schlägt ein Aufruf mit `SyntaxError` in einer Datei fehl,
