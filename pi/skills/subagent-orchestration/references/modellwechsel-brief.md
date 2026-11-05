@@ -32,6 +32,13 @@ Steht das Modell im Auftragsbrief (Satz „Dein Modell: …“) und die Queue ha
 - Kontrollrunde während des Laufs: `git status --short` (geänderte yaml) und Zeilenzahl des Logs genügen als Lebenszeichen neben der `.activity`-mtime; das Log entsteht erst nach einigen Minuten — fehlt es früh, ist das kein Mangel.
 - Abnahme: alle Prüf-/Build-Befehle selbst nachlaufen lassen, je Befund eine Zeile im Log gegenprüfen, 3 übernommene Befunde stichprobenartig in der yaml nachsehen, dann ein Commit über den ganzen Doku-Ordner.
 
+# Nachträglicher Korrektur-Auftrag der übergeordneten Ebene (nach „fertig“/DONE)
+
+- Der Auftrag kann nach dem Abschluss kommen (Handprüfung der Leitebene fand Mängel, obwohl deren Prüfskript grün war): Wiederaufnahme wie nach pi-Tod — Abschlussmarker `DONE` wurde von der Leitebene verschoben, Herzschlag neu starten, Queue-Zeile (neu, `offen`) auf `läuft <runId> <modell>` setzen, Journalzeile.
+- Vor dem Start Voraussetzungen prüfen (RAM-Skript, Kontingent des vorgegebenen Anbieters, Worktree sauber, Queue-Zeile vorhanden) und den Auftrags-Brief lesen: Er enthält verbindliche Entscheidungen der Leitebene, die der Worker erfüllen muss; sie gehören NICHT in meine Auslegung, sondern wörtlich in den Brief-Verweis des Start-Tasks.
+- Start-Task: Brief + Befundquelle nennen, „Vorgehen wie im vorherigen Korrektur-Auftrag“, Testformat/Quotierung wiederholen und festhalten, was der Worker NICHT tut (kein Commit, keine Queue/DONE-Änderung, keine Änderung an Leitebenen-Skripten – nur beschreiben, falls nötig). Commit, Queue-Fertigmeldung (`fertig <Commit>`), Antwortdatei-Prüfung und `DONE` neu schreiben bleiben bei mir.
+- Abnahme wie beim Korrektur-Lauf, zusätzlich: Antwortdatei der Leitebene (je Befund eine Zeile mit Datei:Zeile oder Grund) gegenprüfen und Paketzahlen vorher/nachher nennen.
+
 # Abnahme-Commit bei parallelen Planer-Läufen
 
 - Mehrere Läufe schreiben gleichzeitig in verschiedene Dateien desselben Worktrees: je Abnahme nur die Datei des fertigen Laufs hinzufügen (`git add <pfad>/<BEREICH>.yaml`), nie den ganzen Doku-Ordner — sonst landen halbfertige Dateien laufender Worker im falschen Commit.
