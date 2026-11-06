@@ -5,12 +5,23 @@
 - Die Ordnernamen beginnen mit `--` → ohne `--` liest `ls` sie als Option und bricht ab. Immer `ls -d -- */` bzw. `ls -t -- ./--<slug>--/*.jsonl` oder `find` nutzen:
   `cd ~/.pi/agent/sessions && find . -name '*.jsonl' -newermt '<YYYY-MM-DD HH:MM>' -printf '%TY-%Tm-%Td %TH:%TM %s %p\n' | sort`
   (mtime = letzte Schreibung, Größe verrät Riesensitzungen → nie ganz lesen).
+- Schneller über die Session-ID aus `session_search {}`: `grep -rl "<session-id>" ~/.pi/agent/sessions --include=*.jsonl`.
 - Der Dateiname trägt die Startzeit in UTC → vor jedem Vergleich mit Commits/Logs in Ortszeit umrechnen; der Versatz ändert sich beim Sommer-/Winterzeitwechsel.
 
 ## Prozess ↔ Sitzung zuordnen
 - `ps -o pid,lstart,etime,args -C pi`: Startzeit eines pi-Prozesses = Zeitstempel seiner ERSTEN Session-Datei.
 - `/new` legt im selben Prozess eine neue Datei an — die PID bleibt, ihre Startzeit zeigt weiter auf die Ursprungssitzung. Aktuell ist die jüngste Datei mit passendem cwd, deren mtime noch wächst.
+- Schnellster Nachweis für `/new` im selben Pane: `ls -dt ~/.pi/tasks/*` — die Ordner heißen `<session-id>-<pi-PID>`. Tragen die eigene und die tote Sitzung dieselbe PID-Endung, bin ich der Nachfolger.
 - Worker/Delegates: `ps -eo pid,lstart,args | grep -E 'acp-delegate|pi --mode|del_'` (runId steht im Argument).
+
+## Delegate-Worker der toten Sitzung finden
+```bash
+jq -r 'select(.type=="message" and .message.role=="assistant") | .message.content[]?
+  | select(.type=="toolCall" and (.name|test("delegate|subagent"))) | .name+" "+(.arguments|tostring)' F | cut -c1-500
+jq -r 'select(.type=="message" and .message.role=="toolResult") | select(.message.toolName|test("delegate|subagent"))
+  | (.message.content|map(.text? // "")|join(" "))' F | grep -o 'runId `[^`]*`' | sort -u
+```
+- Der zuletzt genannte runId gilt, denn ein `resumeFrom` vergibt eine neue ID. Danach `tail -c 1500 /tmp/acp-delegate/<runId>.activity` lesen und `git status --short` im Worker-cwd prüfen, um den Teilstand zu sehen.
 
 ## Struktur
 - Zeile 1: `{"type":"session","version":…,"id":…,"timestamp":…,"cwd":…}`.
@@ -28,7 +39,9 @@ jq -r 'select(.type=="message" and .message.role=="assistant" and .message.stopR
 ```
 - Das Ende der Fehlermeldung lesen (`.[-200:]`): Die Anbieter-JSON-Hülle steht vorne, die Ursache hinten.
 - `prompt is too long` / `context length` / `too many tokens`: Kontext-Überlauf. Die Sitzung nie fortsetzen (`--continue`, `--session`, Watchdog-Neustart), denn jede Anfrage schickt wieder die volle Historie. Frisch starten und den Stand aus den Projekt-Dokumenten aufbauen; prüfen, dass der Watchdog die neue Sitzung verfolgt und nicht die alte neu startet.
-- `429` / `overloaded`: Kontingent oder Last. Nach dem Reset darf die Sitzung fortgesetzt werden.
+- `429` / `overloaded` / Proxy-Meldung `bili_throttle_terminal`: Kontingent oder Last. Die genaue Ursache und das Reset-Datum stehen oft nicht in der Sitzung, sondern nur im Retry-Log eines Workers (`grep -a 429 /tmp/acp-delegate/*.activity | tail -2`). z.ai/bigmodel meldet ein Wochen- oder Monatslimit als Code `1310` mit Reset-Zeitpunkt.
+  - Kurze Last-Sperre: Die Sitzung darf nach dem Reset fortgesetzt werden.
+  - Reset erst in Tagen: nicht warten, sondern auf einem anderen Anbieter weiterarbeiten. Worker desselben Anbieters hängen dann in Retry-Schleifen: abbrechen und mit `resumeFrom` plus `model`-Override auf einen verfügbaren Anbieter fortsetzen. Dem Nutzer das Reset-Datum nennen.
 - `aborted`: Der Nutzer hat abgebrochen, kein Absturz.
 - Die Zeitspanne zwischen letzter echter Antwort und letztem Fehler ist die Ausfallzeit; in den Bericht an den Nutzer aufnehmen.
 
@@ -55,3 +68,4 @@ jq -r 'select(.type=="message" and .message.role=="assistant" and .timestamp>"<v
   | .timestamp[11:19] + " " + ([.message.content[]? | if .type=="text" then "TXT: "+.text
       elif .type=="toolCall" then "CALL: "+(.arguments|tostring) else empty end] | join(" | "))' F | cut -c1-600 | tail -12
 ```
+Offene Punkte der toten Sitzung quer über ihre Antworten sammeln: Texte ab einem Zeitpunkt nach `offen|später|follow|noch nicht|nächst` greppen (`… | grep -iE '…' | tail -15`). Grund: Angekündigte Folgearbeiten stehen oft nur in Zwischenmeldungen und in keinem Tracker.
