@@ -36,7 +36,7 @@ wt remove <name>                                   # Worktree + Branch aufräume
 ## Stolperfallen
 - Ohne Shell-Integration druckt `wt switch` nur „Cannot change directory" — der Worktree-Pfad steht trotzdem in der ✓-Zeile; diesen parsen, nicht die Warnung.
 - Parallel-Agenten im selben Repo: NIE zwei Writer in denselben Worktree-Pfad; Haupt-Checkout bleibt frei (deshalb existiert diese Konvention).
-- Build-Ordner (target/, node_modules/) liegen je Worktree frisch leer — bei teuren Builds `wt step --copy-ignored` nutzen (CoW auf btrfs, billig).
+- Build-Ordner (target/, node_modules/) liegen je Worktree frisch leer — bei teuren Builds `wt step --copy-ignored` nutzen (CoW auf btrfs, billig). Für einen kurzen Typecheck oder Test in einem JS-Monorepo reichen Symlinks auf den Haupt-Checkout: `ln -sfn ../<repo>/node_modules node_modules`, je Paket mit eigenen `node_modules` dasselbe mit relativem Pfad. Voraussetzung ist ein unverändertes Lockfile gegenüber dem Haupt-Checkout. Die Symlinks nie stagen, also gezielt Pfade `git add`. LSP- und pi-lens-Funde, die vor dem Verlinken entstanden sind („Cannot find module“), sind Altlasten. Gültig ist erst ein Lauf von `tsc --noEmit` danach.
 - Viele parallele Worktrees = viele Builds = RAM beachten (Skill ram-audit); lieber sequenziell mergen als alles gleichzeitig bauen.
 - `wt remove` löscht den Branch nur, wenn gemerged — ungemergte Arbeit vorher committen/mergen oder explizit entscheiden.
 - wt liegt in ~/.local/bin — auf Maschinen ohne das im PATH Binary-Pfad direkt angeben oder nachinstallieren (Prebuilt: GitHub Releases *-aarch64-unknown-linux-musl.tar.xz, sha256 prüfen).
