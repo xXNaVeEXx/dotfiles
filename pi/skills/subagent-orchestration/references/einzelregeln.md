@@ -33,14 +33,18 @@ als Benachrichtigung des Ersatzwerkzeugs, und der Herzschlag dient nur noch als 
 `timeoutMs` = Brief-Timeout in Minuten × 60000 setzen (ohne den Wert greift ein kurzes Standardlimit).
 
 ## Globale Worker-Obergrenze bei jedem Leitstand-Wecken gegenprüfen
-Die Platzzählung liest die Queue-Spalte „Status“ per Muster. Spuren schreiben dort gelegentlich Freitext (z. B. „nacharbeit läuft
-<runId> sonnet“ statt „nacharbeit <runId> sonnet“). Die Zeile zählt dann nicht, und eine Spur startet einen Worker über die Grenze.
-Darum bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten: für das Ersatzwerkzeug
-`jq .state /tmp/pi-subagents-uid-*/async-subagent-runs/*/status.json` (laufend = `running`), für `acp_delegate` die `.out`/`.activity`
-je Queue-Zeile. Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen, das Zählmuster tolerant machen
-(Schlüsselwort am Anfang plus Modellname irgendwo in der Zelle, getestet per Selbsttest) und die Spur auf das Kopfzeilen-Format
-hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap reichen (`free -m`), weil sonst Stunden Arbeit
-verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
+Die Platzzählung liest die Queue-Spalte „Status“ per Muster. Spuren schreiben dort Freitext („nacharbeit läuft <runId> sonnet“,
+„review läuft <runId> opus (abnahme OK, …)“ für Prüfer-Worker). Ein Muster, das ein Schlüsselwort am Zellenanfang verlangt, zählt
+solche Zeilen nicht, und eine Spur startet einen Worker über die Grenze. Darum zählt das Muster jede Zelle, die irgendwo
+`läuft|nacharbeit` UND eine Lauf-Kennung (8 Hex-Zeichen) UND einen Modellnamen enthält, z. B.
+`\|[^|]*\b(läuft|nacharbeit)\b[^|]*\b[0-9a-f]{8}\b[^|]*\b(sonnet|opus)\b[^|]*\|\s*$`. Die Lauf-Kennung ist Pflicht, weil
+Zustandsnotizen wie „nacharbeit nötig (Review opus teilweise)“ oder „endlauf läuft (HEAD <sha>)“ sonst fälschlich zählen.
+Das Muster mit positiven und negativen Beispielzeilen und dem Selbsttest prüfen und danach die Live-Zählung gegen die echten Läufe halten.
+Bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten: für das Ersatzwerkzeug
+`jq .state /tmp/pi-subagents-uid-*/async-subagent-runs/<runId>*/status.json` (laufend = `running`, Aktivität = mtime `output-0.log`), für
+`acp_delegate` die `.out`/`.activity` je Queue-Zeile. Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
+das Muster nachziehen und die Spur auf das Kopfzeilen-Format hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap
+reichen (`free -m`), weil sonst Stunden Arbeit verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
 
 ## Build-Rechner fällt mitten im Lauf aus (Integration rot mit „server … not responding“/Timeout)
 Ein roter Prüf- oder Integrationsschritt mit Verbindungsfehler ist kein Paketfehler. Zuerst den Host prüfen:
@@ -54,9 +58,11 @@ schlafender Rechner lässt sich aus der Ferne nicht reparieren, und ohne Meldung
 ## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
 Der Worker fragt über `contact_supervisor`; die Spur sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
 Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet die Antwort „withdrawn by the child“, hat der Worker
-die Frage zurückgezogen (z. B. weil die Leitstand-Ebene ihm schon geantwortet hat) und arbeitet weiter: dieselbe Entscheidung kurz per
-`subagent({action:"steer", id:<runId>, message, options:{index:0}})` bestätigen, statt sie zu verwerfen. Vorher `subagent({action:"status", id})`
-prüfen: Läuft er noch? Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
+die Frage zurückgezogen (Frist abgelaufen oder die Leitstand-Ebene hat ihm schon geantwortet) und arbeitet weiter: dieselbe Entscheidung kurz per
+`subagent({action:"steer", id:<runId>, message, options:{index:0}})` nachreichen, statt sie zu verwerfen (in der Leitstand-Sitzung vorher
+`subagents_enable`, sonst fehlt das Werkzeug). Vorher prüfen, ob er noch läuft (`subagent({action:"status", id})` oder `jq .state …/status.json`).
+Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
+Rückfragen also im selben Turn beantworten: erst die Freigabe-Datei schreiben, dann sofort antworten, weil der Worker nur kurz wartet.
 Hat die Leitstand-Ebene dieselbe Freigabe schon in die `vorgaben/<WP>.pfade` geschrieben, die Datei vor dem Eintragen lesen und nichts doppelt anhängen.
 Meldet `steer` „child completed before consuming steering“, ist der Worker fertig: seine Abschlussmeldung lesen, nicht erneut steuern.
 
