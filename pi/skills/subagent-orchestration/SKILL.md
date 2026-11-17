@@ -22,7 +22,7 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - Nebenthemen, um die der Nutzer zwischendurch bittet (z. B. ein störendes Werkzeug), zeitlich begrenzen: zuerst
   upstream nach dem Fehler suchen (Issues/PRs), nach wenigen Diagnoseschritten Zwischenstand mit Ursache und Plan
   melden. Grund: Stilles Lesen von Fremdcode verbraucht Kontext, den die Hauptarbeit noch braucht.
-- Einzelregeln (`references/einzelregeln.md`): Folgearbeit aus einem Lernpass per `systemd-run`-Selbst-Erinnerung einplanen; Teilergebnis-PR nur aus einem sauberen Extra-Worktree auf den PR-Commits; Worker erst nach dem Anlegen seines Worktrees starten (eigener Tool-Block, sonst „spawn … node ENOENT“).
+- Einzelregeln (`references/einzelregeln.md`): Folgearbeit aus einem Lernpass per `systemd-run`-Selbst-Erinnerung einplanen; Teilergebnis-PR nur aus einem sauberen Extra-Worktree auf den PR-Commits; Worker erst nach dem Anlegen seines Worktrees starten (eigener Tool-Block, sonst „spawn … node ENOENT“); Spur hält an, weil ihr Worker-Werkzeug fehlt (Ersatzweg einer anderen Spur gezielt freigeben); faire Platzvergabe über Spuren mit gemeinsamer Obergrenze (Spur ohne Worker hat Vorrang und wird geweckt).
 - Worker-Plätze nie leer lassen: Endet ein Paket, sofort das nächste starten und erst danach integrieren,
   prüfen und Lücken lesen. Die Aufgabe für das nächste Paket schreibe ich, während das laufende noch arbeitet.
   Ein freier Platz darf höchstens ein paar Minuten frei bleiben, nicht bis die eigene Integration fertig ist.

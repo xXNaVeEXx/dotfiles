@@ -1,13 +1,13 @@
 ---
 name: mag-tech-app-entwicklung
-description: "Feature- und Fix-Arbeit an der besichtigungs-app im mag-tech-monorepo (Next.js/React-UI, next-intl, Jest, Playwright) selbst ausführen — Prüfkette über die Worktree-Wrapper, i18n-Plurale samt Jest-Mock, React-Lint-Regel für setState im Effekt, Handy-Blatt-/Reiter-Muster, E2E-Lauf ohne Baum-Änderung. Use when UI-Texte, Karten-/Handy-Layout oder Specs in apps/besichtigungs-app geändert und lokal belegt werden müssen."
+description: "Feature- und Fix-Arbeit an der besichtigungs-app im mag-tech-monorepo (Next.js/React-UI, next-intl, Jest, Playwright) selbst ausführen — Prüfkette über die Worktree-Wrapper, i18n-Plurale samt Jest-Mock, React-Lint-Regel für setState im Effekt, Handy-Blatt-/Reiter-Muster, E2E-Lauf ohne Baum-Änderung. Use when UI-Texte, Karten-/Handy-Layout oder Specs in apps/besichtigungs-app geändert und lokal belegt werden müssen, oder wenn Features/Bugfixes der besichtigungs-app in die zentrio-app übernommen werden sollen."
 ---
 
 # mag-tech-app-entwicklung
 
 # mag-tech-app-entwicklung
 
-Klasse: UI-/Textänderungen an `apps/besichtigungs-app` im Worktree-Setup (`/home/gamzat/projects/mag-tech-wt/<spur>`) lokal bauen, prüfen und belegen. Release/PR-Kette siehe `mag-tech-release`, `gh-pr-automation`; Mehr-Worker-Läufe siehe `subagent-orchestration`; Cluster-Installationen/Migrationen siehe `mag-tech-cluster-ops`.
+Klasse: UI-/Textänderungen an `apps/besichtigungs-app` im Worktree-Setup (`/home/gamzat/projects/mag-tech-wt/<spur>`) lokal bauen, prüfen und belegen. Release/PR-Kette siehe `mag-tech-release`, `gh-pr-automation`; Mehr-Worker-Läufe siehe `subagent-orchestration`; Cluster-Installationen/Migrationen siehe `mag-tech-cluster-ops`. Features/Fixes der besichtigungs-app nach zentrio-app übernehmen (Lücke messen, Datei-Abgleich, Konfliktspuren, Begriffe neutralisieren): `references/zentrio-abgleich.md`.
 
 ## Issue + PR-Fluss (monorepo-weit, auch zentrio-app)
 - Issue zuerst in der KI-Plattform anlegen, dann Branch/PR darauf beziehen: MCP-Endpoint `https://agents.gamzatlab.net/api/mcp` mit `Authorization: Bearer $(cat ~/.tmp/kip_token.txt)` (der Dateiinhalt IST der Schlüssel `kip_…`), JSON-RPC `tools/call` → `issue_create` mit `{title, bodyMd, projectSlug?, parentNumber?}`; die Antwort liefert die `number` (→ MAG-<n>). Request per Python als Datei bauen (`json.dumps(..., ensure_ascii=True)`) und mit `curl --data @<datei>` senden — Umlaute/Quotes im `-d`-Argument erzeugen „Ungültiges JSON“ (400).
