@@ -30,6 +30,21 @@ vollständigen Aufruf: `subagents_enable`, dann `subagent({agent:"worker", async
 Danach muss die Spur die runId in die Queue eintragen (`läuft <runId> <modell>`), weil die globale Platzzählung nur Queue-Zeilen sieht.
 Hinweise in die Freigabe schreiben: Der Herzschlag (`warte.sh`) erkennt Ersatz-Läufe nicht als fertig. Die Fertigmeldung kommt
 als Benachrichtigung des Ersatzwerkzeugs, und der Herzschlag dient nur noch als Takt. Die Freigabe in ENTSCHEIDUNGEN protokollieren.
+`timeoutMs` = Brief-Timeout in Minuten × 60000 setzen (ohne den Wert greift ein kurzes Standardlimit).
+
+## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
+Der Worker fragt über `contact_supervisor`; die Spur sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
+Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet die Antwort „withdrawn by the child“, hat der Worker
+die Frage zurückgezogen (z. B. weil die Leitstand-Ebene ihm schon geantwortet hat) und arbeitet weiter: dieselbe Entscheidung kurz per
+`subagent({action:"steer", id:<runId>, message, options:{index:0}})` bestätigen, statt sie zu verwerfen. Vorher `subagent({action:"status", id})`
+prüfen: Läuft er noch? Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
+
+## Gemeinsames Werkzeug scheitert an der Namensform neuer Pakete (z. B. Bindestrich-Ordner im Modul-Scan)
+Betrifft die Hürde mehrere Pakete (alle Ordnernamen kommen aus dem Plan), die Werkzeug-Erweiterung klein und rückwärtskompatibel halten
+(Namen abbilden, echten Pfad behalten) statt Pfade der Pakete umzubenennen — Abnahme-Tests und Exklusiv-Pfade bleiben so gültig.
+Ablauf: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` für Werkzeug-Datei + deren Test anlegen (Kommentarzeile mit Grund), (2) Worker mit
+Testfall und eigenem Commit beauftragen, (3) Entscheidung in ENTSCHEIDUNGEN, (4) die Folgepakete derselben Gruppe erst nach Integration
+dieses Pakets starten oder im Brief auf die Erweiterung verweisen. Grund: Sonst scheitert jedes Folgepaket am selben Build-Fehler.
 
 ## Faire Vergabe knapper Worker-Plätze über mehrere Spuren
 Teilen sich Spuren eine globale Obergrenze (z. B. höchstens 2 Claude-Worker), belegt sonst die Spur, die zuerst `next` fragt,
