@@ -42,6 +42,15 @@ je Queue-Zeile. Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonis
 hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap reichen (`free -m`), weil sonst Stunden Arbeit
 verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
 
+## Build-Rechner fällt mitten im Lauf aus (Integration rot mit „server … not responding“/Timeout)
+Ein roter Prüf- oder Integrationsschritt mit Verbindungsfehler ist kein Paketfehler. Zuerst den Host prüfen:
+`tailscale status | grep <host>` (zeigt „offline, last seen Nm ago“, also den Ausfallzeitpunkt) und `timeout 15 ssh -o BatchMode=yes
+-o ConnectTimeout=8 <host> uptime`. Dann im Build-Wrapper nachsehen, ob er schon auf einen Ersatz-Host ausweicht (Erreichbarkeitsprobe vor
+der Host-Wahl); laufende Neuversuche der Spur nicht abbrechen. Ist der Ersatz-Host der eigene Rechner, Last und RAM/Swap im Blick
+behalten (`uptime`, `free -m`), weil dort auch Sitzungen und Worker laufen. Den Ausfall dem Nutzer als einzigen Handgriff melden
+(Host einschalten/ins Netz bringen) und in die Nutzer-Liste und den Kopf der Statusseite schreiben. Grund: Ein ausgeschalteter oder
+schlafender Rechner lässt sich aus der Ferne nicht reparieren, und ohne Meldung bleibt die Bauzeit unbemerkt langsamer.
+
 ## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
 Der Worker fragt über `contact_supervisor`; die Spur sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
 Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet die Antwort „withdrawn by the child“, hat der Worker
