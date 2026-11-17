@@ -57,6 +57,22 @@ Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet 
 die Frage zurückgezogen (z. B. weil die Leitstand-Ebene ihm schon geantwortet hat) und arbeitet weiter: dieselbe Entscheidung kurz per
 `subagent({action:"steer", id:<runId>, message, options:{index:0}})` bestätigen, statt sie zu verwerfen. Vorher `subagent({action:"status", id})`
 prüfen: Läuft er noch? Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
+Hat die Leitstand-Ebene dieselbe Freigabe schon in die `vorgaben/<WP>.pfade` geschrieben, die Datei vor dem Eintragen lesen und nichts doppelt anhängen.
+Meldet `steer` „child completed before consuming steering“, ist der Worker fertig: seine Abschlussmeldung lesen, nicht erneut steuern.
+
+## Abnahme: gespeicherten Endlauf gegen HEAD und Fix-Commits halten
+`wpq.py wait check <WP>` zeigt das zuletzt gespeicherte Ergebnis, auch wenn danach noch Fix-Commits kamen (z. B. clippy-Korrekturen nach einem
+roten ersten Lauf). Vor „grün“ oder „rot“ `WPQ_HEAD` mit `git rev-parse --short HEAD` im Worktree vergleichen; weicht es ab, den Endlauf neu
+als bg_run fahren, statt Nacharbeit zu verlangen oder den alten Lauf zu glauben. Bei Worker-Meldungen „nextest lief vor den letzten Commits“
+hängt die Entscheidung am neuen Endlauf, nicht am Bericht.
+
+## Reviewer-Subagent liefert „Nichts gespeichert“ statt Befunden
+Startet die Spur einen Reviewer (`subagent`, Agent `reviewer`) kurz nach einem automatischen Lernpass, übernimmt er dessen Anweisungen aus dem
+geerbten Verlauf und antwortet mit „nichts zu speichern“. Ein einfaches „Das ist ein Code-Review“ im Task und `context:"fresh"` haben das
+nicht verhindert. Ergebnis ist leer, also nie als „keine Mängel“ lesen. Abhilfe: nach dem ersten Leerlauf nicht wiederholen, sondern die
+Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue öffentliche Funktion auf Aufrufer außerhalb der Gruppe, Werkzeug-Diff lesen)
+und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
+Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
 
 ## Gemeinsames Werkzeug scheitert an der Namensform neuer Pakete (z. B. Bindestrich-Ordner im Modul-Scan)
 Betrifft die Hürde mehrere Pakete (alle Ordnernamen kommen aus dem Plan), die Werkzeug-Erweiterung klein und rückwärtskompatibel halten
