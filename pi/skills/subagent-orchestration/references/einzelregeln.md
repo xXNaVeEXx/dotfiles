@@ -32,6 +32,16 @@ Hinweise in die Freigabe schreiben: Der Herzschlag (`warte.sh`) erkennt Ersatz-L
 als Benachrichtigung des Ersatzwerkzeugs, und der Herzschlag dient nur noch als Takt. Die Freigabe in ENTSCHEIDUNGEN protokollieren.
 `timeoutMs` = Brief-Timeout in Minuten × 60000 setzen (ohne den Wert greift ein kurzes Standardlimit).
 
+## Globale Worker-Obergrenze bei jedem Leitstand-Wecken gegenprüfen
+Die Platzzählung liest die Queue-Spalte „Status“ per Muster. Spuren schreiben dort gelegentlich Freitext (z. B. „nacharbeit läuft
+<runId> sonnet“ statt „nacharbeit <runId> sonnet“). Die Zeile zählt dann nicht, und eine Spur startet einen Worker über die Grenze.
+Darum bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten: für das Ersatzwerkzeug
+`jq .state /tmp/pi-subagents-uid-*/async-subagent-runs/*/status.json` (laufend = `running`), für `acp_delegate` die `.out`/`.activity`
+je Queue-Zeile. Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen, das Zählmuster tolerant machen
+(Schlüsselwort am Anfang plus Modellname irgendwo in der Zelle, getestet per Selbsttest) und die Spur auf das Kopfzeilen-Format
+hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap reichen (`free -m`), weil sonst Stunden Arbeit
+verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
+
 ## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
 Der Worker fragt über `contact_supervisor`; die Spur sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
 Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet die Antwort „withdrawn by the child“, hat der Worker
