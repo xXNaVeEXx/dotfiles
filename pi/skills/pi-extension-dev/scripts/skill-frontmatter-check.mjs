@@ -8,20 +8,38 @@
 // Ausgabe je Skill: OK <name> <description-Länge> | FAIL <name> <Fehler> | NODESC/LONG/NOFM <name>
 //                   | DUP <name> <Befund>
 // Exit 1, sobald ein Skill nicht lädt oder DUP zeigt.
+// pi-Einstieg: PI_CLI=<pfad/cli.js> erzwingt ihn; sonst alle `pi` im PATH der Reihe nach probieren
+// (inaktive mise-Shims und andere Wrapper ohne cli.js-Verweis werden übersprungen).
 import { execSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-function piCli() {
-  const bin = realpathSync(execSync("command -v pi", { shell: "/bin/bash" }).toString().trim());
+function cliFrom(candidate) {
+  const bin = realpathSync(candidate);
   // npm-Install: der Symlink zeigt direkt auf die JS-Datei.
   if (/\.[cm]?js$/.test(bin)) return bin;
   // nix-Install: Bash-Wrapper, letzte Zeile `exec node …/dist/bundle/cli.js`.
-  const hits = readFileSync(bin, "utf8").match(/\/[^\s"']+\/cli\.js/g);
-  if (!hits) throw new Error(`pi-Einstieg nicht gefunden in ${bin}`);
-  return hits[hits.length - 1];
+  let text;
+  try {
+    text = readFileSync(bin, "utf8");
+  } catch {
+    return "";
+  }
+  const hits = text.match(/\/[^\s"']+\/cli\.js/g) ?? [];
+  const last = hits[hits.length - 1] ?? "";
+  return last && existsSync(last) ? last : "";
+}
+
+function piCli() {
+  if (process.env.PI_CLI) return process.env.PI_CLI;
+  const all = execSync("type -ap pi || true", { shell: "/bin/bash" }).toString().split("\n");
+  for (const candidate of all.map((s) => s.trim()).filter(Boolean)) {
+    const cli = cliFrom(candidate);
+    if (cli) return cli;
+  }
+  throw new Error(`pi-Einstieg nicht gefunden (geprüft: ${all.join(" ").trim()}); PI_CLI setzen`);
 }
 
 function dupFinding(body) {
