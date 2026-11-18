@@ -41,8 +41,8 @@ solche Zeilen nicht, und eine Spur startet einen Worker über die Grenze. Darum 
 Zustandsnotizen wie „nacharbeit nötig (Review opus teilweise)“ oder „endlauf läuft (HEAD <sha>)“ sonst fälschlich zählen.
 Das Muster mit positiven und negativen Beispielzeilen und dem Selbsttest prüfen und danach die Live-Zählung gegen die echten Läufe halten.
 Bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten, und zwar aus dem Lauf-Register statt aus der Queue:
-`jq -r 'select(.state=="running") | (.steps[0].model // .model) + " " + .cwd' /tmp/pi-subagents-uid-*/async-subagent-runs/*/status.json`
-listet jeden laufenden Ersatz-Worker mit Modell und Worktree (Aktivität = mtime `output-0.log`); für `acp_delegate` die `.out`/`.activity`
+`for d in $(ls -dt /tmp/pi-subagents-uid-*/async-subagent-runs/*/ | head -8); do [ "$(jq -r .state $d/status.json)" = running ] && echo "running $(basename $d | cut -c1-8) $(jq -r '(.steps[0].model // .model) + " " + .cwd' $d/status.json)"; done`
+listet jeden laufenden Ersatz-Worker mit Kennung, Modell und Worktree (Aktivität = mtime `output-0.log`); für `acp_delegate` die `.out`/`.activity`
 je Queue-Zeile. Grund: Eine Status-Zelle kann eine fremde 8-Hex-Kennung tragen (Commit-SHA des fertigen Workers statt runId des Prüfers)
 oder das Modell vor der Kennung nennen; das Muster zählt sie dann nicht, nur das Register zeigt den Lauf. Jeden laufenden Lauf ohne passende
 Queue-Zeile über den `cwd` dem Paket zuordnen und dessen Zelle berichtigen.
@@ -61,6 +61,12 @@ diese Zahl in Statusseiten-Kopf, STAND und Nutzerbericht schreiben. Nie die letz
 Journalzeilen „integriert“ sind in der Zählung meist schon enthalten, das Hochzählen im Kopf meldet dann ein Paket zu viel. Ist eine frühere
 Meldung falsch gewesen, sie im nächsten Bericht ausdrücklich berichtigen und in STAND vermerken. Grund: Der Nutzer liest die Zahlen als
 Fortschrittsmaß, und eine stille Korrektur nach unten sieht wie verlorene Arbeit aus.
+
+## Watchdog weckt den Leitstand, obwohl alles planmäßig läuft
+Die Leerlaufschwelle des Leitstand-Watchdogs liegt oft unter dem Takt der Aufsichts-Loops (z. B. 150 min gegen 180 min); dann ist die Weckung
+kein Fehlerzeichen. Trotzdem die volle Runde fahren (Queue-Zählung, Lauf-Register, Kontingent, RAM, Push-Stand, Aufsichts-Prozesse, offene
+Berichtspunkte) und dabei einen liegengebliebenen eigenen Punkt abarbeiten. Im Bericht in einem Satz sagen, dass die Ruhe geplant war und
+wann die nächste Aufsichtsmeldung kommt. Grund: Der Nutzer liest die Watchdog-Meldung mit und hält den Leitstand sonst für hängend.
 
 ## Build-Rechner fällt mitten im Lauf aus (Integration rot mit „server … not responding“/Timeout)
 Ein roter Prüf- oder Integrationsschritt mit Verbindungsfehler ist kein Paketfehler. Zuerst den Host prüfen:
@@ -128,7 +134,12 @@ die Lebend-Prüfung per Umgebungsvariable steuern (z. B. `WPQ_LEBT=W1-C`, aktiv 
 Bei jedem Wecken Aufsichtsberichte, PLAN-Log und die Journalzeilen „integriert“ nach „offen für L0“/„Offen BERICHT“/„nicht verdrahtet“/
 „nicht registriert“ durchsuchen. Typisch: Der Worker durfte eine gesperrte Sammeldatei nicht ändern (Gateway-Methodenliste, Gruppen-Registrierung
 der Oberfläche, CLI-Enum), der Baustein ist eingebaut, aber von außen nicht erreichbar. Den Rest nicht selbst einbauen (der Leitstand baut nicht)
-und nicht liegen lassen. Die Spur bekommt ihn per `spur.sh prompt` mit einer Entscheidungsregel zurück:
+und nicht liegen lassen.
+Zuerst jeden gemeldeten Rest im Integrationszweig nachprüfen, bevor er einem Paket zugeordnet wird: `git grep -n '<funktion>'` ohne Testdateien
+und die Definition samt Kommentar lesen. Trägt die Funktion `#[cfg(test)]` oder ist sie laut Kommentar ein Testhelfer, und läuft der echte Einstieg
+über einen anderen, angeschlossenen Weg, ist der Punkt erledigt: in STAND mit Fundstelle vermerken, kein Paket. Grund: Worker melden auch
+Testhelfer als „nicht verdrahtet“, und ein Pflichtpunkt dafür erzeugt toten Code.
+Die Spur bekommt einen echten Rest per `spur.sh prompt` mit einer Entscheidungsregel zurück:
 (1) Reicht eine Registrierung oder ein paar Aufrufzeilen, als kleiner Integrationsfix ohne eigenen Worker: genaue Zeilen, Reihenfolge zu laufenden
 Integrationen (nach dem gerade laufenden Einbau, vor dem nächsten Paket an derselben Datei), Prüfung über den Build-Wrapper (check + betroffene
 Tests gezielt), eigener Commit mit Paket-ID, Push, Verweis auf die frühere gleichartige Freigabe.
@@ -137,6 +148,15 @@ Vor der Wahl die Gegenseite lesen, nicht nur die Sammeldatei: Eine Registrierung
 Registriert sie eine Gruppe, deren Methoden am Gateway fehlen (Handler brauchen Zustand wie Store, Konfig, Netz-Tor), läuft sie ins Leere und
 gehört nach (2). Den Pflichtpunkt dann in den Brief des Pakets schreiben, das die Gateway-Seite baut, samt Zusatzfreigabe der Sammeldateien
 (`vorgaben/<WP>.pfade`) und „Test über den Gateway-Aufruf je Methode“.
+Ein Journalverweis „→ Pflichtpunkt <Paket>“ ist noch kein Pflichtpunkt. Bei jedem Wecken den Pflicht-Abschnitt im Brief des Zielpakets und dessen
+`.pfade` gegen ALLE Verweise seit der letzten Prüfung halten: Jedes verwiesene Modul steht namentlich im Abschnitt, jede dafür zu ändernde Datei
+(auch die Kanal-/Einstiegsdatei des Bereichs selbst, nicht nur Gateway und Oberfläche) ist freigegeben. Die Lücke mit einem Befehl belegen:
+`git grep -ln '<bereich>::<modul>' -- <crates> | grep -v '<eigene ordner der module>'` (leer = kein Aufrufer). Fehlendes der Spur als
+Ergänzungsauftrag geben („kein Eilauftrag, laufenden Worker nicht stören, Journalzeile als Quittung“), mit Ausweg: Wird das Zielpaket dadurch
+zu groß, ein eigenes kleines Anschlusspaket direkt danach einplanen und melden. Grund: Die Spur schreibt den Verweis ins Journal, ergänzt den Brief
+aber nur beim ersten Mal; spätere Pakete derselben Gruppe fallen heraus, und das Zielpaket schließt nur an, was in seinem Brief steht.
+Liegt das Zielpaket in einer späteren Welle und hat noch keinen Brief, die Vorgabe als `vorgaben/<WP>.md` ablegen (verbindliche Leitstand-Vorgabe,
+die das Queue-Werkzeug beim Erzeugen in den Brief übernimmt).
 Wiederholt sich die Lücke absehbar für eine ganze Paketgruppe (z. B. jeder Kanal-Grundbetrieb), die Prüfung gleich als stehende Regel „nach jeder
 Integration dieser Gruppe“ geben. Die Entscheidung kommt in ENTSCHEIDUNGEN; beim nächsten Wecken im Spur-Journal prüfen, ob der Commit auf dem
 Integrationszweig liegt bzw. der Pflichtpunkt im Brief steht. Grund: Solche Reste gehen in Berichten sonst unter, bis ein späteres Paket oder der
