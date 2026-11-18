@@ -1,6 +1,6 @@
 ---
 name: omarchy-bar-widgets
-description: Eigene Widgets in die Omarchy-Statusbar und ins omarchy.agents-Panel bringen — Command-Module in shell.json, Usage-Record-Collector fürs Agents-Panel (Schema, percent-Bruch-Falle), inkl. z.ai/bigmodel.cn Usage-API. Use when adding custom data/widgets to the Omarchy bar or agents panel, or querying z.ai GLM Coding Plan usage.
+description: Eigene Widgets in die Omarchy-Statusbar und ins omarchy.agents-Panel bringen — Command-Module in shell.json, Usage-Record-Collector fürs Agents-Panel (Schema, percent-Bruch-Falle), inkl. z.ai/bigmodel.cn Usage-API. Use when adding custom data/widgets to the Omarchy bar or agents panel, querying z.ai GLM Coding Plan usage, or when the Claude usage record shows empty limits or a quota gate reading it suddenly reports 0 %.
 ---
 
 # omarchy-bar-widgets
@@ -57,6 +57,7 @@ und per FileView live bei Dateiänderung. Sofort-Rescan: `omarchy-shell omarchy.
 - Hero-Icon: `assets/<id>.svg` Konvention im Plugin-Ordner (read-only) → unbekannte IDs fallen auf den Bar-Glyph `󱚣` zurück. Alternativ `omarchy plugin clone omarchy.agents` (forkt aber ganzes Panel).
 - Provider-Switch-Chips erscheinen ab 2 Providern; `omarchy-shell omarchy.agents next` zyklisch.
 - Settings-Sperre: `settings.providers[id].enabled === false` versteckt Provider (Default: enabled).
+- **Claude-Record mit `limits: []` und authHelpText „saved sign-in expired“**: Der first-party Sammler `omarchy-agent-usage-claude` fragt die Limits nur mit dem Token aus `$CLAUDE_CONFIG_DIR/.credentials.json` ab, und nur die Claude-Code-CLI erneuert dieses Token. Ist es abgelaufen, zeigt er den Probe-Cache `~/.cache/omarchy/agent-usage/claude-limits.json`, aber nur Fenster, die seitdem nicht zurückgesetzt wurden; nach dem Wochenwechsel ist die Liste leer. Jedes Skript, das daraus Prozent liest (Kontingent-Tore), sieht dann still 0 %. Dauerhafte Abhilfe ohne omarchy-Dateien zu ändern: Ein Timer-Skript (alle 10 min, nur wenn das Claude-Code-Token abgelaufen ist) legt einen Temp-Ordner mit `.credentials.json` = `jq '{claudeAiOauth:{accessToken:.anthropic.access, expiresAt:.anthropic.expires, rateLimitTier:"", subscriptionType:""}}' ~/.pi/agent/auth.json` an (chmod 600; pi erneuert sein Anthropic-OAuth-Token selbst), ruft `CLAUDE_CONFIG_DIR=<tmp> omarchy-agent-usage-claude --limits-only --force` (schreibt den Probe-Cache) und danach `omarchy-agent-usage-update --limits-only claude` (schreibt den Record sofort; der normale Lauf nimmt den Cache als Rückfall). Prüfen: `jq -c .limits ~/.local/state/omarchy/agents/usage/claude.json`. Der Endpunkt liefert dabei nicht immer ein 5-h-Fenster; ein Tor sieht dann kurz = 0 %. Einmaliges `claude auth login` stellt den direkten Weg wieder her.
 
 ## Befrager-Muster (bewährt, gebaut für z.ai GLM Coding Plan)
 
