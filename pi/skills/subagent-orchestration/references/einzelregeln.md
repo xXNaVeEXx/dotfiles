@@ -51,9 +51,12 @@ In Spur-Anleitung und Hinweis darum festhalten: vor jedem einzelnen Start neu z�
 Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
 das Muster nachziehen und die Spur auf das Kopfzeilen-Format hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap
 reichen (`free -m`), weil sonst Stunden Arbeit verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
-Umgekehrter Fall: Zeigt das Register weniger Läufe als die Grenze, während eine Spur-Zelle „wartet auf Slot“ trägt, die Spur sofort per
-`spur.sh prompt` anstoßen (Start nach erneutem Zählen, runId+Modell in die Zelle). Grund: Ihr Herzschlag schläft bis zu einer Stunde, der freie
-Platz bliebe sonst so lange ungenutzt.
+Umgekehrter Fall: Zeigt das Register weniger Läufe als die Grenze, die Spuren auf ungenutzte Plätze prüfen. Zwei Formen: (a) eine Spur-Zelle
+trägt „wartet auf Slot“; (b) eine Spur hat keinen eigenen Lauf im Register, weil sie nur einbaut (Zelle „integrieren“, Journal „integ läuft“),
+obwohl `wpq.py next <spur>` ein startbares Paket zeigt (Ausgabe beginnt mit START). In beiden Fällen die Spur sofort per `spur.sh prompt`
+anstoßen: nach erneutem Zählen das nächste Paket parallel zum Einbau starten, runId+Modell in die Zelle, kurze Journalzeile als Quittung.
+Grund: Ihr Herzschlag schläft bis zu einer Stunde, und manche Spur wartet aus Gewohnheit den Einbau ab; der freie Platz bliebe so lange ungenutzt.
+Der Anstoß wirkt meist dauerhaft (die Spur startet danach von selbst während des Einbaus); beim nächsten Wecken im Journal gegenprüfen.
 
 ## Fortschrittszahlen in Bericht und Statusseite nur aus der Live-Zählung übernehmen
 Die Zahl „fertig X von Y“ je Spur bei jedem Wecken aus der Queue zählen (`grep -c '| fertig' QUEUE.md` gegen `grep -c '^| LC-WP'`) und genau
@@ -155,6 +158,15 @@ Ein Journalverweis „→ Pflichtpunkt <Paket>“ ist noch kein Pflichtpunkt. Be
 Ergänzungsauftrag geben („kein Eilauftrag, laufenden Worker nicht stören, Journalzeile als Quittung“), mit Ausweg: Wird das Zielpaket dadurch
 zu groß, ein eigenes kleines Anschlusspaket direkt danach einplanen und melden. Grund: Die Spur schreibt den Verweis ins Journal, ergänzt den Brief
 aber nur beim ersten Mal; spätere Pakete derselben Gruppe fallen heraus, und das Zielpaket schließt nur an, was in seinem Brief steht.
+Die Größe des Sammelpakets selbst mitverfolgen: bei jedem Wecken die Einträge seines Pflicht-Abschnitts zählen (`grep -n '<Gruppenkürzel>-' <brief>`)
+und die Zahl in STAND notieren. Ab etwa einem halben Dutzend Anschlüssen die Teilung nicht dem Paketstart überlassen, sondern die Spur vorab
+entscheiden lassen (ein Paket oder Anschlusspaket danach) und dem Nutzer im Bericht als beobachteten Punkt nennen. Grund: Jeder Eintrag ist für
+sich klein, zusammen sprengen sie Zeitlimit und Prüfumfang eines einzelnen Workers.
+Übliche Teilung ist zweistufig im selben Worktree: Stufe 1 = Paket laut Plan mit Abnahme wie üblich, Stufe 2 = eigener Anschluss-Lauf danach
+(stärkeres Modell, eigener Brief mit der ganzen Pflichtliste, je Anschluss ein Test über den echten Aufrufweg, eigene Commits; wird auch das zu groß,
+nach Bereich geteilt und nacheinander). Endlauf und Integration erst nach Stufe 2. Den Pflicht-Abschnitt im Zielbrief ausdrücklich als
+„wird in Stufe 2 erledigt“ kennzeichnen (Stufe-1-Worker setzt ihn nicht halb um), die `.pfade`-Freigaben bleiben für Stufe 2 stehen, weitere
+Anschluss-Verweise späterer Pakete laufen in dieselbe Liste; Entscheidung in ENTSCHEIDUNGEN, Quittung im Journal.
 Liegt das Zielpaket in einer späteren Welle und hat noch keinen Brief, die Vorgabe als `vorgaben/<WP>.md` ablegen (verbindliche Leitstand-Vorgabe,
 die das Queue-Werkzeug beim Erzeugen in den Brief übernimmt).
 Wiederholt sich die Lücke absehbar für eine ganze Paketgruppe (z. B. jeder Kanal-Grundbetrieb), die Prüfung gleich als stehende Regel „nach jeder
