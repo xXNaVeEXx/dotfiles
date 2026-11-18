@@ -14,6 +14,15 @@ Ohne `pub mod <gruppe>;` und Dispatch-Zeile sind Code und Tests des Pakets tot; 
 
 Grund: Parallel konfligieren alle Pakete in denselben Zeilen der Bereichsdatei, und ohne Anschluss prüft kein Test den Code.
 
+## Szenario-Datei des Briefs fehlt in der Pfadliste
+Nennt der Brief ein E2E-Szenario (`tests/…/E2E-*.toml`) oder eine andere Datei außerhalb der Paket-Ordner, kennt `abnahme` sie nur, wenn sie in der
+Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“ erst nach der Arbeit des Workers.
+- Beim Anlegen von `vorgaben/<WP>.pfade` den Brief gegen die Liste halten: `grep -n "E2E-\|\.toml" wp/<WP>.md` und jede Fundstelle eintragen.
+- Von einem Geschwisterpaket nur die STEHENDEN Freigaben kopieren (`handbuch.html`, `Cargo.toml` der eigenen Crate); dessen Szenario-Zeilen gehören
+  dem Geschwister und passen nicht zum neuen Brief. Fehlt dem Folgepaket ein Szenario, fragt der Worker zurück.
+- Rückfrage wegen fehlender Datei: Zeile mit Grund an `.pfade` anhängen, ENTSCHEIDUNGEN + Journal ergänzen, `subagent_supervisor reply` im selben Turn.
+Grund: Die Pfadliste ist die einzige Quelle der Abnahme; jede Lücke kostet eine Rückfrage-Runde samt Wartezeit des Workers.
+
 ## Merge-Konflikte bei der Integration (Exit 4) in gemeinsam genutzten Dateien
 Pakete derselben Gruppe erweitern dieselbe Crate-`Cargo.toml` (neue Abhängigkeiten) und lassen `handbuch.html` neu erzeugen; der erste Einbau
 nach einem Geschwisterpaket konfligiert deshalb fast sicher. Lösung im Paket-Worktree (nicht im Integrationsbaum), dann `git add` +

@@ -1,0 +1,12 @@
+# Standard-Prüffragen für Rust-Pakete mit RPC, Löschen oder Fremdtext
+
+Immer in den Reviewer-Auftrag UND vorab in den Worker-Brief schreiben; jede wiederkehrende Beanstandung kostet sonst eine volle Nacharbeitsrunde (Worker → Review → Nacharbeit → Endlauf).
+
+- **Löschende/ändernde RPC ohne Freigabe:** Jede Methode, die löscht, kaltstellt oder Daten dauerhaft ändert, läuft über `Decision::Ask` (Ask → „Freigabe nötig“ ablehnen; nie per `confirmed`-Flag oder Standard-`enforce` umgehen); nur die Vorschau (`dryRun`) bleibt frei. Muster: `freigabe()` in `kern/laufzeit/provider_auth/rpc.rs`.
+- **Vom Aufrufer vorgegebene Uhr (`nowMs`):** Altersgrenzen (Aufbewahrung, Ablauf, Schutz) dürfen nie vom RPC-Parameter abhängen, sonst löscht eine Zukunftszeit alles Ungeschützte. Test-Uhr nur über einen Testbetrieb-Schalter, sonst `min(nowMs, jetzt)` oder ablehnen. Test-Hilfsmethoden (`anlegen`, Motor-Tod, Fake-Zeit) gehören nicht in die Produktionsregistrierung.
+- **Grenzkonstanten gegen Hilfsfunktionen abgleichen:** Eine eigene Höchstlänge (z. B. 100 000) gegen die interne Kürzung der aufgerufenen Funktion (Schwärzer kürzt auf 64 KiB) prüfen; sonst ist „vollständig“ im Bericht falsch.
+- **Fremdtext:** Rahmen-Tags und Herkunfts-/System-Zeilen (`[Input provenance:`, `[System note:`) im Nutzertext neutralisieren; PEM über Teilgrenzen vor dem Kürzen schwärzen; Namen/Labels einzeilig und längenbegrenzt; keine quadratische Suche (HashMap statt linearer Suche in einer Schleife).
+- **Selbst nachzählen statt dem Bericht glauben:** Testzahl per `grep -c '#\[test\]'`; Hotspot-Unversehrtheit per `git diff --stat <Basis> HEAD -- '*gateway.rs' '*tests/modscan.rs' '*Cargo.toml'` (ein Reviewer ohne Commit-Bereich-Diff kann das nicht — die Spur prüft es selbst).
+- **Eigenbau statt fehlender Abhängigkeit** (z. B. eigener Kompressor, weil `Cargo.toml` Hotspot ist): Reviewer auf Dekompressions-Bombe, Offset-/Längenüberlauf, manipulierte Eingaben und Tests dafür ansetzen; Status ehrlich `ersatz`.
+- **Wartung/Timer ohne Betriebsaufrufer:** nur per RPC auslösbar heißt im Bericht „nur manuell ausgelöst“; Status nicht höher als gerechtfertigt.
+- **Lauf-Register statt `wpq.py next` vertrauen:** `next` zählt Reviews nicht mit und Reservierungen anderer Spuren; vor jedem Review-/Nacharbeit-Start `jq -r 'select(.state=="running") | .cwd' /tmp/pi-subagents-uid-*/async-subagent-runs/*/status.json` zählen (≤1 → Start erlaubt, global max 2 Claude-Läufe).
