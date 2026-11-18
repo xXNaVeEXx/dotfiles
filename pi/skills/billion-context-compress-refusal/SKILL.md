@@ -1,6 +1,6 @@
 ---
 name: billion-context-compress-refusal
-description: "billion-context-Faltungen, die mit „Compression refused: coverage regression“, „cannot satisfy turn integrity“, „no net shrink“ oder dem Repeat-failure-Guard scheitern oder als abgeschnittene Stub-Blöcke landen, diagnostizieren und entschärfen — Bereichsform prüfen (höchstens ein lückenloser Neuversuch), ID-Drift im Session-State messen, Stubs per decompress-to-file reparieren, Auslöser vermeiden, Turn-Abbruch nach Ablehnung verhindern (compress nie allein senden), Upstream-Fix verfolgen. Use when an ACP/billion-context compress is refused (coverage regression, turn integrity, no net shrink), a turn aborts right after a compress with „unsupported stop reason length“, a fresh block shows a tiny truncated summary, the user complains about recurring ACP refusal or stop-reason errors, or a nearly full session must be compacted although acp_status shows nothing compressible."
+description: "billion-context-Faltungen, die mit „Compression refused: coverage regression“, „cannot satisfy turn integrity“, „no net shrink“ oder dem Repeat-failure-Guard scheitern oder als abgeschnittene Stub-Blöcke landen, diagnostizieren und entschärfen — Bereichsform prüfen (höchstens ein lückenloser Neuversuch), ID-Drift im Session-State messen, Stubs per decompress-to-file reparieren, Auslöser vermeiden, Turn-Abbruch nach Ablehnung verhindern (compress nie allein senden), Upstream-Fix verfolgen. Use when an ACP/billion-context compress is refused (coverage regression, turn integrity, no net shrink), a turn aborts right after a compress with „unsupported stop reason length“, a fresh block shows a tiny truncated summary, the user complains about recurring ACP refusal or stop-reason errors, or a nearly full session must be compacted although acp_status shows nothing compressible, or a session only „thinks“ without output after switching to a model with a smaller context window."
 ---
 
 # billion-context-compress-refusal
@@ -103,6 +103,15 @@ Die Meldung ist die Antwort des Proxys auf einen eigenen `compress`-Aufruf. Ein 
 - Bei „no net shrink“ denselben Bereich nie mit derselben Zusammenfassung erneut senden. Stattdessen kürzer schreiben, einen größeren Bereich wählen oder gar nicht falten.
 
 ## 6. Kontext fast voll, aber nichts faltbar
+- Sonderfall Modellwechsel: Wechselt eine große Sitzung auf ein Modell mit kleinerem Fenster (Log:
+  `context <N> tokens reached preflight target 200000 (model window 200000`), faltet der Proxy vor JEDER Anfrage minutenlang
+  selbst, oft ohne zu konvergieren; der Nutzer sieht nur „denkt“, Abbruch endet mit „summarization aborted: client
+  disconnected“. Diagnose: in der Sitzungs-JSONL stehen Läufe des neuen Modells mit stopReason „aborted“ und 0 Tokens;
+  `grep "sess=<id-präfix>" ~/.local/state/billion-context/bili.log | grep preflight` zeigt die Faltrunden; das Modell
+  selbst per `pi -p --provider <p> --model <id> --no-session "OK"` gegenprüfen, damit nicht das Modell verdächtigt wird.
+  Abhilfe: zurück aufs große Modell, Stand-Datei schreiben, dann EIN Helfer, der bei Leerlauf nacheinander `/compact …`,
+  `/model <provider>/<id>` (exakter Name setzt ohne Auswahldialog) und den Fortsetzungsauftrag schickt. Grund: pis
+  `/compact` schrumpft den Kontext in einem Schritt unter das kleine Fenster, das schrittweise Proxy-Falten nicht.
 - Erkennen: `acp_status` zeigt nur alte Blöcke, `0 tool | 0 text`, „max compressible 0“, und BILLED INPUT ist Stunden alt
   („measured <n>m ago“). Dann sieht der Proxy die aktuelle Masse nicht, und `compress` bringt nichts; der Druck steht in
   pis eigener Anzeige (Fußzeile in %).
