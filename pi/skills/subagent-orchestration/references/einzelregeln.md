@@ -40,9 +40,15 @@ solche Zeilen nicht, und eine Spur startet einen Worker über die Grenze. Darum 
 `\|[^|]*\b(läuft|nacharbeit)\b[^|]*\b[0-9a-f]{8}\b[^|]*\b(sonnet|opus)\b[^|]*\|\s*$`. Die Lauf-Kennung ist Pflicht, weil
 Zustandsnotizen wie „nacharbeit nötig (Review opus teilweise)“ oder „endlauf läuft (HEAD <sha>)“ sonst fälschlich zählen.
 Das Muster mit positiven und negativen Beispielzeilen und dem Selbsttest prüfen und danach die Live-Zählung gegen die echten Läufe halten.
-Bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten: für das Ersatzwerkzeug
-`jq .state /tmp/pi-subagents-uid-*/async-subagent-runs/<runId>*/status.json` (laufend = `running`, Aktivität = mtime `output-0.log`), für
-`acp_delegate` die `.out`/`.activity` je Queue-Zeile. Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
+Bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten, und zwar aus dem Lauf-Register statt aus der Queue:
+`jq -r 'select(.state=="running") | (.steps[0].model // .model) + " " + .cwd' /tmp/pi-subagents-uid-*/async-subagent-runs/*/status.json`
+listet jeden laufenden Ersatz-Worker mit Modell und Worktree (Aktivität = mtime `output-0.log`); für `acp_delegate` die `.out`/`.activity`
+je Queue-Zeile. Grund: Eine Status-Zelle kann eine fremde 8-Hex-Kennung tragen (Commit-SHA des fertigen Workers statt runId des Prüfers)
+oder das Modell vor der Kennung nennen; das Muster zählt sie dann nicht, nur das Register zeigt den Lauf. Jeden laufenden Lauf ohne passende
+Queue-Zeile über den `cwd` dem Paket zuordnen und dessen Zelle berichtigen.
+Häufigste Ursache einer Überschreitung: Die Spur startet zwei Läufe im selben Turn (z. B. Nacharbeit und Review), zählt aber nur einmal davor.
+In Spur-Anleitung und Hinweis darum festhalten: vor jedem einzelnen Start neu zählen (`wpq.py next`), nie zwei Starts ohne Zählung dazwischen.
+Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
 das Muster nachziehen und die Spur auf das Kopfzeilen-Format hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap
 reichen (`free -m`), weil sonst Stunden Arbeit verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
 
