@@ -64,14 +64,29 @@ Die Meldung ist die Antwort des Proxys auf einen eigenen `compress`-Aufruf. Ein 
   Signatur an das Gesprächs-Präfix gebunden; steht in der Anfrage `thinking.block_binding.prefix_mismatch_behavior:
   "error"`, lehnt die API danach JEDEN Lauf der Sitzung ab (auch Review-Turns), und Wiederholen hilft nicht.
 - Beleg: `grep -n "upstream 400\|thinking-pair-violated" ~/.local/state/billion-context/bili.log | tail`.
-- Wer setzt den Wert: `grep -rn "prefix_mismatch_behavior" ~/.pi/agent/npm/node_modules --include=*.js -l`. pi-ai
-  selbst sendet `drop_block`; ein Paket, das Anthropic-Anfragen neu baut (pi-background-tasks,
-  `dist/src/core/anthropic-attribution.js`), kann `error` setzen.
-- Fix: dort `'error'` → `'drop_block'` (beide Stellen, dist-JS und src-TS), Versions-Anhang im dynamischen Import der
-  Einstiegsdatei hochzählen, `node --check`, Smoke-Test `pi -p --provider anthropic --model <m> --no-session "OK"`.
-  Vorgehen und Reload-Regeln: Skill `pi-extension-dev`, Abschnitt „Installiertes npm-Pi-Paket lokal patchen“. Die
-  betroffene Sitzung braucht `/reload` (tippt der Nutzer), weil das Modul schon geladen ist. Nach jedem Update des
-  Pakets erneut prüfen.
+- Wer baut die Anfrage: `grep -rn "prefix_mismatch_behavior" ~/.pi/agent/npm/node_modules --include=*.js -l`. pi-ai
+  sendet `drop_block` nur für Modelle mit Mid-Convo-Effort; ein Paket, das Anthropic-Anfragen neu baut
+  (pi-background-tasks, `dist/src/core/anthropic-attribution.js`), entscheidet je Modell-Policy selbst.
+- Gefährlich ist nicht nur ein explizites `'error'`, sondern auch ein FEHLENDES `block_binding`: Dann gilt der
+  API-Standard `error`. Deshalb immer das AKTUELLE Modell prüfen (`echo $PI_MODEL`) und in der Policy-Tabelle
+  nachsehen, ob es Binding-Beta-Header (`thinking-binding-controls-…`) und `block_binding` bekommt. Ein Fix nur für
+  das Modell, bei dem der Fehler zuerst auftrat, lässt jedes andere adaptive Modell weiter scheitern.
+- Fix: für jedes betroffene adaptive Modell den Binding-Beta-Header in seine Policy aufnehmen und im adaptive-Zweig
+  `block_binding: { prefix_mismatch_behavior: 'drop_block' }` setzen, sobald der Header dabei ist (dist-JS und src-TS
+  gleich), Versions-Anhang im dynamischen Import der Einstiegsdatei hochzählen, `node --check`, Smoke-Test mit GENAU
+  dem Modell der Sitzung: `pi -p --provider anthropic --model $PI_MODEL --no-session "OK"`.
+  Vorgehen und Reload-Regeln: Skill `pi-extension-dev`, Abschnitt „Installiertes npm-Pi-Paket lokal patchen“. Nach
+  jedem Update des Pakets erneut prüfen.
+- Jede Sitzung, die vor dem Patch gestartet ist, hat das alte Modul geladen und wirft den Fehler weiter, auch die
+  eigene. Prüfen: `ps -o lstart= -p $PPID` gegen die Änderungszeit der gepatchten Datei; ist der Prozess älter, ist
+  ein erneuter Fehler kein Zeichen für einen falschen Patch (dann nicht weiter suchen, nur per grep bestätigen, dass
+  keine zweite Stelle `error` setzt).
+- Das `/reload` selbst auslösen, statt den Nutzer tippen zu lassen: ein abgekoppelter Helfer (`setsid nohup … &`)
+  wartet auf zwei aufeinanderfolgende Nicht-`working`-Messungen des eigenen Panes (`herdr agent get $HERDR_PANE_ID`),
+  schickt `herdr agent prompt $HERDR_PANE_ID "/reload"`, wartet erneut auf Leerlauf und schickt danach den
+  Fortsetzungs-Auftrag als Nutzernachricht. Den eigenen Turn sofort beenden und im Bericht sagen, dass der Fix in
+  dieser Sitzung erst nach dem Reload wirkt. Grund: Solange der Fehler besteht, bricht jeder Lauf ab, und der
+  Hauptauftrag kommt ohne Reload nicht voran.
 
 ## 4. Vorbeugen
 - Keine Assistant-Texte aus nur Leerzeichen vor Tool-Calls: entweder ein sinnvoller Satz oder direkt der Tool-Call.
