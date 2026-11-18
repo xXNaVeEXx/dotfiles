@@ -4,26 +4,33 @@
 Der Endlauf (`wpq.py check`) ist rot in `export-ts`/`ui`: Eine generierte Index-Datei (z. B. `ui/src/generated/.../index.ts`)
 enthält die Exporte der NEUEN Gruppe des Pakets nicht, obwohl Code und Tests im Worktree stimmen. Typisch direkt nach einem
 Merge des Integrationszweigs ins Paket. Andere Pakete derselben Welle sind grün.
+Gleiche Ursache, andere Form: Ein Test, der eingebettete Datentabellen zählt (z. B. „alle Übersetzungstabellen geladen“), ist rot, weil
+neu hinzugefügte Tabellendateien im Build-Spiegel nicht eingebettet wurden.
 
 ## Ursache
-Der Modul-Scan (build.rs mit `rerun-if-changed` auf einen Ordner) vergleicht Änderungszeiten. rsync -a auf den geteilten Build-Slot behält
-alte mtimes, und der Slot wurde nach dem Anlegen des Ordners schon von einem anderen Paket gebaut: Cargo hält den Scan für aktuell,
-der neue Ordner bleibt unsichtbar.
+Ein Build-Skript (build.rs mit `rerun-if-changed` auf einen Ordner) vergleicht Änderungszeiten. rsync -a auf den geteilten Build-Slot behält
+alte mtimes, und der Slot wurde nach dem Anlegen der Dateien schon von einem anderen Paket gebaut: Cargo hält das Skript für aktuell,
+der neue Ordner bzw. die neue Datei bleibt unsichtbar. Das betrifft jeden Ordner, den ein build.rs beobachtet, nicht nur `src/`.
 
 ## Dauerhafte Abhilfe im Build-Wrapper (einmal einbauen statt je Paket von Hand)
-Im Remote-Build-Wrapper nach der Slot-Belegung und vor dem rsync eine Frische-Prüfung ausführen: je Crate, dessen `build.rs` den Scan enthält,
-`find src -printf '%y %P\n' | sort | md5sum` bilden und mit einer pro Host+Slot+Crate gespeicherten Summe vergleichen (z. B. `locks/scan-<host-slot>-<crate>.sum`).
-Weicht sie ab, `touch build.rs` und eine Log-Zeile (`RB_SCAN <crate>: …`) schreiben. Grund: Die Dateiliste ändert sich genau dann, wenn ein
-Ordner dazukommt oder wegfällt, unabhängig von mtimes, und `build.rs` im Spiegel neuer als der letzte Build erzwingt den Scan.
+Im Remote-Build-Wrapper nach der Slot-Belegung und vor dem rsync eine Frische-Prüfung ausführen: je Crate, dessen `build.rs` einen Ordner
+beobachtet (Modul-Scan, `rerun-if-changed=src`, eingebettete Datenordner wie Übersetzungstabellen),
+`find <ordner> -printf '%y %P\n' | sort | md5sum` über ALLE beobachteten Ordner bilden und mit einer pro Host+Slot+Crate gespeicherten Summe
+vergleichen (z. B. `locks/scan-<host-slot>-<crate>.sum`). Weicht sie ab, `touch build.rs` und eine Log-Zeile (`RB_SCAN <crate>: …`) schreiben.
+Grund: Die Dateiliste ändert sich genau dann, wenn eine Datei oder ein Ordner dazukommt oder wegfällt, unabhängig von mtimes, und `build.rs`
+im Spiegel neuer als der letzte Build erzwingt den Neulauf. Beim Einbauen alle `rerun-if-changed`-Ziele der Build-Skripte durchsehen
+(`grep -n rerun-if crates/*/build.rs`); ein vergessener Datenordner zeigt sich erst Tage später als roter Zähl-Test.
 Für Nicht-Cargo-Läufe überspringen und per Umgebungsvariable abschaltbar machen. Prüfen per Handtest mit eigenem Lock-Ordner: erster Lauf fasst
-alle Scan-Crates an, zweiter keinen, neuer und entfernter Ordner werden je erkannt. Danach beide Spuren informieren, dass sie mtimes nicht mehr
-von Hand erneuern und ein Wiederauftreten mit den `RB_SCAN`-Zeilen melden.
+alle betroffenen Crates an, zweiter keinen, neuer und entfernter Ordner bzw. neue Datei werden je erkannt. Den Wrapper nur atomar ersetzen
+(Kopie bearbeiten, `bash -n`, `mv`), weil laufende Builds das Skript sonst halb geändert weiterlesen. Danach beide Spuren informieren, dass sie
+mtimes nicht mehr von Hand erneuern und ein Wiederauftreten mit den `RB_SCAN`-Zeilen melden.
 
 ## Notbehelf von Hand (nur, solange der Wrapper die Prüfung nicht hat)
 Im Paket-Worktree, ohne Git-Änderung:
 1. `git checkout -- ui/src/generated` (falls ein roter Lauf Dateien zurückgeholt hat),
-2. für jeden Gruppenordner des Pakets (je Crate/Schicht, i. d. R. 5–6 Pfade): `find <ordner> -type f -exec touch {} +; touch <ordner>`,
-3. `wpq.py check <WP> --bg` neu starten. Beleg, dass es die Ursache war: `export-ts` wird grün.
+2. für jeden neuen Ordner des Pakets (je Crate/Schicht, i. d. R. 5–6 Pfade, auch neue Datenordner/-dateien): `find <ordner> -type f -exec touch {} +; touch <ordner>`,
+   bei eingebetteten Daten zusätzlich das `build.rs` des einbettenden Crates anfassen,
+3. `wpq.py check <WP> --bg` neu starten. Beleg, dass es die Ursache war: der vorher rote Schritt wird grün.
 
 ## Warteschleife
 `wpq.py wait check <WP>` kehrt bei laufendem Check mit „läuft noch“ und Exit 0 zurück. Darum nie `wait … && integ` ketten,
