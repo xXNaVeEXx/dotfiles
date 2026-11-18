@@ -51,6 +51,9 @@ In Spur-Anleitung und Hinweis darum festhalten: vor jedem einzelnen Start neu z�
 Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
 das Muster nachziehen und die Spur auf das Kopfzeilen-Format hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap
 reichen (`free -m`), weil sonst Stunden Arbeit verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
+Umgekehrter Fall: Zeigt das Register weniger Läufe als die Grenze, während eine Spur-Zelle „wartet auf Slot“ trägt, die Spur sofort per
+`spur.sh prompt` anstoßen (Start nach erneutem Zählen, runId+Modell in die Zelle). Grund: Ihr Herzschlag schläft bis zu einer Stunde, der freie
+Platz bliebe sonst so lange ungenutzt.
 
 ## Fortschrittszahlen in Bericht und Statusseite nur aus der Live-Zählung übernehmen
 Die Zahl „fertig X von Y“ je Spur bei jedem Wecken aus der Queue zählen (`grep -c '| fertig' QUEUE.md` gegen `grep -c '^| LC-WP'`) und genau
@@ -121,11 +124,20 @@ Die wartende Spur wird per `spur.sh prompt` geweckt, mit einem Zeitstempel-Lock 
 die Lebend-Prüfung per Umgebungsvariable steuern (z. B. `WPQ_LEBT=W1-C`, aktiv nur im Testmodus) und das Wecken abschalten
 (`WPQ_NO_WECK=1`). Grund: Sonst sieht der Sandkasten die echten Herzschläge des Rechners, und alte Tests werden zufällig rot.
 
-## Spur meldet einen kleinen Rest „offen für Leitstand“ (z. B. fehlender Anschluss in einer gesperrten Sammeldatei)
-Aufsichtsberichte und das PLAN-Log bei jedem Wecken nach „offen für L0“/„offen für Leitstand“ durchsuchen. Den Rest nicht selbst
-einbauen (der Leitstand baut nicht) und nicht liegen lassen. Die Spur bekommt ihn per `spur.sh prompt` als kleinen Integrationsfix zurück,
-ohne eigenen Worker. In die Nachricht gehören: die genauen Zeilen, die Reihenfolge zu laufenden Integrationen (nach dem gerade laufenden
-Einbau und vor dem nächsten Paket, das dieselbe Datei berührt), die Prüfung über den Build-Wrapper (check + betroffene Tests), ein eigener
-Commit mit Paket-ID, Push und der Verweis auf die frühere gleichartige Freigabe. Die Entscheidung kommt in ENTSCHEIDUNGEN. Beim nächsten
-Wecken im Spur-Journal prüfen, ob der Commit auf dem Integrationszweig liegt. Grund: Solche Reste gehen in Berichten sonst unter, bis ein
-späteres Paket an der fehlenden Verdrahtung scheitert.
+## Integriertes Paket mit offenem Anschluss („offen für Leitstand“, „Offen BERICHT: … nicht verdrahtet“)
+Bei jedem Wecken Aufsichtsberichte, PLAN-Log und die Journalzeilen „integriert“ nach „offen für L0“/„Offen BERICHT“/„nicht verdrahtet“/
+„nicht registriert“ durchsuchen. Typisch: Der Worker durfte eine gesperrte Sammeldatei nicht ändern (Gateway-Methodenliste, Gruppen-Registrierung
+der Oberfläche, CLI-Enum), der Baustein ist eingebaut, aber von außen nicht erreichbar. Den Rest nicht selbst einbauen (der Leitstand baut nicht)
+und nicht liegen lassen. Die Spur bekommt ihn per `spur.sh prompt` mit einer Entscheidungsregel zurück:
+(1) Reicht eine Registrierung oder ein paar Aufrufzeilen, als kleiner Integrationsfix ohne eigenen Worker: genaue Zeilen, Reihenfolge zu laufenden
+Integrationen (nach dem gerade laufenden Einbau, vor dem nächsten Paket an derselben Datei), Prüfung über den Build-Wrapper (check + betroffene
+Tests gezielt), eigener Commit mit Paket-ID, Push, Verweis auf die frühere gleichartige Freigabe.
+(2) Braucht der Anschluss eine Schnittstelle, die erst ein späteres Paket liefert, als Pflichtpunkt in dessen Brief eintragen und dem Leitstand melden.
+Vor der Wahl die Gegenseite lesen, nicht nur die Sammeldatei: Eine Registrierungszeile ist nur „klein“, wenn die Ziel-Handler schon existieren.
+Registriert sie eine Gruppe, deren Methoden am Gateway fehlen (Handler brauchen Zustand wie Store, Konfig, Netz-Tor), läuft sie ins Leere und
+gehört nach (2). Den Pflichtpunkt dann in den Brief des Pakets schreiben, das die Gateway-Seite baut, samt Zusatzfreigabe der Sammeldateien
+(`vorgaben/<WP>.pfade`) und „Test über den Gateway-Aufruf je Methode“.
+Wiederholt sich die Lücke absehbar für eine ganze Paketgruppe (z. B. jeder Kanal-Grundbetrieb), die Prüfung gleich als stehende Regel „nach jeder
+Integration dieser Gruppe“ geben. Die Entscheidung kommt in ENTSCHEIDUNGEN; beim nächsten Wecken im Spur-Journal prüfen, ob der Commit auf dem
+Integrationszweig liegt bzw. der Pflichtpunkt im Brief steht. Grund: Solche Reste gehen in Berichten sonst unter, bis ein späteres Paket oder der
+Nutzer an der fehlenden Verdrahtung scheitert.
