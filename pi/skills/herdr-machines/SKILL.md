@@ -5,11 +5,6 @@ description: "Mit der herdr-CLI entfernte Linux-Maschinen (VPS) aufnehmen — ni
 
 # herdr-machines
 
----
-name: herdr-machines
-description: Mit der herdr-CLI entfernte Linux-Maschinen (VPS) aufnehmen — nicht-interaktiver SSH-Key-Zwang, Remote-Binary-PATH-Falle unter /usr/local/bin, Retry nach fehlgeschlagenem machine add. Use when herdr machine add fails, asks for a password despite installed SSH keys, or reports the remote herdr binary is not resolved.
----
-
 # herdr: Maschinen aufnehmen (machine add)
 
 ## Vorbedingung: SSH-Key-Login ohne Passwort UND ohne TTY

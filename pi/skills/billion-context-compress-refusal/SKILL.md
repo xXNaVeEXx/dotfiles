@@ -59,6 +59,20 @@ Die Meldung ist die Antwort des Proxys auf einen eigenen `compress`-Aufruf. Ein 
   unkritisch, solange `node -e "new (require('better-sqlite3'))(':memory:')"` im npm-Ordner läuft. Danach im
   turn-weiter-Log beobachten, ob noch Fortsetzungen nötig sind; wenn nicht, per `turn-weiter.off` abschalten.
 
+## 3c. HTTP 400 „Invalid `signature` in `thinking` block … bound to a different conversation“
+- Mechanismus: Der Proxy schreibt beim Falten frühere Nachrichten um. Denk-Blöcke neuer Claude-Modelle sind per
+  Signatur an das Gesprächs-Präfix gebunden; steht in der Anfrage `thinking.block_binding.prefix_mismatch_behavior:
+  "error"`, lehnt die API danach JEDEN Lauf der Sitzung ab (auch Review-Turns), und Wiederholen hilft nicht.
+- Beleg: `grep -n "upstream 400\|thinking-pair-violated" ~/.local/state/billion-context/bili.log | tail`.
+- Wer setzt den Wert: `grep -rn "prefix_mismatch_behavior" ~/.pi/agent/npm/node_modules --include=*.js -l`. pi-ai
+  selbst sendet `drop_block`; ein Paket, das Anthropic-Anfragen neu baut (pi-background-tasks,
+  `dist/src/core/anthropic-attribution.js`), kann `error` setzen.
+- Fix: dort `'error'` → `'drop_block'` (beide Stellen, dist-JS und src-TS), Versions-Anhang im dynamischen Import der
+  Einstiegsdatei hochzählen, `node --check`, Smoke-Test `pi -p --provider anthropic --model <m> --no-session "OK"`.
+  Vorgehen und Reload-Regeln: Skill `pi-extension-dev`, Abschnitt „Installiertes npm-Pi-Paket lokal patchen“. Die
+  betroffene Sitzung braucht `/reload` (tippt der Nutzer), weil das Modul schon geladen ist. Nach jedem Update des
+  Pakets erneut prüfen.
+
 ## 4. Vorbeugen
 - Keine Assistant-Texte aus nur Leerzeichen vor Tool-Calls: entweder ein sinnvoller Satz oder direkt der Tool-Call.
 - Beim Zusammenführen vorhandener Blöcke EINEN zusammenhängenden Bereich von der ersten bis zur letzten faltbaren Nachricht wählen; mehrere Bereiche in einem Aufruf nur lückenlos aneinander und an ganzen Turns ausgerichtet. Grund: Der Proxy hat die Grenzen früherer Blöcke beim Falten an Turns und geschützte Nachrichten angepasst; eine Lücke zwischen eigenen Bereichen trifft dann leicht schon gefaltete Nachrichten und löst dieselbe Ablehnung aus wie Drift.

@@ -1,6 +1,6 @@
 ---
 name: lumi-desktop-local-builds
-description: Schwere Builds, Tests und dsh-Runtime-Proben für apps/lumi-desktop ausführen — bevorzugt per tools/remote.sh auf dem Remote-Testrechner, sonst lokal: Wächter-Schleife gegen den Ausgabe-Wächter, cargo-safe/pnpm-safe, dsh-Kompatibilitäts-Proben mit Cache-Kopien, plus Orchestrator-Abnahme von Worker-Ergebnissen vor dem Commit. Use when apps/lumi-desktop builds/tests/dsh probes must run locally, a session was killed by the output watchdog mid-build, or a build worker finished and its uncommitted result needs acceptance.
+description: "Schwere Builds, Tests und dsh-Runtime-Proben für apps/lumi-desktop ausführen — bevorzugt per tools/remote.sh auf dem Remote-Testrechner, sonst lokal: Wächter-Schleife gegen den Ausgabe-Wächter, cargo-safe/pnpm-safe, dsh-Kompatibilitäts-Proben mit Cache-Kopien, plus Orchestrator-Abnahme von Worker-Ergebnissen vor dem Commit. Use when apps/lumi-desktop builds/tests/dsh probes must run locally, a session was killed by the output watchdog mid-build, or a build worker finished and its uncommitted result needs acceptance."
 ---
 
 # lumi-desktop-local-builds

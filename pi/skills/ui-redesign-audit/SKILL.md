@@ -1,6 +1,6 @@
 ---
 name: ui-redesign-audit
-description: App-weites UX-/Design-Audit und Redesign-Planung der eigenen UI per Researcher-Sub-Agents → Planner → Etappen-Worker: Bereichs-Split der Audits, messbare rg-Kennzahlen, Gestaltungsleitfaden (DESIGN.md) plus Etappenplan unter Test-, i18n- und Routen-Randbedingungen. Use when der Nutzer will, dass die eigene App schöner, einheitlicher, zugänglicher oder für Erstnutzer verständlicher wird (Look & Feel, Navigation, Einstellungen, Animationen, Onboarding).
+description: "App-weites UX-/Design-Audit und Redesign-Planung der eigenen UI per Researcher-Sub-Agents → Planner → Etappen-Worker: Bereichs-Split der Audits, messbare rg-Kennzahlen, Gestaltungsleitfaden (DESIGN.md) plus Etappenplan unter Test-, i18n- und Routen-Randbedingungen. Use when der Nutzer will, dass die eigene App schöner, einheitlicher, zugänglicher oder für Erstnutzer verständlicher wird (Look & Feel, Navigation, Einstellungen, Animationen, Onboarding)."
 ---
 
 # ui-redesign-audit

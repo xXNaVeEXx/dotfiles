@@ -5,11 +5,6 @@ description: Ein frisch installiertes/offline Zielgerät ohne Agent-Netzzugang v
 
 # tty-handoff-bridge
 
----
-name: tty-handoff-bridge
-description: Ein frisch installiertes/offline Zielgerät ohne Agent-Netzzugang via User-TTY übernehmen — HTTP-Key-Handoff vom Kontroll-Host, ready-Poll, SSH-Retry, TUI als User-Kommunikation. Use when a device needs agent control but only the user has physical access (fresh OS install, no network route to it).
----
-
 # TTY-Handoff-Bridge — Zielgerät via User-TTY übernehmen
 
 Lage: Agent läuft auf einem Kontroll-Host (SSH-Key vorhanden); das Zielgerät

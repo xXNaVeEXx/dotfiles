@@ -5,13 +5,6 @@ description: "Installation, Umzug und Stilllegung von Kunden-Clustern (besichtig
 
 # mag-tech-cluster-ops
 
----
-name: mag-tech-cluster-ops
-description: Installation, Umzug und Stilllegung von Kunden-Clustern (besichtigungs-app/zentrio) auf den Mag-Tech-VMs per customer-vm-Installer inkl. Backups (Longhorn/S3), Flux-Kanälen und dem gehärteten Keycloak auth.mag-tech.eu. Use when a customer VM/cluster shall be installed, moved, decommissioned, or its Keycloak clients/backups/Flux delivery managed.
----
-
-# mag-tech-cluster-ops
-
 Klasse: Lebenszyklus der Kunden-Kubernetes-Cluster (k3s + Longhorn + Flux + Edge-Caddy) der Mag-Tech-Apps. Code-Pfaden/PR-Fluss siehe `mag-tech-app-entwicklung`; Auslieferungskanäle regelt der Auslieferungshelfer (einziger Weg: `docs/rules/auslieferung-ein-weg.md`).
 
 ## Inventar (Live-Quellen statt Merkliste)
