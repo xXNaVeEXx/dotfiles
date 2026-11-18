@@ -52,6 +52,13 @@ Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtige
 das Muster nachziehen und die Spur auf das Kopfzeilen-Format hinweisen. Laufende Worker über der Grenze nicht abbrechen, wenn RAM/Swap
 reichen (`free -m`), weil sonst Stunden Arbeit verloren gehen. Der nächste Start wartet dann von selbst, bis die Zählung wieder unter der Grenze liegt.
 
+## Fortschrittszahlen in Bericht und Statusseite nur aus der Live-Zählung übernehmen
+Die Zahl „fertig X von Y“ je Spur bei jedem Wecken aus der Queue zählen (`grep -c '| fertig' QUEUE.md` gegen `grep -c '^| LC-WP'`) und genau
+diese Zahl in Statusseiten-Kopf, STAND und Nutzerbericht schreiben. Nie die letzte gemeldete Zahl um gerade gesehene Integrationen erhöhen:
+Journalzeilen „integriert“ sind in der Zählung meist schon enthalten, das Hochzählen im Kopf meldet dann ein Paket zu viel. Ist eine frühere
+Meldung falsch gewesen, sie im nächsten Bericht ausdrücklich berichtigen und in STAND vermerken. Grund: Der Nutzer liest die Zahlen als
+Fortschrittsmaß, und eine stille Korrektur nach unten sieht wie verlorene Arbeit aus.
+
 ## Build-Rechner fällt mitten im Lauf aus (Integration rot mit „server … not responding“/Timeout)
 Ein roter Prüf- oder Integrationsschritt mit Verbindungsfehler ist kein Paketfehler. Zuerst den Host prüfen:
 `tailscale status | grep <host>` (zeigt „offline, last seen Nm ago“, also den Ausfallzeitpunkt) und `timeout 15 ssh -o BatchMode=yes
@@ -87,20 +94,23 @@ Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue ö
 und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
 Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
 
-## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform, eine handgeschriebene Sammeldatei fehlt, oder ein erzeugtes Sammelartefakt muss neu)
-Drei Formen derselben Plan-Lücke: (a) ein gemeinsames Werkzeug (Modul-Scan) lehnt die Namensform neuer Ordner ab, (b) ein Bereich hat gar
+## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform, eine handgeschriebene Sammeldatei fehlt, ein erzeugtes Sammelartefakt muss neu, oder die eigene Crate braucht Abhängigkeiten)
+Vier Formen derselben Plan-Lücke: (a) ein gemeinsames Werkzeug (Modul-Scan) lehnt die Namensform neuer Ordner ab, (b) ein Bereich hat gar
 keinen Scan, sondern eine von Hand gepflegte Sammeldatei (`mod.rs` mit Befehls-Enum), die nicht zu den exklusiven Pfaden des Pakets gehört,
-(c) ein aus Fragmenten erzeugtes Sammelartefakt (z. B. Handbuch-HTML) muss neu erzeugt werden, weil Drift-Tests sonst rot sind.
+(c) ein aus Fragmenten erzeugtes Sammelartefakt (z. B. Handbuch-HTML) muss neu erzeugt werden, weil Drift-Tests sonst rot sind,
+(d) das Paket braucht neue Abhängigkeiten in der `Cargo.toml` seiner eigenen Crate, die Abnahme-Klassifizierung kennt aber nur die Quellpfade.
 (a) Die Werkzeug-Erweiterung klein und rückwärtskompatibel halten (Namen abbilden, echten Pfad behalten), statt Pfade der Pakete umzubenennen,
 weil Abnahme-Tests und Exklusiv-Pfade so gültig bleiben. (b) Den Anschluss genau wie bei der ersten gleichartigen Freigabe erlauben: nur
 Modul-Zeile, Enum-Varianten mit Doku und `run`-Zeilen, neue Zwischen-`mod.rs` so, dass Folgepakete nur Zeilen anhängen. (c) Nur über den
-Generator erzeugen, nie von Hand, eigener Commit; bei Konflikten beim Einbauen neu erzeugen statt Hunks zu mischen.
+Generator erzeugen, nie von Hand, eigener Commit; bei Konflikten beim Einbauen neu erzeugen statt Hunks zu mischen. (d) Freigeben, wenn die
+Projektregeln Abhängigkeiten in der eigenen Crate erlauben; `Cargo.toml` fremder Crates und die Workspace-`Cargo.toml` bleiben Rückfragen,
+weil dort parallele Pakete kollidieren.
 Ablauf: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` (Kommentarzeile mit Grund und Präzedenz), (2) Worker mit eigenem Commit für den
 Anschluss und Testfall beauftragen und im Bericht als Abweichung vermerken lassen, (3) Entscheidung in ENTSCHEIDUNGEN, (4) Folgepakete derselben
 Gruppe nacheinander starten (nicht parallel), jeweils mit gleichartiger Freigabe, Änderungen an der Sammeldatei nur additiv.
-Kehrt dieselbe Freigabe bei jedem Paket wieder (typisch bei (c)), sie der Spur als stehende Regel geben: Die Spur legt die `.pfade` schon
-beim Start des Pakets an und schreibt sie in den Brief. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde, jede Rückfrage kostet
-einen Turn, und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
+Kehrt dieselbe Freigabe bei jedem Paket wieder (typisch bei (c) und (d)), sie der Spur schon bei der ersten Rückfrage als stehende Regel geben:
+Die Spur legt die `.pfade` beim Start des Pakets an und schreibt sie in den Brief. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde,
+jede Rückfrage kostet einen Turn, und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
 
 ## Faire Vergabe knapper Worker-Plätze über mehrere Spuren
 Teilen sich Spuren eine globale Obergrenze (z. B. höchstens 2 Claude-Worker), belegt sonst die Spur, die zuerst `next` fragt,
