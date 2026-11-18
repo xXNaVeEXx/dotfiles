@@ -56,13 +56,14 @@ behalten (`uptime`, `free -m`), weil dort auch Sitzungen und Worker laufen. Den 
 schlafender Rechner lässt sich aus der Ferne nicht reparieren, und ohne Meldung bleibt die Bauzeit unbemerkt langsamer.
 
 ## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
-Der Worker fragt über `contact_supervisor`; die Spur sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
-Antworten per `subagent_supervisor({action:"reply", replyTo, message})`. Meldet die Antwort „withdrawn by the child“, hat der Worker
-die Frage zurückgezogen (Frist abgelaufen oder die Leitstand-Ebene hat ihm schon geantwortet) und arbeitet weiter: dieselbe Entscheidung kurz per
+Der Worker fragt über `contact_supervisor`; die Leitstand- oder Spur-Sitzung sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
+Der Worker wartet nur Sekunden und arbeitet dann mit seinem angekündigten Ersatzweg weiter; die Frage gilt danach als „withdrawn“.
+Darum im selben Tool-Block die Freigabe-Datei schreiben UND `subagent_supervisor({action:"reply", replyTo, message})` senden.
+Meldet die Antwort „withdrawn by the child“ (der Normalfall, wenn der Turn länger dauert), dieselbe Entscheidung per
 `subagent({action:"steer", id:<runId>, message, options:{index:0}})` nachreichen, statt sie zu verwerfen (in der Leitstand-Sitzung vorher
-`subagents_enable`, sonst fehlt das Werkzeug). Vorher prüfen, ob er noch läuft (`subagent({action:"status", id})` oder `jq .state …/status.json`).
+`subagents_enable`, sonst fehlt das Werkzeug; danach erst im nächsten Turn aufrufen). Vorher prüfen, ob er noch läuft (`jq .state …/status.json`).
 Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
-Rückfragen also im selben Turn beantworten: erst die Freigabe-Datei schreiben, dann sofort antworten, weil der Worker nur kurz wartet.
+Danach die Spur des Workers per `spur.sh prompt` informieren, dass die Frage beantwortet ist, damit sie nicht doppelt entscheidet.
 Hat die Leitstand-Ebene dieselbe Freigabe schon in die `vorgaben/<WP>.pfade` geschrieben, die Datei vor dem Eintragen lesen und nichts doppelt anhängen.
 Meldet `steer` „child completed before consuming steering“, ist der Worker fertig: seine Abschlussmeldung lesen, nicht erneut steuern.
 
@@ -80,12 +81,17 @@ Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue ö
 und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
 Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
 
-## Gemeinsames Werkzeug scheitert an der Namensform neuer Pakete (z. B. Bindestrich-Ordner im Modul-Scan)
-Betrifft die Hürde mehrere Pakete (alle Ordnernamen kommen aus dem Plan), die Werkzeug-Erweiterung klein und rückwärtskompatibel halten
-(Namen abbilden, echten Pfad behalten) statt Pfade der Pakete umzubenennen — Abnahme-Tests und Exklusiv-Pfade bleiben so gültig.
-Ablauf: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` für Werkzeug-Datei + deren Test anlegen (Kommentarzeile mit Grund), (2) Worker mit
-Testfall und eigenem Commit beauftragen, (3) Entscheidung in ENTSCHEIDUNGEN, (4) die Folgepakete derselben Gruppe erst nach Integration
-dieses Pakets starten oder im Brief auf die Erweiterung verweisen. Grund: Sonst scheitert jedes Folgepaket am selben Build-Fehler.
+## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform oder eine handgeschriebene Sammeldatei fehlt)
+Zwei Formen derselben Plan-Lücke: (a) ein gemeinsames Werkzeug (Modul-Scan) lehnt die Namensform neuer Ordner ab, (b) ein Bereich hat gar
+keinen Scan, sondern eine von Hand gepflegte Sammeldatei (`mod.rs` mit Befehls-Enum), die nicht zu den exklusiven Pfaden des Pakets gehört.
+(a) Die Werkzeug-Erweiterung klein und rückwärtskompatibel halten (Namen abbilden, echten Pfad behalten), statt Pfade der Pakete umzubenennen,
+weil Abnahme-Tests und Exklusiv-Pfade so gültig bleiben. (b) Den Anschluss genau wie bei der ersten gleichartigen Freigabe erlauben: nur
+Modul-Zeile, Enum-Varianten mit Doku und `run`-Zeilen, neue Zwischen-`mod.rs` so, dass Folgepakete nur Zeilen anhängen.
+Ablauf für beide: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` (Kommentarzeile mit Grund und Präzedenz), Handbuch nur über den Generator,
+(2) Worker mit eigenem Commit für den Anschluss und Testfall beauftragen und im Bericht als Abweichung vermerken lassen, (3) Entscheidung in
+ENTSCHEIDUNGEN, (4) Folgepakete derselben Gruppe nacheinander starten (nicht parallel), jeweils mit gleichartiger Freigabe, Änderungen
+an der Sammeldatei nur additiv; Konflikte löst die Spur beim Einbauen. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde,
+und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
 
 ## Faire Vergabe knapper Worker-Plätze über mehrere Spuren
 Teilen sich Spuren eine globale Obergrenze (z. B. höchstens 2 Claude-Worker), belegt sonst die Spur, die zuerst `next` fragt,
