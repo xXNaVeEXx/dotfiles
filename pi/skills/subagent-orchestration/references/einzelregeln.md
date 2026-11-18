@@ -95,3 +95,12 @@ ohne PAUSE mit startbarem Paket, gibt die fragende Spur den Platz ab. „Wartet�
 Die wartende Spur wird per `spur.sh prompt` geweckt, mit einem Zeitstempel-Lock höchstens alle 10 Minuten. In der Attrappen-Testreihe
 die Lebend-Prüfung per Umgebungsvariable steuern (z. B. `WPQ_LEBT=W1-C`, aktiv nur im Testmodus) und das Wecken abschalten
 (`WPQ_NO_WECK=1`). Grund: Sonst sieht der Sandkasten die echten Herzschläge des Rechners, und alte Tests werden zufällig rot.
+
+## Spur meldet einen kleinen Rest „offen für Leitstand“ (z. B. fehlender Anschluss in einer gesperrten Sammeldatei)
+Aufsichtsberichte und das PLAN-Log bei jedem Wecken nach „offen für L0“/„offen für Leitstand“ durchsuchen. Den Rest nicht selbst
+einbauen (der Leitstand baut nicht) und nicht liegen lassen. Die Spur bekommt ihn per `spur.sh prompt` als kleinen Integrationsfix zurück,
+ohne eigenen Worker. In die Nachricht gehören: die genauen Zeilen, die Reihenfolge zu laufenden Integrationen (nach dem gerade laufenden
+Einbau und vor dem nächsten Paket, das dieselbe Datei berührt), die Prüfung über den Build-Wrapper (check + betroffene Tests), ein eigener
+Commit mit Paket-ID, Push und der Verweis auf die frühere gleichartige Freigabe. Die Entscheidung kommt in ENTSCHEIDUNGEN. Beim nächsten
+Wecken im Spur-Journal prüfen, ob der Commit auf dem Integrationszweig liegt. Grund: Solche Reste gehen in Berichten sonst unter, bis ein
+späteres Paket an der fehlenden Verdrahtung scheitert.
