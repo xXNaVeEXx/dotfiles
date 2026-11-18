@@ -57,14 +57,14 @@ schlafender Rechner lässt sich aus der Ferne nicht reparieren, und ohne Meldung
 
 ## Rückfrage eines Ersatz-Workers (`subagent`) beantworten
 Der Worker fragt über `contact_supervisor`; die Leitstand- oder Spur-Sitzung sieht eine Benachrichtigung „subagent_supervisor_request“ mit `replyTo`-ID.
-Der Worker wartet nur Sekunden und arbeitet dann mit seinem angekündigten Ersatzweg weiter; die Frage gilt danach als „withdrawn“.
-Darum im selben Tool-Block die Freigabe-Datei schreiben UND `subagent_supervisor({action:"reply", replyTo, message})` senden.
-Meldet die Antwort „withdrawn by the child“ (der Normalfall, wenn der Turn länger dauert), dieselbe Entscheidung per
-`subagent({action:"steer", id:<runId>, message, options:{index:0}})` nachreichen, statt sie zu verwerfen (in der Leitstand-Sitzung vorher
-`subagents_enable`, sonst fehlt das Werkzeug; danach erst im nächsten Turn aufrufen). Vorher prüfen, ob er noch läuft (`jq .state …/status.json`).
+Der Worker wartet nur wenige Sekunden und arbeitet dann mit seinem angekündigten Ersatzweg weiter; die Frage gilt danach als „withdrawn“.
+Schon der erste Tool-Block der Leitstand-Sitzung kommt in der Regel zu spät. Darum gleich `steer` als eigentlichen Antwortweg einplanen:
+(1) im ersten Block die `vorgaben/<WP>.pfade` lesen bzw. anlegen (`[ -f f ] && cat f || printf … > f`, nie doppelt anhängen, weil oft die
+Spur dieselbe Freigabe schon eingetragen hat), ENTSCHEIDUNGEN-Zeile schreiben und parallel `subagent_supervisor({action:"reply", replyTo, message})` versuchen;
+(2) meldet die Antwort „withdrawn by the child“, sofort `subagent({action:"steer", id:<runId>, message, options:{index:0}})` mit derselben
+Entscheidung senden. Ist in der Leitstand-Sitzung `subagent` noch nicht aktiv, zuerst `subagents_enable` (Werkzeug erst im nächsten Turn nutzbar).
 Grund: Eine Entscheidung, die der Worker nie sieht, führt zu zwei verschiedenen Annahmen im selben Baum.
-Danach die Spur des Workers per `spur.sh prompt` informieren, dass die Frage beantwortet ist, damit sie nicht doppelt entscheidet.
-Hat die Leitstand-Ebene dieselbe Freigabe schon in die `vorgaben/<WP>.pfade` geschrieben, die Datei vor dem Eintragen lesen und nichts doppelt anhängen.
+Danach die Spur des Workers per `spur.sh prompt` informieren, falls sie die Freigabe nicht selbst schon angelegt hat, damit sie nicht doppelt entscheidet.
 Meldet `steer` „child completed before consuming steering“, ist der Worker fertig: seine Abschlussmeldung lesen, nicht erneut steuern.
 
 ## Abnahme: gespeicherten Endlauf gegen HEAD und Fix-Commits halten
@@ -81,17 +81,20 @@ Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue ö
 und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
 Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
 
-## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform oder eine handgeschriebene Sammeldatei fehlt)
-Zwei Formen derselben Plan-Lücke: (a) ein gemeinsames Werkzeug (Modul-Scan) lehnt die Namensform neuer Ordner ab, (b) ein Bereich hat gar
-keinen Scan, sondern eine von Hand gepflegte Sammeldatei (`mod.rs` mit Befehls-Enum), die nicht zu den exklusiven Pfaden des Pakets gehört.
+## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform, eine handgeschriebene Sammeldatei fehlt, oder ein erzeugtes Sammelartefakt muss neu)
+Drei Formen derselben Plan-Lücke: (a) ein gemeinsames Werkzeug (Modul-Scan) lehnt die Namensform neuer Ordner ab, (b) ein Bereich hat gar
+keinen Scan, sondern eine von Hand gepflegte Sammeldatei (`mod.rs` mit Befehls-Enum), die nicht zu den exklusiven Pfaden des Pakets gehört,
+(c) ein aus Fragmenten erzeugtes Sammelartefakt (z. B. Handbuch-HTML) muss neu erzeugt werden, weil Drift-Tests sonst rot sind.
 (a) Die Werkzeug-Erweiterung klein und rückwärtskompatibel halten (Namen abbilden, echten Pfad behalten), statt Pfade der Pakete umzubenennen,
 weil Abnahme-Tests und Exklusiv-Pfade so gültig bleiben. (b) Den Anschluss genau wie bei der ersten gleichartigen Freigabe erlauben: nur
-Modul-Zeile, Enum-Varianten mit Doku und `run`-Zeilen, neue Zwischen-`mod.rs` so, dass Folgepakete nur Zeilen anhängen.
-Ablauf für beide: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` (Kommentarzeile mit Grund und Präzedenz), Handbuch nur über den Generator,
-(2) Worker mit eigenem Commit für den Anschluss und Testfall beauftragen und im Bericht als Abweichung vermerken lassen, (3) Entscheidung in
-ENTSCHEIDUNGEN, (4) Folgepakete derselben Gruppe nacheinander starten (nicht parallel), jeweils mit gleichartiger Freigabe, Änderungen
-an der Sammeldatei nur additiv; Konflikte löst die Spur beim Einbauen. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde,
-und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
+Modul-Zeile, Enum-Varianten mit Doku und `run`-Zeilen, neue Zwischen-`mod.rs` so, dass Folgepakete nur Zeilen anhängen. (c) Nur über den
+Generator erzeugen, nie von Hand, eigener Commit; bei Konflikten beim Einbauen neu erzeugen statt Hunks zu mischen.
+Ablauf: (1) Zusatzfreigabe als `vorgaben/<WP>.pfade` (Kommentarzeile mit Grund und Präzedenz), (2) Worker mit eigenem Commit für den
+Anschluss und Testfall beauftragen und im Bericht als Abweichung vermerken lassen, (3) Entscheidung in ENTSCHEIDUNGEN, (4) Folgepakete derselben
+Gruppe nacheinander starten (nicht parallel), jeweils mit gleichartiger Freigabe, Änderungen an der Sammeldatei nur additiv.
+Kehrt dieselbe Freigabe bei jedem Paket wieder (typisch bei (c)), sie der Spur als stehende Regel geben: Die Spur legt die `.pfade` schon
+beim Start des Pakets an und schreibt sie in den Brief. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde, jede Rückfrage kostet
+einen Turn, und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
 
 ## Faire Vergabe knapper Worker-Plätze über mehrere Spuren
 Teilen sich Spuren eine globale Obergrenze (z. B. höchstens 2 Claude-Worker), belegt sonst die Spur, die zuerst `next` fragt,
