@@ -19,7 +19,8 @@ Den Worker (`acp_delegate` mit `cwd` = Paket-Worktree) erst aufrufen, wenn das A
 eigenen Tool-Block. Grund: Im selben parallelen Block läuft der Start, bevor der Ordner existiert. Er scheitert sofort mit
 „spawn …/node ENOENT“, weil Node einen fehlenden `cwd` wie ein fehlendes Programm meldet; das sieht nach kaputtem Node aus.
 Gibt ein Skript die Startschritte aus (Worktree anlegen, dann Worker starten), schreibt es diese Reihenfolge in die Ausgabe
-und in die Spur-Anleitung.
+und in die Spur-Anleitung. Dieselbe Reihenfolge gilt für jede Datei, die ein Folgeschritt liest (z. B. Zusatzfreigabe schreiben, dann
+Einbau starten): erst schreiben, im nächsten Block starten.
 
 ## Spur meldet „Worker-Werkzeug fehlt“ und startet nichts
 Spuren sind angewiesen, nicht still auf einen anderen Startweg auszuweichen. Fehlt ihr Standard-Startwerkzeug (z. B. nach einem
@@ -31,6 +32,9 @@ Danach muss die Spur die runId in die Queue eintragen (`läuft <runId> <modell>`
 Hinweise in die Freigabe schreiben: Der Herzschlag (`warte.sh`) erkennt Ersatz-Läufe nicht als fertig. Die Fertigmeldung kommt
 als Benachrichtigung des Ersatzwerkzeugs, und der Herzschlag dient nur noch als Takt. Die Freigabe in ENTSCHEIDUNGEN protokollieren.
 `timeoutMs` = Brief-Timeout in Minuten × 60000 setzen (ohne den Wert greift ein kurzes Standardlimit).
+Die Freigabe muss JEDE Rolle nennen, die die Spur über das fehlende Werkzeug startet (Worker, Prüfer, Rechercheur), je mit vollständigem
+Aufruf. Grund: Eine Freigabe nur für „Worker“ lässt die Spur die übrigen Schritte still auslassen (siehe „Prozessschritte der Spuren
+gegeneinander halten“).
 
 ## Globale Worker-Obergrenze bei jedem Leitstand-Wecken gegenprüfen
 Die Platzzählung liest die Queue-Spalte „Status“ per Muster. Spuren schreiben dort Freitext („nacharbeit läuft <runId> sonnet“,
@@ -49,6 +53,8 @@ oder das Modell vor der Kennung nennen; das Muster zählt sie dann nicht, nur da
 Queue-Zeile über den `cwd` dem Paket zuordnen und dessen Zelle berichtigen.
 Zeigt das Register kurz nach einer Fertigmeldung nur einen Lauf, erst 30–60 s später erneut zählen, bevor die Spur angestoßen wird: Zwischen
 „Worker fertig“ und dem Start von Prüfer oder Nacharbeit liegt der Turn der Spur (`herdr agent get <pane>` zeigt dann `working`).
+Trägt eine Zelle „läuft <runId>“, fehlt der Lauf aber im Register, seinen Ordner direkt ansehen (`…/async-subagent-runs/<runId>*/status.json`,
+Ende von `output-0.log`): Er ist dann meist gerade fertig geworden, und die Spur hat die Meldung noch nicht verarbeitet.
 Häufigste Ursache einer Überschreitung: Die Spur startet zwei Läufe im selben Turn (z. B. Nacharbeit und Review), zählt aber nur einmal davor.
 In Spur-Anleitung und Hinweis darum festhalten: vor jedem einzelnen Start neu zählen (`wpq.py next`), nie zwei Starts ohne Zählung dazwischen.
 Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
@@ -68,10 +74,31 @@ Journalzeilen „integriert“ sind in der Zählung meist schon enthalten, das H
 Meldung falsch gewesen, sie im nächsten Bericht ausdrücklich berichtigen und in STAND vermerken. Grund: Der Nutzer liest die Zahlen als
 Fortschrittsmaß, und eine stille Korrektur nach unten sieht wie verlorene Arbeit aus.
 
+## Prozessschritte der Spuren gegeneinander halten (nicht nur Fortschritt und Anschlüsse)
+Bei jeder vollen Runde je Spur zählen, wie oft die Pflichtschritte der Abnahme im Journal vorkommen, und die Zahlen nebeneinander stellen:
+`grep -c 'Review' <spur>/JOURNAL.md` gegen `grep -c 'integriert' <spur>/JOURNAL.md`, ebenso für Endlauf und Nacharbeit. Eine Spur mit vielen
+Einbauten und fast keinen Prüfzeilen lässt den Schritt aus, auch wenn jede einzelne Journalzeile sauber aussieht („abnahme OK, Check grün,
+Eigenprüfung“). Dann die Spur-Anleitung lesen (was verlangt der Abnahme-Schritt, ab welcher Größe) und nachsehen, seit wann der Schritt fehlt.
+Typischer Auslöser: Der Schritt hing an einem weggefallenen Werkzeug oder lieferte einmal ein leeres Ergebnis, und die Spur hat ihn still
+durch eine Eigenprüfung ersetzt.
+Maßnahme in einem Auftrag per `spur.sh prompt`, mit Quittung als Journalzeile:
+(1) Der Schritt ist ab sofort wieder Pflicht, mit vollständigem Aufruf über den funktionierenden Startweg der anderen Spur und dem Hinweis,
+wie ein scheinbar leeres Ergebnis zu prüfen ist. Der Prüfer zählt als Worker-Platz.
+(2) Das Paket, das gerade vor dem Einbau steht, sofort prüfen; einen laufenden Einbau dafür nicht abbrechen, Funde als Nacharbeit im selben
+Worktree und zweiter kleiner Einbau; abhängige Pakete starten erst nach dem Ergebnis.
+(3) Schon eingebaute Pakete nachprüfen, aber gebündelt nach Bereich auf dem Stand des Integrationszweigs statt je Paket: je Bündel ein Lauf
+mit dem starken Modell, Auftrag „Sicherheit und echte Fehler, nicht Stil“, Paketliste und Pfade im Auftrag. Reihenfolge nach Risiko
+(Anmeldung, Signaturen, Geheimnisse, Netz- und Dateizugriff zuerst). Schwere Funde sofort als Fix mit eigenem Commit, mittlere je Bündel sammeln.
+Die Bündel laufen in freien Plätzen bzw. dann, wenn die Spur sonst auf Abhängigkeiten wartet; die Spur meldet erst fertig, wenn alle geprüft sind.
+Entscheidung in ENTSCHEIDUNGEN; dem Nutzer offen sagen, seit wann der Schritt fehlte, wie viele Pakete betroffen sind, dass der Leitstand es
+erst jetzt bemerkt hat, und was die Nachprüfung zusätzlich an Kontingent kostet (Hochrechnung und angebotene Grenze nachziehen).
+Grund: Die Abnahme prüft Form und Pfade, Tests prüfen nur, was der Worker selbst bedacht hat; die Fehlerquote der geprüften Spur zeigt, wie
+viele Mängel in der ungeprüften stecken.
+
 ## Watchdog weckt den Leitstand, obwohl alles planmäßig läuft
 Die Leerlaufschwelle des Leitstand-Watchdogs liegt oft unter dem Takt der Aufsichts-Loops (z. B. 150 min gegen 180 min); dann ist die Weckung
 kein Fehlerzeichen. Trotzdem die volle Runde fahren (Queue-Zählung, Lauf-Register, Kontingent, RAM, Push-Stand, Aufsichts-Prozesse, offene
-Berichtspunkte) und dabei einen liegengebliebenen eigenen Punkt abarbeiten. Im Bericht in einem Satz sagen, dass die Ruhe geplant war und
+Berichtspunkte, Prozessschritte je Spur) und dabei einen liegengebliebenen eigenen Punkt abarbeiten. Im Bericht in einem Satz sagen, dass die Ruhe geplant war und
 wann die nächste Aufsichtsmeldung kommt. Grund: Der Nutzer liest die Watchdog-Meldung mit und hält den Leitstand sonst für hängend.
 Meldet sich kurz danach eine Aufsicht planmäßig, sie neu starten, nur die Kurzrunde fahren (Zählung, Journal-Ende, Register, Kontingent,
 Push-Stand), eine STAND-Zeile schreiben und dem Nutzer in wenigen Zeilen sagen, was sich seit dem letzten Bericht geändert hat; Statusseiten-Kopf
@@ -111,7 +138,8 @@ hängt die Entscheidung am neuen Endlauf, nicht am Bericht.
 Laufzeit gegen die Plangröße halten (Start- und Fertigzeile im Journal). Ist ein als groß geplantes Paket nach einem Bruchteil der üblichen Zeit
 fertig, ist „abnahme OK“ allein kein Beleg: Die Abnahme prüft Pfade und Form, nicht den Umfang. Nicht eingreifen und nichts abbrechen, aber
 (1) sicherstellen, dass die Prüfung durch das zweite Modell vor dem Einbau wirklich läuft (Queue-Zelle „prüfen“ → beim nächsten Wecken eine
-Review-Zeile mit Befundzahl im Journal), (2) den Punkt in STAND vermerken und dem Nutzer in einem Satz als beobachteten Punkt nennen,
+Review-Zeile mit Befundzahl im Journal; schreibt die Spur stattdessen „integ gestartet“, fehlt der Schritt → siehe „Prozessschritte der Spuren
+gegeneinander halten“), (2) den Punkt in STAND vermerken und dem Nutzer in einem Satz als beobachteten Punkt nennen,
 (3) beim nächsten Wecken das Ergebnis nachlesen und berichten (gefundene Lücken, Nacharbeit, Einbau). Grund: Schnelle Fertigmeldungen bei
 großen Paketen sind typisch Teilumsetzungen mit Ersatz-Status, und nur der Prüfer deckt sie vor dem Einbau auf.
 
@@ -122,9 +150,10 @@ nicht verhindert. Zuerst unterscheiden, ob der Review trotzdem stattfand: Die Sc
 während der Bericht davor geschrieben wurde. Prüfen mit `wc -c <lauf-ordner>/output-0.log` (ein echter Review hat Hunderte KB), dem Ende der
 Ausgabe (nennt die Schlusszeile Befunde oder einen Review-Bericht?) und der Berichtsdatei bzw. der Journalzeile der Spur mit Befundzahl.
 Eine kurze Laufzeit in `status.json` allein beweist keinen Leerlauf. Nur wenn kein Bericht existiert, ist das Ergebnis leer, also nie als
-„keine Mängel“ lesen. Abhilfe dann: nach dem ersten Leerlauf nicht wiederholen, sondern die
+„keine Mängel“ lesen. Abhilfe dann: den Reviewer im nächsten Turn ohne Lernpass davor neu starten; bis dahin die
 Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue öffentliche Funktion auf Aufrufer außerhalb der Gruppe, Werkzeug-Diff lesen)
-und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
+und das im Journal als Eigenprüfung vermerken. Die Eigenprüfung überbrückt nur dieses eine Paket und ersetzt den Prüfschritt nicht auf Dauer:
+Bleibt der Reviewer bei den Folgepaketen weg, fällt die Zweitprüfung der ganzen Spur still aus.
 Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
 
 ## Exklusive Paket-Pfade werden nie gebaut (Modul-Scan scheitert an Namensform, eine handgeschriebene Sammeldatei fehlt, ein erzeugtes Sammelartefakt muss neu, oder die eigene Crate braucht Abhängigkeiten)
