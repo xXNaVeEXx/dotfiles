@@ -21,19 +21,26 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
 5. Liegt der Zeitpunkt deutlich vor dem Wochenwechsel (mehr als etwa ein Tag Pause), dem Nutzer sofort als Entscheidung vorlegen,
    in einfachen Worten und mit Zahlen:
    - Grenze lassen: Pause ab wann bis wann, wie viele Pakete bleiben liegen.
-   - Grenze auf den errechneten Endstand plus kleinen Puffer anheben: Welle wird fertig, so viel bleibt ihm für eigene Arbeit.
+   - Grenze anheben, damit die Welle fertig wird: als Zahl den errechneten Endstand plus etwa fünf Punkte Puffer nennen, auf volle fünf
+     gerundet, und dazu, wie viel ihm für eigene Arbeit bleibt. Nie den Endstand selbst als Grenze anbieten: Er ist eine Schätzung,
+     und eine Grenze genau darauf hält die Spuren kurz vor dem Ziel an.
    - Eigene Zahl.
    Dazu sagen, was ohne Antwort gilt (die bestehende Grenze).
 6. Die Frage zusätzlich in die Nutzer-Liste (Datei für offene Nutzerpunkte) und in den Kopf der Statusseite schreiben, mit Datum.
 7. Die Grenze nie selbst ändern. Sie ist eine Vorgabe des Nutzers über sein eigenes Kontingent.
-8. Bei jedem weiteren Wecken die Hochrechnung mit dem neuen Messpunkt nachziehen. Verschiebt sich der Zeitpunkt um mehr als ein paar
-   Stunden, die alte Angabe im Bericht ausdrücklich berichtigen („vorher gerechnet: …“) und den Eintrag in der Nutzer-Liste um einen
-   Nachtrag ergänzen, statt einen zweiten Eintrag anzulegen. Solange die Antwort aussteht, die offene Frage in jedem Bericht in einem
-   Satz wiederholen (mit dem Standard ohne Antwort), weil der Nutzer meist nur den letzten Bericht liest.
+8. Bei jedem weiteren Wecken die Hochrechnung mit dem neuen Messpunkt nachziehen – alle drei Zahlen und damit auch die angebotene
+   Anhebung. Verschiebt sich der Zeitpunkt um mehr als ein paar Stunden oder reicht die zuvor angebotene Grenze nicht mehr für den
+   Rest, die alte Angabe im Bericht ausdrücklich berichtigen („vorher gerechnet: …, jetzt nötig: …“) und den Eintrag in der Nutzer-Liste
+   um einen Nachtrag ergänzen, statt einen zweiten Eintrag anzulegen. Grund: Antwortet der Nutzer später auf eine alte Meldung mit der
+   alten Zahl, bleibt die Welle trotz Zustimmung unfertig. Solange die Antwort aussteht, die offene Frage in jedem Bericht in einem
+   Satz wiederholen (mit der aktuellen Zahl und dem Standard ohne Antwort), weil der Nutzer meist nur den letzten Bericht liest.
+9. Nennt der Nutzer später eine Grenze, die nach der aktuellen Rechnung nicht für den Rest reicht, sie umsetzen und im selben Bericht
+   sagen, wie viele Pakete damit voraussichtlich liegen bleiben.
 
 ## Hinweise
 - Die Rate je Paket schwankt mit der Modellmischung (starkes Modell für Prüfer und lange Pakete kostet ein Mehrfaches).
-  Stehen im Rest viele Pakete mit starkem Modell, den Endstand als Spanne angeben.
+  Stehen im Rest viele Pakete mit starkem Modell oder mehrstufige Sammelpakete (ein Paket, mehrere lange Läufe), sie als mehrere
+  Pakete zählen und den Endstand als Spanne angeben.
 - Kurzzeitfenster und Wochenfenster getrennt betrachten; fehlt die Messung des Kurzzeitfensters, das im Bericht sagen statt 0 % zu melden.
 - Nähert sich der Wert der Grenze, keine neuen langen Pakete mit starkem Modell mehr beginnen lassen, die sicher in die Pause laufen:
   Ein mitten im Lauf pausierter Worker kostet beim Fortsetzen erneut den vollen Kontext.
