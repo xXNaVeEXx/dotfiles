@@ -4,12 +4,19 @@ Die Kontingent-Wache meldet erst, wenn die Wochengrenze erreicht ist. Dann stehe
 hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hochrechnen.
 
 ## Ablauf
-1. Bei jedem Wecken einen Messpunkt in die Stand-Datei schreiben: Uhrzeit, Wochenwert in Prozent, fertige Pakete je Spur (Live-Zählung aus der Queue).
-2. Aus zwei Messpunkten, die mindestens ein paar Stunden auseinanderliegen, zwei Raten bilden:
-   Prozentpunkte je Stunde und Prozentpunkte je fertigem Paket.
+1. Bei jedem Wecken einen Messpunkt in die Stand-Datei schreiben: Uhrzeit, Wochenwert in Prozent, Summe der fertigen Pakete aller Spuren
+   (Live-Zählung aus der Queue). Den Messpunkt als eigene, wiedererkennbare Angabe schreiben („Messpunkt: N Pakete fertig, X %“),
+   damit die nächste Runde ihn ohne Nachrechnen findet.
+2. Die Raten immer über die längste verfügbare Strecke bilden: vom ersten Messpunkt der Woche (oder seit dem letzten Wochenwechsel
+   bzw. Ende einer Pause) bis jetzt, nicht aus dem letzten Abstand allein. Zwei Raten: Prozentpunkte je Stunde und Prozentpunkte je
+   fertigem Paket. Grund: Der Verbrauch je Stunde schwankt stark mit der Tageszeit und der Phase (nachts oft weniger als die Hälfte,
+   weil mehr eingebaut als gebaut wird); eine Rechnung aus wenigen Stunden verschiebt den Zeitpunkt um einen halben Tag.
 3. Die Rücksetzzeit nicht annehmen, sondern aus der Limits-Datei des Anbieters lesen (`resetsAt`, UTC in Ortszeit umrechnen).
-4. Zwei Zahlen ableiten:
-   - Zeitpunkt, an dem die Grenze erreicht wird: (Grenze − aktueller Wert) ÷ Punkte je Stunde.
+4. Drei Zahlen ableiten:
+   - Pakete bis zur Grenze: (Grenze − aktueller Wert) ÷ Punkte je Paket. Das ist die verlässlichste Zahl, weil die Rate je Paket
+     über Tag und Nacht fast gleich bleibt.
+   - Zeitpunkt, an dem die Grenze erreicht wird: (Grenze − aktueller Wert) ÷ Punkte je Stunde. Als Spanne von ein bis zwei Stunden nennen,
+     nie als feste Uhrzeit.
    - Endstand, wenn der Rest der Welle durchläuft: aktueller Wert + offene Pakete × Punkte je Paket.
 5. Liegt der Zeitpunkt deutlich vor dem Wochenwechsel (mehr als etwa ein Tag Pause), dem Nutzer sofort als Entscheidung vorlegen,
    in einfachen Worten und mit Zahlen:
@@ -19,8 +26,10 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
    Dazu sagen, was ohne Antwort gilt (die bestehende Grenze).
 6. Die Frage zusätzlich in die Nutzer-Liste (Datei für offene Nutzerpunkte) und in den Kopf der Statusseite schreiben, mit Datum.
 7. Die Grenze nie selbst ändern. Sie ist eine Vorgabe des Nutzers über sein eigenes Kontingent.
-8. Bei jedem weiteren Wecken die Hochrechnung mit dem neuen Messpunkt nachziehen und nur melden, wenn sich der Zeitpunkt
-   um mehr als ein paar Stunden verschiebt.
+8. Bei jedem weiteren Wecken die Hochrechnung mit dem neuen Messpunkt nachziehen. Verschiebt sich der Zeitpunkt um mehr als ein paar
+   Stunden, die alte Angabe im Bericht ausdrücklich berichtigen („vorher gerechnet: …“) und den Eintrag in der Nutzer-Liste um einen
+   Nachtrag ergänzen, statt einen zweiten Eintrag anzulegen. Solange die Antwort aussteht, die offene Frage in jedem Bericht in einem
+   Satz wiederholen (mit dem Standard ohne Antwort), weil der Nutzer meist nur den letzten Bericht liest.
 
 ## Hinweise
 - Die Rate je Paket schwankt mit der Modellmischung (starkes Modell für Prüfer und lange Pakete kostet ein Mehrfaches).
