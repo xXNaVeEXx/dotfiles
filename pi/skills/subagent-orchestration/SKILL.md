@@ -22,7 +22,7 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
 - Nebenthemen, um die der Nutzer zwischendurch bittet (z. B. ein störendes Werkzeug), zeitlich begrenzen: zuerst
   upstream nach dem Fehler suchen (Issues/PRs), nach wenigen Diagnoseschritten Zwischenstand mit Ursache und Plan
   melden. Grund: Stilles Lesen von Fremdcode verbraucht Kontext, den die Hauptarbeit noch braucht.
-- Einzelregeln (`references/einzelregeln.md`): Selbst-Erinnerung aus Lernpass; Teil-PR aus Extra-Worktree; Worker erst nach dem Anlegen seines Worktrees starten; Ersatzweg bei fehlendem Worker-Werkzeug; faire Platzvergabe über Spuren; Worker-Grenze gegen real laufende Worker; Build-Host-Ausfall; Rückfrage/Steer von Ersatz-Workern; Endlauf gegen HEAD; Reviewer-Leerlauf. Roter Endlauf: `references/remote-check-veralteter-scan.md`; Bereich ohne Modul-Scan: `references/bereichsdatei-ohne-modulscan.md`.
+- Einzelregeln (`references/einzelregeln.md`): Teil-PR aus Extra-Worktree; Ersatzweg bei fehlendem Worker-Werkzeug; faire Platzvergabe; Worker-Grenze; Build-Host-Ausfall; Steer von Ersatz-Workern; Endlauf gegen HEAD; Reviewer-Leerlauf. Roter Endlauf: `references/remote-check-veralteter-scan.md`, Lastflake/Testdatei ohne Hotspot: `references/integ-rot-lastflake-und-testdatei-freigabe.md`; Bereich ohne Modul-Scan: `references/bereichsdatei-ohne-modulscan.md`; Kontingent hochrechnen: `references/kontingent-hochrechnung.md`.
 - Worker-Plätze nie leer lassen: Endet ein Paket, sofort das nächste starten und erst danach integrieren,
   prüfen und Lücken lesen. Die Aufgabe für das nächste Paket schreibe ich, während das laufende noch arbeitet.
   Ein freier Platz darf höchstens ein paar Minuten frei bleiben, nicht bis die eigene Integration fertig ist.
