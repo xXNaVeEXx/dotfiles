@@ -21,7 +21,19 @@ Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“
 - Von einem Geschwisterpaket nur die STEHENDEN Freigaben kopieren (`handbuch.html`, `Cargo.toml` der eigenen Crate); dessen Szenario-Zeilen gehören
   dem Geschwister und passen nicht zum neuen Brief. Fehlt dem Folgepaket ein Szenario, fragt der Worker zurück.
 - Rückfrage wegen fehlender Datei: Zeile mit Grund an `.pfade` anhängen, ENTSCHEIDUNGEN + Journal ergänzen, `subagent_supervisor reply` im selben Turn.
+- Der Endlauf `wpq check` ruft das E2E-Skript mit `--filter <E2E-ID>` und findet das Szenario NUR über den Dateinamen: Die Datei muss `E2E-<ID>.toml`
+  heißen (nicht nach dem Paket benannt), sonst bricht der Check mit Exit 2 ab. Die E2E-ID aus dem Brief ableiten, Dateinamen in `.pfade` UND in den
+  Worker-Start-Task schreiben.
+- Ändert das Paket ein Handbuch-Fragment (`docs/manual/claw/**/<WP>.json`), scheitern die UI-Tests `generator-drift`/`handbuch`, bis `handbuch.html`
+  per `node tools/manual-gen.mjs` neu erzeugt ist: `docs/manual/handbuch.html` von Anfang an freigeben (nur Generator-Ausgabe, eigener Commit).
+- Eine `.pfade`-Freigabe VOR dem `integ`-Start in eigenem Tool-Block anlegen; im selben Block gestartet verliert `integ` den Wettlauf (MANGEL Pfad).
 Grund: Die Pfadliste ist die einzige Quelle der Abnahme; jede Lücke kostet eine Rückfrage-Runde samt Wartezeit des Workers.
+
+## Worker läuft ins Zeitlimit (90 min) mit unfertigem Paket
+Typisch: Rust und E2E committet, UI/Handbuch uncommittet, Bericht und Status-YAML fehlen (`abnahme` nennt 4 Mängel).
+- `git status`, `git log <Basis>..HEAD`, `wpq.py abnahme` lesen; kurzen Abschluss-Brief nach `nacharbeit/<WP>.md` schreiben (was committet ist, was laut `abnahme` fehlt, früh committen) und einen frischen Worker auf demselben Worktree starten; Status währenddessen „läuft <runId> <modell> (Abschluss-Worker)“.
+- In JEDEN Start-Task für große Pakete: „nach 60 min zuerst committen, was da ist; Bericht und Status-YAML vorrangig“. Grund: Das Zeitlimit tötet den Worker ohne Vorwarnung, uncommittete Arbeit ist dann nur durch einen weiteren Lauf zu retten.
+- Reviewer bleibt ein anderes Modell als der Abschluss-Worker (Worker opus → Reviewer sonnet).
 
 ## Merge-Konflikte bei der Integration (Exit 4) in gemeinsam genutzten Dateien
 Pakete derselben Gruppe erweitern dieselbe Crate-`Cargo.toml` (neue Abhängigkeiten) und lassen `handbuch.html` neu erzeugen; der erste Einbau
