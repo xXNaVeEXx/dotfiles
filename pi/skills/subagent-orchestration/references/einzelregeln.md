@@ -41,11 +41,14 @@ solche Zeilen nicht, und eine Spur startet einen Worker über die Grenze. Darum 
 Zustandsnotizen wie „nacharbeit nötig (Review opus teilweise)“ oder „endlauf läuft (HEAD <sha>)“ sonst fälschlich zählen.
 Das Muster mit positiven und negativen Beispielzeilen und dem Selbsttest prüfen und danach die Live-Zählung gegen die echten Läufe halten.
 Bei jedem Wecken die tatsächlich laufenden Worker gegen die Grenze halten, und zwar aus dem Lauf-Register statt aus der Queue:
-`for d in $(ls -dt /tmp/pi-subagents-uid-*/async-subagent-runs/*/ | head -8); do [ "$(jq -r .state $d/status.json)" = running ] && echo "running $(basename $d | cut -c1-8) $(jq -r '(.steps[0].model // .model) + " " + .cwd' $d/status.json)"; done`
+`for d in $(ls -dt /tmp/pi-subagents-uid-*/async-subagent-runs/*/ | head -12); do [ "$(jq -r .state $d/status.json 2>/dev/null)" = running ] && echo "running $(basename $d | cut -c1-8) $(jq -r '(.steps[0].model // .model) + " " + .cwd' $d/status.json)"; done; true`
 listet jeden laufenden Ersatz-Worker mit Kennung, Modell und Worktree (Aktivität = mtime `output-0.log`); für `acp_delegate` die `.out`/`.activity`
-je Queue-Zeile. Grund: Eine Status-Zelle kann eine fremde 8-Hex-Kennung tragen (Commit-SHA des fertigen Workers statt runId des Prüfers)
+je Queue-Zeile. Das abschließende `true` gehört dazu: Ist der letzte geprüfte Lauf nicht „running“, endet die Schleife sonst mit Exit 1, und
+der ganze Rundenbefehl sieht wie ein Fehler aus. Grund für das Register: Eine Status-Zelle kann eine fremde 8-Hex-Kennung tragen (Commit-SHA des fertigen Workers statt runId des Prüfers)
 oder das Modell vor der Kennung nennen; das Muster zählt sie dann nicht, nur das Register zeigt den Lauf. Jeden laufenden Lauf ohne passende
 Queue-Zeile über den `cwd` dem Paket zuordnen und dessen Zelle berichtigen.
+Zeigt das Register kurz nach einer Fertigmeldung nur einen Lauf, erst 30–60 s später erneut zählen, bevor die Spur angestoßen wird: Zwischen
+„Worker fertig“ und dem Start von Prüfer oder Nacharbeit liegt der Turn der Spur (`herdr agent get <pane>` zeigt dann `working`).
 Häufigste Ursache einer Überschreitung: Die Spur startet zwei Läufe im selben Turn (z. B. Nacharbeit und Review), zählt aber nur einmal davor.
 In Spur-Anleitung und Hinweis darum festhalten: vor jedem einzelnen Start neu zählen (`wpq.py next`), nie zwei Starts ohne Zählung dazwischen.
 Bei Abweichung die Queue-Zeile per `wpq.py status <WP> "<kanonisch>"` berichtigen,
@@ -70,13 +73,19 @@ Die Leerlaufschwelle des Leitstand-Watchdogs liegt oft unter dem Takt der Aufsic
 kein Fehlerzeichen. Trotzdem die volle Runde fahren (Queue-Zählung, Lauf-Register, Kontingent, RAM, Push-Stand, Aufsichts-Prozesse, offene
 Berichtspunkte) und dabei einen liegengebliebenen eigenen Punkt abarbeiten. Im Bericht in einem Satz sagen, dass die Ruhe geplant war und
 wann die nächste Aufsichtsmeldung kommt. Grund: Der Nutzer liest die Watchdog-Meldung mit und hält den Leitstand sonst für hängend.
+Meldet sich kurz danach eine Aufsicht planmäßig, sie neu starten, nur die Kurzrunde fahren (Zählung, Journal-Ende, Register, Kontingent,
+Push-Stand), eine STAND-Zeile schreiben und dem Nutzer in wenigen Zeilen sagen, was sich seit dem letzten Bericht geändert hat; Statusseiten-Kopf
+und Hochrechnung nur bei der vollen Runde nachziehen.
 
 ## Build-Rechner fällt mitten im Lauf aus (Integration rot mit „server … not responding“/Timeout)
 Ein roter Prüf- oder Integrationsschritt mit Verbindungsfehler ist kein Paketfehler. Zuerst den Host prüfen:
 `tailscale status | grep <host>` (zeigt „offline, last seen Nm ago“, also den Ausfallzeitpunkt) und `timeout 15 ssh -o BatchMode=yes
 -o ConnectTimeout=8 <host> uptime`. Dann im Build-Wrapper nachsehen, ob er schon auf einen Ersatz-Host ausweicht (Erreichbarkeitsprobe vor
 der Host-Wahl); laufende Neuversuche der Spur nicht abbrechen. Ist der Ersatz-Host der eigene Rechner, Last und RAM/Swap im Blick
-behalten (`uptime`, `free -m`), weil dort auch Sitzungen und Worker laufen. Den Ausfall dem Nutzer als einzigen Handgriff melden
+behalten (`uptime`, `free -m`), weil dort auch Sitzungen und Worker laufen. Sinkt der freie RAM dort plötzlich um mehrere GB, vor jedem
+Eingriff den Verursacher zuordnen: `ps -eo rss,pid,etimes,args --sort=-rss | head` und je Prozess `/proc/<pid>/cgroup` plus
+`systemctl --user status <scope>` (zeigt Befehl, Speicherdeckel und Spitze). Ein Build in einem gedeckelten Scope (Linker, rustc) ist erwartete
+Last und endet von selbst; nur ungedeckelte oder fremde Verbraucher sind ein Befund. Den Ausfall dem Nutzer als einzigen Handgriff melden
 (Host einschalten/ins Netz bringen) und in die Nutzer-Liste und den Kopf der Statusseite schreiben. Grund: Ein ausgeschalteter oder
 schlafender Rechner lässt sich aus der Ferne nicht reparieren, und ohne Meldung bleibt die Bauzeit unbemerkt langsamer.
 
@@ -98,10 +107,22 @@ roten ersten Lauf). Vor „grün“ oder „rot“ `WPQ_HEAD` mit `git rev-parse
 als bg_run fahren, statt Nacharbeit zu verlangen oder den alten Lauf zu glauben. Bei Worker-Meldungen „nextest lief vor den letzten Commits“
 hängt die Entscheidung am neuen Endlauf, nicht am Bericht.
 
+## Worker meldet ein groß geplantes Paket auffällig schnell fertig
+Laufzeit gegen die Plangröße halten (Start- und Fertigzeile im Journal). Ist ein als groß geplantes Paket nach einem Bruchteil der üblichen Zeit
+fertig, ist „abnahme OK“ allein kein Beleg: Die Abnahme prüft Pfade und Form, nicht den Umfang. Nicht eingreifen und nichts abbrechen, aber
+(1) sicherstellen, dass die Prüfung durch das zweite Modell vor dem Einbau wirklich läuft (Queue-Zelle „prüfen“ → beim nächsten Wecken eine
+Review-Zeile mit Befundzahl im Journal), (2) den Punkt in STAND vermerken und dem Nutzer in einem Satz als beobachteten Punkt nennen,
+(3) beim nächsten Wecken das Ergebnis nachlesen und berichten (gefundene Lücken, Nacharbeit, Einbau). Grund: Schnelle Fertigmeldungen bei
+großen Paketen sind typisch Teilumsetzungen mit Ersatz-Status, und nur der Prüfer deckt sie vor dem Einbau auf.
+
 ## Reviewer-Subagent liefert „Nichts gespeichert“ statt Befunden
 Startet die Spur einen Reviewer (`subagent`, Agent `reviewer`) kurz nach einem automatischen Lernpass, übernimmt er dessen Anweisungen aus dem
 geerbten Verlauf und antwortet mit „nichts zu speichern“. Ein einfaches „Das ist ein Code-Review“ im Task und `context:"fresh"` haben das
-nicht verhindert. Ergebnis ist leer, also nie als „keine Mängel“ lesen. Abhilfe: nach dem ersten Leerlauf nicht wiederholen, sondern die
+nicht verhindert. Zuerst unterscheiden, ob der Review trotzdem stattfand: Die Schlusszeile kann die Antwort auf den angehängten Lernpass sein,
+während der Bericht davor geschrieben wurde. Prüfen mit `wc -c <lauf-ordner>/output-0.log` (ein echter Review hat Hunderte KB), dem Ende der
+Ausgabe (nennt die Schlusszeile Befunde oder einen Review-Bericht?) und der Berichtsdatei bzw. der Journalzeile der Spur mit Befundzahl.
+Eine kurze Laufzeit in `status.json` allein beweist keinen Leerlauf. Nur wenn kein Bericht existiert, ist das Ergebnis leer, also nie als
+„keine Mängel“ lesen. Abhilfe dann: nach dem ersten Leerlauf nicht wiederholen, sondern die
 Stichprobe selbst machen (Diff-Statistik, Katalog-ID → Test, `grep` je neue öffentliche Funktion auf Aufrufer außerhalb der Gruppe, Werkzeug-Diff lesen)
 und das im Journal als Eigenprüfung vermerken; den Reviewer erst beim nächsten Paket in einem Turn ohne Lernpass davor starten.
 Nicht verdrahtete Bausteine (kein Aufrufer außerhalb von Modul und Tests) gehören mit Konsument in den Schlussbericht.
@@ -123,6 +144,8 @@ Gruppe nacheinander starten (nicht parallel), jeweils mit gleichartiger Freigabe
 Kehrt dieselbe Freigabe bei jedem Paket wieder (typisch bei (c) und (d)), sie der Spur schon bei der ersten Rückfrage als stehende Regel geben:
 Die Spur legt die `.pfade` beim Start des Pakets an und schreibt sie in den Brief. Grund: Sonst scheitert jedes Folgepaket an derselben Hürde,
 jede Rückfrage kostet einen Turn, und parallele Pakete erzeugen an derselben Sammeldatei Merge-Konflikte.
+Laufen Pakete derselben Gruppe doch parallel, sind Einbau-Konflikte an genau diesen Dateien erwartbar und kein Befund: Abhängigkeitslisten
+vereinigen (beide Seiten behalten, Lock-Datei prüfen), erzeugte Sammelartefakte auf die eigene Seite setzen und neu erzeugen, dann zweite Runde.
 
 ## Faire Vergabe knapper Worker-Plätze über mehrere Spuren
 Teilen sich Spuren eine globale Obergrenze (z. B. höchstens 2 Claude-Worker), belegt sonst die Spur, die zuerst `next` fragt,
@@ -141,7 +164,8 @@ und nicht liegen lassen.
 Zuerst jeden gemeldeten Rest im Integrationszweig nachprüfen, bevor er einem Paket zugeordnet wird: `git grep -n '<funktion>'` ohne Testdateien
 und die Definition samt Kommentar lesen. Trägt die Funktion `#[cfg(test)]` oder ist sie laut Kommentar ein Testhelfer, und läuft der echte Einstieg
 über einen anderen, angeschlossenen Weg, ist der Punkt erledigt: in STAND mit Fundstelle vermerken, kein Paket. Grund: Worker melden auch
-Testhelfer als „nicht verdrahtet“, und ein Pflichtpunkt dafür erzeugt toten Code.
+Testhelfer als „nicht verdrahtet“, und ein Pflichtpunkt dafür erzeugt toten Code. Dieselbe Nachprüfung gilt für alte Treffer der Suche:
+Ein „offen für L0“ von gestern kann längst angeschlossen sein (Aufrufzeile per `git grep` im Integrationszweig suchen), dann nur in STAND abhaken.
 Die Spur bekommt einen echten Rest per `spur.sh prompt` mit einer Entscheidungsregel zurück:
 (1) Reicht eine Registrierung oder ein paar Aufrufzeilen, als kleiner Integrationsfix ohne eigenen Worker: genaue Zeilen, Reihenfolge zu laufenden
 Integrationen (nach dem gerade laufenden Einbau, vor dem nächsten Paket an derselben Datei), Prüfung über den Build-Wrapper (check + betroffene
