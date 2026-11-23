@@ -1,6 +1,6 @@
 ---
 name: git-remote-swap
-description: Git-Repo auf einen neuen Origin/Forge umstellen und verlustfrei aufräumen — tote Worktrees mit kaputten .git-Pointern (Maschinenmigration) erkennen, Branch-Containment-Check + Bundle-Backup, Token-Fetch ohne Persistenz, sichere Branch-Löschkette, CI-/Auslieferungs-Workflows des alten Forges portieren. Use when a repository's remote must move to a new host/forge, stale worktrees or branches must be cleaned up, a repo copied from another machine shows prunable worktrees whose directories still exist, or builds/test-channel releases silently stopped after a forge move.
+description: Git-Repo auf einen neuen Origin/Forge umstellen und verlustfrei aufräumen — tote Worktrees mit kaputten .git-Pointern (Maschinenmigration) erkennen, Branch-Containment-Check + Bundle-Backup, Token-Fetch ohne Persistenz, sichere Branch-Löschkette, CI-/Auslieferungs-Workflows des alten Forges portieren. Use when a repository's remote must move to a new host/forge, stale worktrees or branches must be cleaned up, a repo copied from another machine shows prunable worktrees whose directories still exist, or builds/test-channel releases silently stopped after a forge move, or git pull/fetch suddenly fails with „Repository not found" although the repo exists.
 ---
 
 # git-remote-swap
@@ -101,6 +101,7 @@ git status --short                  # leer
 - **Bash-Guard blockt `git branch -D`** (Muster `/git\s+branch\s+-D/`) — Workflow darauf einrichten statt das Muster zu umgehen: Bundle-Backup + Containment-Check machen das Löschen beweisbar verlustfrei. Der Guard prüft den ganzen Befehlstext, auch Heredoc-Inhalte: Berichte, die den Befehl erwähnen, mit dem write-Tool schreiben, nicht per `cat <<EOF` in bash.
 - **Alte Projekt-Doku lügt nach einem Forge-Wechsel** — AGENTS.md/READMEs referenzieren noch den alten Host, alte `gh`-CLI-Aussagen und Compare-URL-Patterns. Bis zur Doc-Pflege gilt: `git remote -v` ist die Wahrheit, nicht das Doc.
 - **HTTPS-Remote statt SSH bei Token-Auth** — der User nennt oft die SSH-URL, der Token arbeitet aber über HTTPS; Remote als HTTPS setzen und push-URL bei Bedarf separat auf SSH umstellen.
+- **„Repository not found" bei SSH heißt oft „falsches Konto", nicht „Repo weg"** — GitHub verschleiert fehlende Rechte als 404. Diagnosekette: `ssh -o BatchMode=yes -T git@github.com` (nennt das Konto, als das der Key sich anmeldet) gegen `gh auth status` (Konto mit Org-Zugriff) und `gh api repos/<org>/<repo> --jq .full_name` (existiert das Repo?); `git ls-remote https://github.com/<org>/<repo>.git` als Gegenprobe. Gehört der SSH-Key einem Konto ohne Zugriff: `git remote set-url origin https://…` — mit `gh auth git-credential` in `~/.gitconfig` ist das dauerhaft ohne erneute Anmeldung; danach `git pull --ff-only`. Alternative für den User: Public Key beim berechtigten Konto hinterlegen. Ein zuletzt per HTTPS aktualisiertes `.git/FETCH_HEAD` (Zeile `… of https://github.com/…`) verrät, welcher Weg zuletzt funktionierte.
 
 ## Dauerhafte Credential-Lösung (nach dem Swap)
 
