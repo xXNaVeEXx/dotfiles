@@ -23,6 +23,7 @@ wt list                                            # Übersicht; @ = aktuell, + 
 wt merge <name>                                    # am Ende: squash/rebase/merge in Ziel-Branch
 wt remove <name>                                   # Worktree + Branch aufräumen (nach Merge)
 ```
+- Vor dem Anlegen `git fetch` und den Stand vergleichen (`git rev-parse <ziel> origin/<ziel>`). Liegt der lokale Zielbranch hinter dem Remote, mit `wt switch -c <name> --base origin/<ziel>` vom Remote-Stand abzweigen. Grund: Ohne `--base` startet der Worktree vom ausgecheckten lokalen Stand; fehlende Merges zeigen sich dann erst als Konflikt oder rote Prüfung am PR, und Projektregeln (AGENTS.md, Regel-Dokus) werden in veralteter Fassung gelesen. Den Haupt-Checkout dafür nicht pullen, dort können fremde Änderungen liegen.
 - `wt switch -c` im Haupt-Checkout ausführen; danach alle Arbeit im Worktree-Pfad (auch Sub-Agents: deren `cwd` auf den Worktree-Pfad setzen — ein Writer pro Worktree).
 - Branch-Namen: kurz, kebab-case, aufgabenbezogen (kein Ticket-Geraffel im Namen).
 - `wt switch pr:123` checkt einen PR-Branch direkt in einen Worktree aus.
