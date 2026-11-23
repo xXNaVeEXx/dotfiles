@@ -2,16 +2,22 @@
 """Selbstaktualisierende Statusseite für autonome Orchestrator-Läufe (Vorlage).
 
 Liest die Queue-Tabelle im Plan (`| <ID> | Inhalt | Modell | Status |`, Zeilen mit STATUS_PKG_PREFIX oder `PLAN`),
-das Journal (`- <zeit> …`-Zeilen), NUTZER.md/ERLEDIGT.md (Aufzählungen), Git (Commits vor main, gepusht/lokal),
-offene und seit STATUS_SINCE gemergte PRs mit CI-Stand, Worker-Aktivität (/tmp/acp-delegate/<runId>.*; runId =
-letzte `del_…`-ID, die im Journal im selben Satz hinter der Paket-ID steht), laufende bg_run-Wachen der Sitzung und
+das Journal (`- <zeit> …`-Zeilen), NUTZER.md/ERLEDIGT.md (Aufzählungen), Git (Commits vor STATUS_BASE, gepusht/lokal),
+offene und seit STATUS_SINCE gemergte PRs mit CI-Stand, Worker-Aktivität, laufende bg_run-Wachen der Sitzung und
 die letzte Watchdog-Zeile. Schreibt <STATUS_DIR>/status.html atomar (tmp + replace).
+
+Worker-Aktivität (Live-Spalte) – die runId steht in der Statuszelle der Queue-Zeile:
+  - UUID (pi-subagents, `subagent({async:true})`): <STATUS_SUBAGENT_DIR>/<runId>/status.json
+    (state, currentTool, lastActivityAt, startedAt, turnCount); die UUID wird im Status-Abzeichen ausgeblendet.
+  - `del_…` (ältere Delegate-Läufe): <STATUS_ACP_DIR>/<runId>.activity / .session.jsonl; Rückfall = letzte runId,
+    die im Journal im selben Satz hinter der Paket-ID steht.
 
 Start (Beispiel):
   systemd-run --user --unit=<name>-status --on-calendar='*:0/2' \
     --setenv=STATUS_REPO=/pfad/repo --setenv=STATUS_DIR=/pfad/repo/.tmp/n4 --setenv=STATUS_SID=<pi-SID> \
     --setenv=STATUS_GH_REPO=<org>/<repo> --setenv=STATUS_SINCE=<ISO-UTC> --setenv=STATUS_TITLE='Projekt – Stand' \
     --setenv=STATUS_PKG_PREFIX=P15 --setenv=STATUS_WATCHDOG_LOG=/pfad/watchdog.log /usr/bin/python3 <dieses Skript>
+Bei mehr als einer Handvoll Variablen besser ein Wrapper-Skript mit `export STATUS_…` und `exec python3 <skript>`.
 Status-Wörter der Queue: gemergt | committet/fertig | fehler | Abnahme/Prüf…/integrieren | läuft/wartet/nacharbeit/
 resume | sonst offen. Mehrere Queues in einer Datei: je Queue eine Überschrift `## <Name>`; die Spalte „Modell“ wird
 über die Kopfzeile der Tabelle gefunden (sonst Spalte 3), Status = letzte Spalte.
@@ -20,10 +26,16 @@ Optionale env:
   STATUS_STEPS_MD     Markdown mit Checkliste unter STATUS_STEPS_HEAD (Standard `## Steps`, Zeilen `- [ ]/[~]/[x] …`)
                       → „Gesamtplan: n von m Schritten“, der erste offene Schritt ist „jetzt“
   STATUS_OVERVIEW_MD  von Hand gepflegte Übersicht (## / ###, Listen mit [ ]/[~]/[x], Tabellen); an der Marke
-                      `<!-- STEPS -->` wird die Checkliste eingefügt, sonst darunter
+                      `<!-- STEPS -->` wird die Checkliste eingefügt, sonst darunter. Live-Platzhalter:
+                      {{queue:<Sektion>}}, {{queue:<Sektion>:<ID-Regex>}}, {{fertig:<Sektion>}}, {{arbeit:<Sektion>}}
   STATUS_GROUPS       'PRÄFIX=Label;…' → Zeilen je ID-Gruppe in der Queue-Tabelle
   STATUS_CMDS         JSON [["Label","Befehl"],…] → letzte Ausgabezeilen unter „Ressourcen“ (auch bei Exit ≠ 0)
   STATUS_REPOS        JSON [["Label","/pfad/worktree"],…] → Commits je Worktree (Standard: STATUS_REPO)
+  STATUS_BASE         Vergleichs-Branch für „Commits noch nicht auf …“ (Standard origin/main, z. B. origin/test)
+  STATUS_PR_HEAD_RE   Regex auf den Branch-Namen der PRs → nur die PRs dieses Laufs zeigen (sonst alle des Repos)
+  STATUS_SUBAGENT_DIR Ordner der pi-subagents-Läufe, z. B. /tmp/pi-subagents-uid-<uid>/async-subagent-runs
+  STATUS_ACP_DIR      Ordner der älteren Delegate-Läufe (<runId>.activity)
+  STATUS_RUN_ID_RE    Regex der älteren runIds (Standard `del_…`)
 Abschnitt „## Ohne dich entschieden“ im Plan wird mit angezeigt.
 """
 
@@ -40,7 +52,7 @@ from pathlib import Path
 REPO = Path(os.environ.get("STATUS_REPO", "."))
 PLAN_DIR = Path(os.environ.get("STATUS_DIR", str(REPO / ".tmp")))
 OUT = PLAN_DIR / "status.html"
-ACP = Path(os.environ.get("STATUS_ACP_DIR", "/tmp/acp-delegate"))
+ACP = Path(os.environ.get("STATUS_ACP_DIR", "/nonexistent"))
 TASKS = Path(os.environ.get("STATUS_TASKS", str(Path.home() / "projects" / ".pi" / "tasks")))
 WATCHDOG_LOG = Path(os.environ.get("STATUS_WATCHDOG_LOG", "/nonexistent"))
 SID = os.environ.get("STATUS_SID", "")
@@ -55,7 +67,12 @@ STEPS_HEAD = os.environ.get("STATUS_STEPS_HEAD", "## Steps")
 OVERVIEW_MD = Path(os.environ.get("STATUS_OVERVIEW_MD", "/nonexistent"))
 GROUPS = [g.split("=", 1) for g in os.environ.get("STATUS_GROUPS", "").split(";") if "=" in g]
 STEP_RE = re.compile(r"^- \[( |x|~)\] (.*)$")
-RUN_ID = r"del_[a-z0-9]+_[a-z0-9]+"
+RUN_ID = os.environ.get("STATUS_RUN_ID_RE", r"del_[a-z0-9]+_[a-z0-9]+")
+UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+SUB_RUNS = Path(os.environ.get("STATUS_SUBAGENT_DIR", "/nonexistent"))
+BASE = os.environ.get("STATUS_BASE", "origin/main")
+PR_HEAD_RE = os.environ.get("STATUS_PR_HEAD_RE", "")
+LONG_TOOL_MIN = 70  # ein laufender Befehl (Tests, Bau, Warten auf eine Bau-Sperre) darf so lange still sein
 STILL_MIN = 15
 
 KIND_LABEL = {
@@ -128,7 +145,7 @@ def packages() -> list[dict[str, str]]:
             sec, hdr = line[3:].strip(), []
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        is_pkg = PKG_RE.match(line) if PKG_RE else (line.startswith("| " + PKG_PREFIX) or line.startswith("| PLAN"))
+        is_pkg = PKG_RE.match(line) if PKG_RE else line.startswith(("| " + PKG_PREFIX, "| PLAN"))
         if not is_pkg:
             if line.startswith("| "):
                 hdr = [c.lower() for c in cells]
@@ -149,7 +166,51 @@ def latest_run(pkg: str, journal: str) -> str:
     return found
 
 
+def _secs(value: object) -> float:
+    """Millisekunden-Zeitstempel aus status.json als Sekunden; alles Unlesbare wird 0."""
+    try:
+        return float(str(value or 0)) / 1000
+    except ValueError as e:
+        _quiet(e)
+        return 0.0
+
+
+def subagent_state(run_id: str) -> str:
+    """Live-Zustand eines pi-subagents-Laufs aus <STATUS_SUBAGENT_DIR>/<runId>/status.json."""
+    try:
+        st = json.loads(read(SUB_RUNS / run_id / "status.json") or "{}")
+    except ValueError as e:
+        _quiet(e)
+        st = {}
+    if not isinstance(st, dict) or not st:
+        return ""
+    short = f"<small>({esc(run_id[:8])})</small>"
+    state = str(st.get("state", ""))
+    now = time.time()
+    started = _secs(st.get("startedAt"))
+    if state != "running":
+        ended = _secs(st.get("endedAt") or st.get("lastUpdate"))
+        dur = f" nach {(ended - started) / 60:.0f} min" if started and ended else ""
+        cls, txt = ("ok", "Lauf beendet") if state == "complete" else ("bad", f"Lauf abgebrochen ({esc(state)})")
+        return f'<span class="{cls}">{txt}{dur}</span> {short}'
+    last = _secs(st.get("lastActivityAt") or st.get("lastUpdate"))
+    age = (now - last) / 60 if last else 0.0
+    tool = str(st.get("currentTool") or "")
+    limit = LONG_TOOL_MIN if tool else STILL_MIN  # ein laufender Befehl meldet bis zu seinem Ende nichts
+    cls = "warn" if age >= limit else "live"
+    if tool:
+        txt = f"aktiv, führt seit {age:.0f} min einen Befehl aus ({esc(tool)})"
+    elif age < STILL_MIN:
+        txt = f"aktiv, letzte Aktivität vor {age:.0f} min"
+    else:
+        txt = f"still seit {age:.0f} min"
+    info = f"<br><small>läuft seit {(now - started) / 60:.0f} min · {st.get('turnCount', 0)} Schritte</small>" if started else ""
+    return f'<span class="{cls}">{txt}</span> {short}{info}'
+
+
 def run_state(run_id: str) -> str:
+    if UUID_RE.fullmatch(run_id):
+        return subagent_state(run_id)
     act = ACP / f"{run_id}.activity"
     try:
         age = (time.time() - act.stat().st_mtime) / 60
@@ -216,24 +277,30 @@ def pull_requests() -> str:
         return "<p><small>STATUS_GH_REPO nicht gesetzt.</small></p>"
     env = gh_env()
     opened = run(
-        ["gh", "pr", "list", "--repo", GH_REPO, "--state", "open", "--json", "number,title,url,statusCheckRollup"],
+        ["gh", "pr", "list", "--repo", GH_REPO, "--state", "open", "--limit", "100", "--json", "number,title,url,statusCheckRollup,headRefName"],
         timeout=30,
         env=env,
     )
     merged = run(
-        ["gh", "pr", "list", "--repo", GH_REPO, "--state", "merged", "--limit", "8", "--json", "number,title,url,mergedAt"],
+        ["gh", "pr", "list", "--repo", GH_REPO, "--state", "merged", "--limit", "60", "--json", "number,title,url,mergedAt,headRefName"],
         timeout=30,
         env=env,
     )
     rows = []
+
+    def mine(pr: dict) -> bool:
+        return not PR_HEAD_RE or bool(re.search(PR_HEAD_RE, str(pr.get("headRefName", ""))))
+
     try:
         for pr in json.loads(opened or "[]"):
+            if not mine(pr):
+                continue
             rows.append(
                 f'<tr><td><a href="{esc(pr["url"])}">#{pr["number"]}</a></td><td>{esc(pr["title"])}</td>'
                 f'<td><span class="badge run">offen</span></td><td>{checks_summary(pr.get("statusCheckRollup") or [])}</td></tr>'
             )
         for pr in json.loads(merged or "[]"):
-            if (pr.get("mergedAt") or "") < SINCE:
+            if (pr.get("mergedAt") or "") < SINCE or not mine(pr):
                 continue
             rows.append(
                 f'<tr><td><a href="{esc(pr["url"])}">#{pr["number"]}</a></td><td>{esc(pr["title"])}</td>'
@@ -244,7 +311,7 @@ def pull_requests() -> str:
     if not opened and not merged:
         return "<p><small>GitHub gerade nicht erreichbar – nächster Versuch beim nächsten Lauf.</small></p>"
     if not rows:
-        return "<p>Keine offenen PRs, im Zeitraum noch nichts gemergt.</p>"
+        return "<p>Noch kein Pull Request für diese Arbeit.</p>"
     return "<table><tr><th>PR</th><th>Titel</th><th>Zustand</th><th>CI</th></tr>" + "".join(rows) + "</table>"
 
 
@@ -253,7 +320,7 @@ def commits() -> str:
     parts = []
     for label, path in repos:
         git = ["git", "-C", str(path)]
-        log = run([*git, "log", "--format=%h\t%cd\t%s", "--date=format:%d.%m %H:%M", "origin/main..HEAD"])
+        log = run([*git, "log", "--format=%h\t%cd\t%s", "--date=format:%d.%m %H:%M", f"{BASE}..HEAD"])
         unpushed = set(run([*git, "log", "--format=%h", "@{u}..HEAD"]).split())
         branch = run([*git, "branch", "--show-current"]).strip()
         lines = log.splitlines()
@@ -267,7 +334,7 @@ def commits() -> str:
             )
         name = f"<b>{esc(str(label))}</b> · " if label else ""
         local = (f", davon {len(unpushed)} nur lokal" if unpushed else ", alle gepusht") if lines else ""
-        parts.append(f"<p>{name}Branch <code>{esc(branch)}</code> – {len(lines)} Commit(s) noch nicht auf <code>main</code>{local}.</p>")
+        parts.append(f"<p>{name}Branch <code>{esc(branch)}</code> – {len(lines)} Commit(s) noch nicht auf <code>{esc(BASE)}</code>{local}.</p>")
         if rows:
             more = f"<p><small>… und {len(lines) - 12} ältere</small></p>" if len(lines) > 12 else ""
             parts.append("<table><tr><th>Commit</th><th>Zeit</th><th>Betreff</th><th></th></tr>" + "".join(rows) + "</table>" + more)
@@ -419,6 +486,40 @@ def tally(rows: list[dict[str, str]]) -> dict[str, int]:
     return c
 
 
+def queue_text(rows: list[dict[str, str]], sec: str, id_re: str = "") -> str:
+    try:
+        sel = [p for p in rows if p.get("sec") == sec and (not id_re or re.search(id_re, p["id"]))]
+    except re.error:
+        return f"(ungültiger Platzhalter-Regex {id_re})"
+    if not sel:
+        return "keine Aufträge"
+    c = tally(sel)
+    parts = [f"{c['merged'] + c['done']} von {len(sel)} fertig"]
+    for k, w in (("run", "in Arbeit"), ("check", "in Abnahme"), ("fail", "mit Fehler"), ("open", "offen")):
+        if c[k]:
+            parts.append(f"{c[k]} {w}")
+    return ", ".join(parts)
+
+
+def names_text(rows: list[dict[str, str]], sec: str, what: str) -> str:
+    """Titel der fertigen bzw. laufenden Pakete – ohne ID, weil der Leser die Kürzel nicht kennt."""
+    want = ("done", "merged") if what == "fertig" else ("run", "check", "fail")
+    sel = [p for p in rows if p.get("sec") == sec and kind(p["status"]) in want]
+    return "; ".join(p["inhalt"] for p in sel) or "keine"
+
+
+def fill_placeholders(md: str, rows: list[dict[str, str]]) -> str:
+    """Füllt {{queue:…}}, {{fertig:…}}, {{arbeit:…}} im Übersichtstext aus derselben Queue wie die Tabelle."""
+
+    def sub(m: re.Match[str]) -> str:
+        what, arg, extra = m.group(1), m.group(2), m.group(3) or ""
+        if what in ("fertig", "arbeit"):
+            return names_text(rows, arg, what)
+        return queue_text(rows, arg, extra)
+
+    return re.sub(r"\{\{(queue|fertig|arbeit):([^:}]+)(?::([^}]+))?\}\}", sub, md)
+
+
 def bar_html(c: dict[str, int]) -> str:
     total = max(sum(c.values()), 1)
     spans = "".join(
@@ -527,18 +628,18 @@ def render() -> str:
         k = kind(p["status"])
         live = ""
         if k in {"run", "check"}:
-            m = re.search(RUN_ID, p["status"])  # runId steht meist in der Statuszelle, sonst im Journal
+            m = UUID_RE.search(p["status"]) or re.search(RUN_ID, p["status"])  # runId steht in der Statuszelle
             rid = m.group(0) if m else latest_run(p["id"], journal)
             live = run_state(rid) if rid else ""
         row = (
             f"<tr><td><b>{esc(p['id'])}</b></td><td>{esc(p['inhalt'])}</td><td><small>{esc(p['modell'])}</small></td>"
-            f'<td><span class="badge {k}">{esc(p["status"])}</span></td><td>{live}</td></tr>'
+            f'<td><span class="badge {k}">{esc(UUID_RE.sub("", p["status"]).strip())}</span></td><td>{live}</td></tr>'
         )
         (finished if k in {"merged", "done"} else active).append(row)
     head = "<tr><th>Auftrag</th><th>Inhalt</th><th>Modell</th><th>Status</th><th>Live</th></tr>"
     done = counts["merged"] + counts["done"]
     cards = "".join(f'<div class="card"><b>{counts[k]}</b>{KIND_LABEL[k]}</div>' for k in ORDER)
-    ov_top, _, ov_rest = read(OVERVIEW_MD).partition("<!-- STEPS -->")
+    ov_top, _, ov_rest = fill_placeholders(read(OVERVIEW_MD), work).partition("<!-- STEPS -->")
     nutzer = md_list_text(read(PLAN_DIR / "NUTZER.md"))
     if "<li>" not in nutzer:
         nutzer = "<p>Gerade nichts – alles läuft ohne dich weiter.</p>"

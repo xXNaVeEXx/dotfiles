@@ -10,18 +10,33 @@
 ## Abschnitte und Quellen
 | Abschnitt | Quelle | env |
 |---|---|---|
-| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen und Paketlisten als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->`, Klarnamen `STATUS_NAMES='KÜRZEL=Name;…'` |
+| Übersicht (von Hand) | Markdown mit `##`/`###`, Listen `[ ]/[~]/[x]`, Tabellen; Zahlen und Paketlisten als Live-Platzhalter (siehe Pflege) | `STATUS_OVERVIEW_MD`, Marke `<!-- STEPS -->` |
 | Gesamtplan n von m | Checkliste unter `## Steps` im Plan, erster offener Schritt = „jetzt“ | `STATUS_STEPS_MD`, `STATUS_STEPS_HEAD` |
 | Laufende Arbeit | Queue-Tabellen in `<STATUS_DIR>/PLAN.md`, je Queue `## <Name>`, Zeilen je ID-Gruppe | `STATUS_PKG_RE` oder `STATUS_PKG_PREFIX`, `STATUS_GROUPS='PRÄFIX=Label;…'` |
 | Ressourcen und Kontingent | MemAvailable/Swap + letzte Zeilen von Tor-Befehlen (auch bei Exit ≠ 0) | `STATUS_CMDS='[["Label","Befehl"],…]'` |
-| Aufträge + Live-Spalte | runId aus der Statuszelle, sonst aus dem Journal; Aktivität aus `/tmp/acp-delegate/<runId>.*` | `STATUS_ACP_DIR` |
-| Pull Requests | `gh pr list` offen + gemergt seit Startzeit | `STATUS_GH_REPO`, `STATUS_SINCE` |
-| Commits | je Worktree `origin/main..HEAD`, „nur lokal“ markiert | `STATUS_REPOS='[["Label","/pfad"],…]'` |
+| Aufträge + Live-Spalte | runId aus der Statuszelle, sonst aus dem Journal. UUID (Worker per `subagent({async:true})`) → `<STATUS_SUBAGENT_DIR>/<runId>/status.json`; `del_…` (ältere Delegate-Läufe) → `<STATUS_ACP_DIR>/<runId>.*` | `STATUS_SUBAGENT_DIR` (z. B. `/tmp/pi-subagents-uid-<uid>/async-subagent-runs`), `STATUS_ACP_DIR`, `STATUS_RUN_ID_RE` |
+| Pull Requests | `gh pr list` offen + gemergt seit Startzeit, auf Wunsch nur die Branches dieses Laufs | `STATUS_GH_REPO`, `STATUS_SINCE`, `STATUS_PR_HEAD_RE` (z. B. `'^<lauf-präfix>'`) |
+| Commits | je Worktree `<STATUS_BASE>..HEAD`, „nur lokal“ markiert | `STATUS_REPOS='[["Label","/pfad"],…]'`, `STATUS_BASE` (Standard `origin/main`) |
 | Kontrolle (Loop) | letzte Watchdog-Zeile, laufende bg_run-Wachen der Sitzung | `STATUS_WATCHDOG_LOG`, `STATUS_SID`, `STATUS_TASKS` |
 | Bleibt bei dir / Ohne dich entschieden / Erledigt / Journal | `NUTZER.md`, Plan-Abschnitt `## Ohne dich entschieden`, `ERLEDIGT.md`, `JOURNAL.md` | `STATUS_DIR` |
 
 Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fertig · `fehler` → Fehler ·
 `Abnahme`/`Prüf…`/`integrieren` → Abnahme · `läuft`/`wartet`/`nacharbeit`/`resume` → in Arbeit · sonst offen.
+
+Vor dem Einrichten die env an den Lauf anpassen und nicht die Standardwerte übernehmen: `STATUS_BASE` = Ziel-Branch
+der PRs, `STATUS_PR_HEAD_RE` = Branch-Präfix des Laufs, `STATUS_SUBAGENT_DIR` bzw. `STATUS_ACP_DIR` = der Ordner, in
+dem die Worker dieses Laufs wirklich ihren Zustand schreiben. Grund: Mit falschem Vergleichs-Branch zählt die Seite
+fremde Commits, ohne Branch-Filter zeigt sie alle PRs des Repos, und mit falschem Lauf-Ordner bleibt die Live-Spalte
+still leer.
+
+## Ein Lauf, ein Worktree (kleiner Wrapper)
+1. Statusordner im Worktree anlegen (`.tmp/<lauf>/status/`), die Vorlage dorthin kopieren und dort `PLAN.md` (Queue
+   der Seite, getrennt vom fachlichen Plan), `STEPS.md`, `UEBERSICHT.md`, `NUTZER.md`, `ERLEDIGT.md`, `JOURNAL.md`
+   pflegen.
+2. Wrapper `status.sh`: `PATH` mit dem Ordner von `gh`, dann `export STATUS_…` (Repo, Ordner, SID, Tasks-Ordner,
+   GH-Repo, Branch-Filter, Vergleichs-Branch, Startzeit, Zeilen-Regex, Steps, Übersicht, Lauf-Ordner der Worker),
+   am Ende `exec /usr/bin/python3 "$STATUS_DIR/status-page.py"`.
+3. Timer und Probe wie in Schritt 8 des nächsten Abschnitts, danach die Prüfungen aus „Prüfen nach Änderungen“.
 
 ## Wrapper bei mehreren Spuren (Muster)
 1. Alle Queue-Dateien der Spuren in `<STATUS_DIR>/PLAN.md` sammeln: je Datei `## <Spur>` (bei Neben-Queues mit
@@ -45,30 +60,33 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
    Probe vorher wie im Unit: `env -i HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin /bin/bash <wrapper>`.
 
 ## Pflege – sonst zeigt die Seite einen falschen Stand
-- Statuszelle bei jedem Wechsel sofort setzen, mit runId und Modell (`läuft del_… <modell>`): die Live-Spalte liest
-  die runId zuerst dort, das Journal ist nur Rückfall.
+- Statuszelle bei jedem Wechsel sofort setzen, mit runId (`läuft <runId>`, UUID oder `del_…`), das Modell in der
+  Spalte „Modell“: die Live-Spalte liest die runId zuerst dort, das Journal ist nur Rückfall. Eine UUID blendet der
+  Renderer im Abzeichen aus und zeigt sie gekürzt in der Live-Spalte.
 - Bei jedem Abschluss eines Planschritts (z. B. `plannotator_mark_done`) auch das `[x]` in der Steps-Checkliste des
   Plans setzen, `[~]` für teilweise – der Zähler „Gesamtplan“ liest nur die Datei.
 - Zahlen und Paketlisten im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei
-  jedem Lauf füllt:
+  jedem Lauf füllt. In der Vorlage eingebaut:
   - `{{queue:<Sektion>}}` bzw. `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, …
     offen“ aus derselben Queue wie die Tabelle.
-  - `{{fertig:<Sektion>}}` / `{{arbeit:<Sektion>}}` → die fertigen (fertig/gemergt) bzw. laufenden Pakete (in Arbeit,
-    Abnahme, Fehler) als „ID Titel; …“, „keine“ bei leerer Auswahl. Damit nennt der Text immer die richtigen Pakete.
+  - `{{fertig:<Sektion>}}` / `{{arbeit:<Sektion>}}` → die Titel der fertigen (fertig/gemergt) bzw. laufenden Pakete
+    (in Arbeit, Abnahme, Fehler), ohne ID, „keine“ bei leerer Auswahl. Damit nennt der Text immer die richtigen
+    Pakete, in Worten statt Kürzeln.
+
+  Nur bei Läufen mit Kontingent-Toren bzw. langen Teilketten nachzurüsten (Code unten):
   - `{{quota:<Name>}}` → „<Name> W % der Woche, 5-Stunden-Fenster K %“, bei Sperre mit „(neue Läufe gesperrt bis …)“,
     aus der letzten Zeile des `STATUS_CMDS`-Eintrags „Kontingent <Name>“ (`kurz=K%` … `woche=W%`, bei Sperre
     `NEIN … frei ab <Zeit>`).
   - `{{ketten:<Sektion>}}` → die vier Bereiche mit den meisten offenen Teilen (IDs `…<KÜRZEL>-T<n>`), mit Klarnamen
-    aus `STATUS_NAMES`. Damit steht die längste Restkette immer aktuell im Text.
+    aus `STATUS_NAMES='KÜRZEL=Name;…'`. Damit steht die längste Restkette immer aktuell im Text.
 
   Kopf als „Stand in Kürze (Text vom <Datum> – Zahlen live)“. Grund: Von Hand eingetragene Zahlen und Paketlisten
   veralten mit dem nächsten Abschluss, Kontingent-Werte schon nach Minuten, und widersprechen dann der Tabelle auf
   derselben Seite; Kürzel versteht der Nutzer nicht. Jeden Befehl je Lauf nur einmal ausführen (Cache, auch im
-  Ressourcen-Abschnitt), damit Text und Ressourcen dieselbe Ablesung zeigen. Fehlt das der Vorlage noch, beim
-  Einrichten ergänzen und in `render()` `read(OVERVIEW_MD)` durch `fill_placeholders(read(OVERVIEW_MD), work)`
-  ersetzen:
+  Ressourcen-Abschnitt), damit Text und Ressourcen dieselbe Ablesung zeigen. Nachrüsten von `quota` und `ketten`:
+  die Funktionen ergänzen und `fill_placeholders` der Vorlage um die beiden Arten erweitern:
   ```python
-  CMDS = json.loads(os.environ.get("STATUS_CMDS", "[]"))
+  CMDS = _json_env("STATUS_CMDS")
   NAMES = dict(x.split("=", 1) for x in os.environ.get("STATUS_NAMES", "").split(";") if "=" in x)
   _CMD_CACHE = {}
 
@@ -80,25 +98,6 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
           except (OSError, subprocess.SubprocessError) as e:
               _CMD_CACHE[cmd] = f"({e})"
       return _CMD_CACHE[cmd]
-
-  def queue_text(rows, sec, id_re=""):
-      try:
-          sel = [p for p in rows if p.get("sec") == sec and (not id_re or re.search(id_re, p["id"]))]
-      except re.error:
-          return f"(ungültiger Platzhalter-Regex {id_re})"
-      if not sel:
-          return "keine Aufträge"
-      c = tally(sel)
-      parts = [f"{c['merged'] + c['done']} von {len(sel)} fertig"]
-      for k, w in (("run", "in Arbeit"), ("check", "in Abnahme"), ("fail", "mit Fehler"), ("open", "offen")):
-          if c[k]:
-              parts.append(f"{c[k]} {w}")
-      return ", ".join(parts)
-
-  def names_text(rows, sec, what):  # Lauf-Präfix der IDs (z. B. `XY-WP-`) gern per re.sub kürzen
-      want = ("done", "merged") if what == "fertig" else ("run", "check", "fail")
-      sel = [p for p in rows if p.get("sec") == sec and p.get("kind") in want]
-      return "; ".join(f"{p['id']} {p['inhalt']}" for p in sel) or "keine"
 
   def quota_text(name):
       cmd = dict(CMDS).get(f"Kontingent {name}")
@@ -116,20 +115,20 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
       cnt = {}
       for p in rows:
           m = re.search(r"([A-Z0-9]+)-T\d+$", p["id"])
-          if m and p.get("sec") == sec and p.get("kind") not in ("merged", "done"):
+          if m and p.get("sec") == sec and kind(p["status"]) not in ("merged", "done"):
               cnt[m.group(1)] = cnt.get(m.group(1), 0) + 1
       best = sorted(cnt.items(), key=lambda kv: -kv[1])[:top]
       return ", ".join(f"„{NAMES.get(k, k)}“ ({n})" for k, n in best) or "keine offenen Teile"
 
   def fill_placeholders(md, rows):
       def sub(m):
-          kind, arg, extra = m.group(1), m.group(2), m.group(3) or ""
-          if kind == "quota":
+          what, arg, extra = m.group(1), m.group(2), m.group(3) or ""
+          if what == "quota":
               return quota_text(arg)
-          if kind == "ketten":
+          if what == "ketten":
               return chains_text(rows, arg)
-          if kind in ("fertig", "arbeit"):
-              return names_text(rows, arg, kind)
+          if what in ("fertig", "arbeit"):
+              return names_text(rows, arg, what)
           return queue_text(rows, arg, extra)
       return re.sub(r"\{\{(queue|quota|ketten|fertig|arbeit):([^:}]+)(?::([^}]+))?\}\}", sub, md)
   ```
@@ -161,7 +160,8 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
 - Die PR-Abfrage des Renderers muss alle PRs seit Laufbeginn umfassen (`gh pr list --limit` größer als die Zahl der
   PRs seit Start, Zählprobe `gh pr list --state all --limit 500 --json createdAt` gegen `pr_seit`). Grund: Mit zu
   kleinem Limit fallen die ältesten PRs still heraus, und früh fertige Spuren springen auf „in Arbeit“ zurück, weil
-  ihnen die gemergten PRs fehlen.
+  ihnen die gemergten PRs fehlen. Das gilt auch mit Branch-Filter: er greift erst nach dem Abruf, in einem Repo mit
+  vielen fremden PRs muss das Limit also die PRs aller Läufe abdecken.
 - Zeitrahmen und Sperrzeitpunkte nur aus Messwerten schreiben (references/kontingent.md §9). Laufen die Teile einer
   Gruppe nacheinander, endet die Queue frühestens nach max(längste Restkette × Minuten je Teil, alle offenen Teile ×
   Minuten je Teil ÷ Plätze); Minuten je Teil getrennt je Modell aus den letzten Abschlüssen. Die längsten Restketten
@@ -193,14 +193,21 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
 
 ## Lagefrage des Nutzers („hängt etwas? geht es voran?“)
 1. In einem parallelen Block lesen: Pane-Status aller Spuren (`herdr pane list`), die letzten Journalzeilen je Spur,
-   Queue-Zeilen außer fertig/offen, letzter Commit je Spur-Branch, Worker-Aktivität (Alter der
-   `/tmp/acp-delegate/<runId>.activity`, `ERGEBNIS`-Zeile in `.out`), Ende von Watchdog- und Aufsicht-Log,
-   Tor-Skripte (`-v`-Varianten für RAM und Kontingent).
+   Queue-Zeilen außer fertig/offen, letzter Commit je Spur-Branch, Worker-Aktivität (bei `subagent`-Läufen
+   `status.json` und Änderungszeit der `events.jsonl` im Lauf-Ordner des Kindes, bei älteren Läufen Alter der
+   `<runId>.activity` und `ERGEBNIS`-Zeile in `.out`), Ende von Watchdog- und Aufsicht-Log, Tor-Skripte
+   (`-v`-Varianten für RAM und Kontingent).
 2. Urteilen: Eine idle Spur ohne Worker hängt nicht, wenn ihre letzte Journalzeile einen Wartegrund nennt (Tor NEIN,
    Pause bis …) und ein Weck-Task läuft. Sie hängt erst, wenn alle Tore frei sind und nach ihrem nächsten
    Weckzeitpunkt keine neue Aktion kommt. Steht der Weckzeitpunkt kurz bevor, abwarten und erneut lesen (Wartebefehl
    mit Tool-Parameter `timeout`, das bash-Tool bricht sonst nach 60 s ab). Grund: Ein Anstoß während eines geplanten
    Wartens unterbricht nur, und ein voreiliges „hängt“ beunruhigt den Nutzer grundlos.
+   Meldet die Laufzeitumgebung bei einem Worker „keine Aktivität seit N s“ oder „Befehl seit N s offen“, vor jedem
+   Anstoß zwei Dinge lesen: die Prozessliste (läuft sein Befehl, oder wartet er hinter einer Bau-Sperre auf andere
+   schwere Läufe?) und den Zeitstempel seines Lauf-Logs bzw. seiner `events.jsonl`. Wächst eines davon oder steht er
+   in einer Warteschlange, ist es kein Hänger. Grund: Ein Worker, der länger am Stück denkt oder auf die Sperre
+   wartet, meldet nichts; ein Anstoß bricht dann nur einen gesunden Lauf ab. Die Schwelle der Statusseite ist
+   deshalb bei laufendem Befehl hoch (`LONG_TOOL_MIN`), ohne Befehl niedrig (`STILL_MIN`).
 3. Antworten: erster Satz das Urteil, dann „Was gerade passiert“ (letzte Abschlüsse, neu gestartete Worker, kurze
    Pausen mit Grund), „Fortschritt“ (n von m, Tempo je Stunde, grobe Restzeit, was danach automatisch folgt), „Was
    bremst“ (Tor mit Zahlen und Freigabezeit), „Überwachung“ (welche Wächter laufen). Hat eine neue Ablesung eine
@@ -214,6 +221,9 @@ Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fert
 - Änderungen in `.new`-Kopien schreiben und den Renderer erst gegen eine Kopie des Statusordners laufen lassen
   (`STATUS_DIR=<tmp-kopie>`, Test-Übersicht mit gültigem, gefiltertem, unbekanntem und kaputtem Platzhalter), dann per
   `mv` einsetzen. Grund: Der Timer liest sonst halbe Skripte oder überschreibt die Live-Seite mit Testinhalt.
+- Die Kopie der Vorlage muss den Lint des Schreib-Werkzeugs bestehen, sonst wird sie nicht geschrieben: keine festen
+  `/tmp`-Pfade als Standardwert (Ordner nur über env, Rückfall `/nonexistent`), kein ungeschütztes `json.loads` auf
+  Modulebene (über `_json_env`), mehrere Präfixe in einem `startswith((…))`.
 - Wrapper einmal per Hand laufen lassen; das HTML mit `html.parser` auf unbalancierte Tags prüfen (Start-/End-Tag-
   Stapel, void-Elemente wie `meta`, `br` ausnehmen).
 - Schlüsselstrings prüfen: „Gesamtplan: n von m“, Queue-Summen je Gruppe, Ressourcenzeile mit Tor-Ausgaben, eine
