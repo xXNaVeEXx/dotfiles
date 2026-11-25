@@ -89,7 +89,9 @@ Worktree und zweiter kleiner Einbau; abhängige Pakete starten erst nach dem Erg
 (3) Schon eingebaute Pakete nachprüfen, aber gebündelt nach Bereich auf dem Stand des Integrationszweigs statt je Paket: je Bündel ein Lauf
 mit dem starken Modell, Auftrag „Sicherheit und echte Fehler, nicht Stil“, Paketliste und Pfade im Auftrag. Reihenfolge nach Risiko
 (Anmeldung, Signaturen, Geheimnisse, Netz- und Dateizugriff zuerst). Schwere Funde sofort als Fix mit eigenem Commit, mittlere je Bündel sammeln.
-Die Bündel laufen in freien Plätzen bzw. dann, wenn die Spur sonst auf Abhängigkeiten wartet; die Spur meldet erst fertig, wenn alle geprüft sind.
+Die Bündel bekommen eine feste Reihenfolge (erstes Bündel im nächsten frei werdenden Platz vor dem nächsten neuen Paket, danach im Wechsel mit
+je einem Paket; siehe `nachpruefung-einplanen.md`), nie „in freien Plätzen“, weil die Spur jeden freien Platz sofort mit einem neuen Paket
+füllt; die Spur meldet erst fertig, wenn alle geprüft sind.
 Entscheidung in ENTSCHEIDUNGEN; dem Nutzer offen sagen, seit wann der Schritt fehlte, wie viele Pakete betroffen sind, dass der Leitstand es
 erst jetzt bemerkt hat, und was die Nachprüfung zusätzlich an Kontingent kostet (Hochrechnung und angebotene Grenze nachziehen).
 Grund: Die Abnahme prüft Form und Pfade, Tests prüfen nur, was der Worker selbst bedacht hat; die Fehlerquote der geprüften Spur zeigt, wie
