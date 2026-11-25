@@ -1,4 +1,4 @@
-Environment: Pi coding agent; default provider zai-coding-cn (glm-5.3). Extensions laden via jiti aus ~/.pi/agent/extensions/*.ts; 'typebox'-Imports werden vom Pi-Loader aliased.
+Environment: Pi coding agent; default provider zai-coding-cn. Extensions laden via jiti aus ~/.pi/agent/extensions/*.ts; 'typebox'-Imports werden vom Pi-Loader aliased.
 §
 Self-improvement stack lives in hermes-mind: extension ~/.pi/agent/extensions/hermes-mind.ts; MEMORY.md + USER.md in ~/.pi/agent/hermes-mind (§-getrennt, Snapshot je Session eingefroren); skill_manage über ~/.pi/agent/skills (patch nur SKILL.md, references/* nur per write_file als ganze Datei); session_search (FTS5, hermes-mind/sessions.db); Review-Turns = Custom-Message 'hermes-review'.
 §
@@ -10,6 +10,6 @@ Extension error-hub (~/.pi/agent/extensions/error-hub.ts): F/W/I-Ringpuffer (30)
 §
 Artefakt-Extension (~/.pi/agent/extensions/artifacts/, selbstgebaut): Auto-Diff-Artefakte + 💬-Notes, Viewer /artifact N mit Typ-Renderern. Wartung: Skill pi-artifacts-viewer; Paketübersicht via Skill pi-pkg-report.
 §
-bigpowers-Patch: omp-hooks.ts:162 stdio:["ignore","pipe","ignore"] setzen, sonst git-stderr-Echo im TUI; nach npm-Update neu setzen (Skill pi-extension-dev §8).
+bigpowers-Patch: extensions/omp-hooks.ts (Zeile wandert je Version, aktuell :357) stdio:["ignore","pipe","ignore"] setzen, sonst git-stderr-Echo im TUI; nach bigpowers-Update neu setzen (Skill pi-extension-dev §8).
 §
 Pi-Verteilung: nix-conf myHome.pi (Flake earendil-works/pi/stable; pi-sync-Timer; dotfiles pi/-Subtree: settings/skills/extensions, ohne node_modules/hermes-mind; auth.json nicht gesynct → 1× /login je Machine). Maschinen: macOS-MBP, maga (Arch), omarchy (Asahi-MBP, ssh root@192.168.178.91, sudo-PW 1234), cachydeck = Steuer-Host mit hermes-mind-MASTER (sessions.db NUR dort; Memory/DB-Migrationen von dort ziehen).

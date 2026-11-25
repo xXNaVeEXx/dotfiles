@@ -1,7 +1,7 @@
 {
   "lastChangelogVersion": "1.5.2",
   "defaultProvider": "zai-coding-cn",
-  "defaultModel": "glm-5.3",
+  "defaultModel": "glm-5.4",
   "hideThinkingBlock": true,
   "packages": [
     "npm:pi-mcp-adapter",

@@ -23,6 +23,14 @@
 Status-Wörter der Queue: `gemergt` → gemergt · `committet`/`fertig` → fertig · `fehler` → Fehler ·
 `Abnahme`/`Prüf…`/`integrieren` → Abnahme · `läuft`/`wartet`/`nacharbeit`/`resume` → in Arbeit · sonst offen.
 
+Der Renderer sucht diese Wörter als Teilwort in der GANZEN Statuszelle, in der Reihenfolge oben. Die Zelle deshalb
+mit dem Status-Wort beginnen und den Freitext dahinter ohne andere Status-Wörter schreiben: bei einer offenen Zeile
+kein „startet, sobald … fertig ist“, kein „Prüfer“, kein „wartet auf …“ (stattdessen z. B. „offen – startet nach
+dem zweiten Gesamtbericht“). Nach jeder Änderung einer Statuszelle die Summenzeile der Queue lesen („n von m fertig,
+k offen“) und gegen die eigene Zählung halten. Grund: Eine offene Zeile mit „fertig“ im Freitext zählt still als
+fertig, eine mit „Prüfer“ als Abnahme – die Seite meldet dann „alles fertig“, obwohl ein Paket noch gar nicht
+gestartet ist.
+
 Vor dem Einrichten die env an den Lauf anpassen und nicht die Standardwerte übernehmen: `STATUS_BASE` = Ziel-Branch
 der PRs, `STATUS_PR_HEAD_RE` = Branch-Präfix des Laufs, `STATUS_SUBAGENT_DIR` bzw. `STATUS_ACP_DIR` = der Ordner, in
 dem die Worker dieses Laufs wirklich ihren Zustand schreiben. Grund: Mit falschem Vergleichs-Branch zählt die Seite
@@ -65,13 +73,17 @@ still leer.
   Renderer im Abzeichen aus und zeigt sie gekürzt in der Live-Spalte.
 - Bei jedem Abschluss eines Planschritts (z. B. `plannotator_mark_done`) auch das `[x]` in der Steps-Checkliste des
   Plans setzen, `[~]` für teilweise – der Zähler „Gesamtplan“ liest nur die Datei.
+- Kommt nach einer Prüfung ein Nacharbeits-Paket dazu, es im selben Zug an drei Stellen eintragen: neue Queue-Zeile
+  (Status „offen“), neuer Schritt in der Steps-Checkliste und der Engpass-Satz der Übersicht. Grund: Sonst springt
+  „n von m“ beim Start der Nacharbeit rückwärts oder die Seite zeigt „Bau fertig“, während noch ein Paket aussteht.
 - Zahlen und Paketlisten im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei
   jedem Lauf füllt. In der Vorlage eingebaut:
   - `{{queue:<Sektion>}}` bzw. `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, …
     offen“ aus derselben Queue wie die Tabelle.
   - `{{fertig:<Sektion>}}` / `{{arbeit:<Sektion>}}` → die Titel der fertigen (fertig/gemergt) bzw. laufenden Pakete
     (in Arbeit, Abnahme, Fehler), ohne ID, „keine“ bei leerer Auswahl. Damit nennt der Text immer die richtigen
-    Pakete, in Worten statt Kürzeln.
+    Pakete, in Worten statt Kürzeln. Wechselt die Phase (z. B. vom Bau zur Prüfung), den Platzhalter „Gerade in
+    Arbeit“ auf die neue Sektion umstellen, sonst steht dort „keine“.
 
   Nur bei Läufen mit Kontingent-Toren bzw. langen Teilketten nachzurüsten (Code unten):
   - `{{quota:<Name>}}` → „<Name> W % der Woche, 5-Stunden-Fenster K %“, bei Sperre mit „(neue Läufe gesperrt bis …)“,
@@ -216,6 +228,14 @@ still leer.
   Tags auslesen (`re.sub` über Script/Style und Tags, Zeilen ausgeben) und gegen den tatsächlichen Stand halten
   (offene PRs, letzte Merges, offene Nutzer-Aufgaben, Änderungszeit der Quelldateien per `ls -la`). Veraltetes
   sofort korrigieren, neu erzeugen, prüfen und dann in einer Tabelle „vorher → jetzt“ antworten.
+- Meldet sich der Nutzer nach einer Pause („mach weiter, was war der Stand“), zuerst die Wirklichkeit lesen, bevor
+  irgendetwas gestartet wird: Ausgabe der zuletzt gestarteten Hintergrundläufe (deren Benachrichtigung kann während
+  der Pause eingegangen sein, ohne dass ein Zug folgte), `git status`/HEAD des Worktrees, ob der Ziel-Branch
+  inzwischen weiter ist (`git fetch` + `git rev-list --count HEAD..origin/<ziel>`), welche Worker-Prozesse wirklich
+  zu diesem Lauf gehören (cwd aus `/proc/<pid>/cwd`, fremde Läufe anderer Projekte nicht mitzählen). Dann die
+  wartenden nächsten Schritte sofort starten, die Seite nachziehen und offen sagen, seit wann nichts geschah. Grund:
+  Eine Sitzung, die auf eine Benachrichtigung wartete, steht nach einer Pause still; die Seite zeigt dann noch
+  „läuft“, obwohl das Paket längst geliefert hat.
 
 ## Prüfen nach Änderungen am Renderer oder Wrapper
 - Änderungen in `.new`-Kopien schreiben und den Renderer erst gegen eine Kopie des Statusordners laufen lassen
