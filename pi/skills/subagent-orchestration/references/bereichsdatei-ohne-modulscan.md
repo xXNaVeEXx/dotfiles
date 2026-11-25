@@ -14,6 +14,10 @@ Ohne `pub mod <gruppe>;` und Dispatch-Zeile sind Code und Tests des Pakets tot; 
 
 Grund: Parallel konfligieren alle Pakete in denselben Zeilen der Bereichsdatei, und ohne Anschluss prüft kein Test den Code.
 
+Gleiches Muster bei der Flutter-Handy-App: Das Gruppenregister (`apps/lumi/lib/claw/<bereich>/<gruppe>/register.dart`, anfangs `void register(ClawRoutes r) {}`)
+gehört keinem Paket exklusiv. Fragt der Worker nach der Anmeldung seiner Handy-Ansicht, additiv freigeben (import + `r.gruppe/r.texte/r.seite`, eigener Commit,
+Präzedenz-Gruppe nennen) und in `.pfade` eintragen — besser schon beim Start, wenn der Brief eine Handy-Ansicht verlangt.
+
 ## Szenario-Datei des Briefs fehlt in der Pfadliste
 Nennt der Brief ein E2E-Szenario (`tests/…/E2E-*.toml`) oder eine andere Datei außerhalb der Paket-Ordner, kennt `abnahme` sie nur, wenn sie in der
 Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“ erst nach der Arbeit des Workers.
