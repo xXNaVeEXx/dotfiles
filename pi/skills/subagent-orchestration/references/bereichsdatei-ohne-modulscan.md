@@ -14,6 +14,10 @@ Ohne `pub mod <gruppe>;` und Dispatch-Zeile sind Code und Tests des Pakets tot; 
 
 Grund: Parallel konfligieren alle Pakete in denselben Zeilen der Bereichsdatei, und ohne Anschluss prüft kein Test den Code.
 
+Ist NUR die Bereichsdatei der CLI freigegeben (keine eigene Gruppen-Ordner-Freigabe unter der CLI), gehört die Befehlslogik als Funktion in das
+Modul des Pakets in der Kern-Crate; die CLI-Variante ruft nur diese Funktion. Legt der Worker CLI-Dateien unter dem Gruppenordner an, meldet `abnahme`
+„Dateien außerhalb der eigenen Pfade“ — dann Logik verschieben statt Pfade nachzufreigeben. Diese Zeile schon in den Start-Task schreiben.
+
 Gleiches Muster bei der Flutter-Handy-App: Das Gruppenregister (`apps/lumi/lib/claw/<bereich>/<gruppe>/register.dart`, anfangs `void register(ClawRoutes r) {}`)
 gehört keinem Paket exklusiv. Fragt der Worker nach der Anmeldung seiner Handy-Ansicht, additiv freigeben (import + `r.gruppe/r.texte/r.seite`, eigener Commit,
 Präzedenz-Gruppe nennen) und in `.pfade` eintragen — besser schon beim Start, wenn der Brief eine Handy-Ansicht verlangt.
@@ -30,8 +34,9 @@ Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“
   desselben Briefs nennt dagegen einen paketbenannten Dateinamen (`LC-WP-…toml`) – der ist für den Filter falsch, die ID aus dem Abschnitt gewinnt
   (sie stammt oft aus einem anderen Nummernkreis als das Paket). Den Dateinamen `E2E-<ID>.toml` in `.pfade` UND wörtlich in den Worker-Start-Task schreiben.
 - Nennen ZWEI Pakete dieselbe E2E-ID (z. B. Geschwister teilen sich ein Szenario): dem Folgepaket eine EIGENE Datei mit Suffix geben (`E2E-<ID>-<thema>.toml`) – sie trifft den Filter weiter, kollidiert aber nicht mit der Datei des Geschwisters (kein Merge-Konflikt, kein Überschreiben). In `.pfade`, ENTSCHEIDUNGEN und Worker-Task nennen und dem Worker verbieten, die Geschwister-Datei anzufassen.
+- Deckt ein Szenario mehrere Pakete ab (z. B. Datei-Speichern, PDF, Wiki-Notiz in einer E2E-ID), prüft der Worker nur den eigenen Teil offline; die Teile der Geschwister stehen im TOML-Kopf und im Bericht als „gehört anderem Paket“ — ehrliches Teilszenario statt Runner-Änderung.
 - Ändert das Paket ein Handbuch-Fragment (`docs/manual/claw/**/<WP>.json`), scheitern die UI-Tests `generator-drift`/`handbuch`, bis `handbuch.html`
-  per `node tools/manual-gen.mjs` neu erzeugt ist: `docs/manual/handbuch.html` von Anfang an freigeben (nur Generator-Ausgabe, eigener Commit).
+  per `node tools/manual-gen.mjs` neu erzeugt ist: `docs/manual/handbuch.html` von Anfang an freigeben (nur Generator-Ausgabe, eigener Commit). Verlangt der Brief ausdrücklich kein Handbuch, `handbuch.html` NICHT freigeben.
 - Eine `.pfade`-Freigabe VOR dem `integ`-Start in eigenem Tool-Block anlegen; im selben Block gestartet verliert `integ` den Wettlauf (MANGEL Pfad).
 Grund: Die Pfadliste ist die einzige Quelle der Abnahme; jede Lücke kostet eine Rückfrage-Runde samt Wartezeit des Workers.
 
@@ -70,3 +75,4 @@ Auf dem Remote-Rechner laufen schon die Prüfläufe anderer Spuren: den Endlauf 
 - Endlauf rot NUR in einem Schritt mit `RB_EXIT=255` und „server … not responding“ (andere Schritte grün) = Remote-Ausfall, kein Paketfehler: `touch build.rs`, `integ` einfach neu starten (`rb.sh` nimmt dann den Ersatzrechner). Kein Brief, kein Worker.
 - Endet das integ-Log nach wenigen Sekunden mit „ABGEBROCHEN (Signal/Exit 143)“ und `QUEUE` steht auf „fehler integ abgebrochen“, hat ein Signal die Prozessgruppe des `bg_run`-Tasks getötet; der Herzschlag wartet dann auf nichts. Prüfen: `pgrep -af "wpq.py integ"` leer, Log lesen, `git status` im Paket-Worktree sauber. Neu starten ABGEKOPPELT: `setsid nohup bash -c "python3 $C/wpq.py integ <WP>; echo INTEG_EXIT=\$?" > $C/spuren/<SPUR>/integ-<wp>.out 2>&1 < /dev/null & disown`, Ausgabe später per `tail` lesen. Dieselbe Form für lange Endläufe nutzen. Grund: abgekoppelte Prozesse überleben Werkzeug-/Sitzungszeitlimits und Neustarts der Tool-Gruppe.
 - Nach jedem Task-Ende (Notification) trotzdem `wpq.py stand` lesen und nicht nur „completed“ glauben: Exit 0 des bg_run kann ein abgebrochenes integ verdecken (`echo INTEG_EXIT=$?` steht dahinter).
+- Läuft `integ` lange, weil `feat` zwischendurch weiterwandert („inzwischen weiter – nächste Runde“, Runde 2/3 mit vollem Endlauf), ist das normal: im Log nur die letzte Rundenzeile lesen, keine Eingriffe, Reviews/Starts anderer Pakete weiter nach Lauf-Register und RAM entscheiden.
