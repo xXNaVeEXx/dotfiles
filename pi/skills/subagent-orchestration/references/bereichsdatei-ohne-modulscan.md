@@ -22,8 +22,9 @@ Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“
   dem Geschwister und passen nicht zum neuen Brief. Fehlt dem Folgepaket ein Szenario, fragt der Worker zurück.
 - Rückfrage wegen fehlender Datei: Zeile mit Grund an `.pfade` anhängen, ENTSCHEIDUNGEN + Journal ergänzen, `subagent_supervisor reply` im selben Turn.
 - Der Endlauf `wpq check` ruft das E2E-Skript mit `--filter <E2E-ID>` und findet das Szenario NUR über den Dateinamen: Die Datei muss `E2E-<ID>.toml`
-  heißen (nicht nach dem Paket benannt), sonst bricht der Check mit Exit 2 ab. Die E2E-ID aus dem Brief ableiten, Dateinamen in `.pfade` UND in den
-  Worker-Start-Task schreiben.
+  heißen (nicht nach dem Paket benannt), sonst bricht der Check mit Exit 2 ab. Die E2E-ID steht im Brief-Abschnitt „E2E-Szenarien“; die Pfadliste
+  desselben Briefs nennt dagegen einen paketbenannten Dateinamen (`LC-WP-…toml`) – der ist für den Filter falsch, die ID aus dem Abschnitt gewinnt
+  (sie stammt oft aus einem anderen Nummernkreis als das Paket). Den Dateinamen `E2E-<ID>.toml` in `.pfade` UND wörtlich in den Worker-Start-Task schreiben.
 - Ändert das Paket ein Handbuch-Fragment (`docs/manual/claw/**/<WP>.json`), scheitern die UI-Tests `generator-drift`/`handbuch`, bis `handbuch.html`
   per `node tools/manual-gen.mjs` neu erzeugt ist: `docs/manual/handbuch.html` von Anfang an freigeben (nur Generator-Ausgabe, eigener Commit).
 - Eine `.pfade`-Freigabe VOR dem `integ`-Start in eigenem Tool-Block anlegen; im selben Block gestartet verliert `integ` den Wettlauf (MANGEL Pfad).
