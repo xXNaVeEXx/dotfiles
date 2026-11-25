@@ -50,3 +50,11 @@ nach einem Geschwisterpaket konfligiert deshalb fast sicher. Lösung im Paket-Wo
   Endlauf von `integ`, denn ein lokales `cargo metadata --locked --offline` kann am fehlenden Netz scheitern.
 - `handbuch.html`: Konfliktfassung verwerfen (`git checkout --ours`), `node tools/manual-gen.mjs` und `--check`, dann erst `git add`.
 Grund: Von Hand gemischte Hunks in erzeugten Dateien driften; Lockfile-Zeilen sind dagegen reine Listen und sicher von Hand zu ergänzen.
+
+## Worker bittet um lokalen Lauf eines Werkzeugs, das auf dem Remote-Rechner fehlt (z. B. Flutter)
+- Ablehnen (RAM-Schutz: keine lokalen Builds/Tests), per `subagent_supervisor reply` im selben Turn: Test sauber schreiben und von Hand gegen Nachbartests auf Typ-/Import-Fehler lesen, im Bericht unter „Nicht umgesetzt oder nur teilweise“ „nicht ausgeführt“ vermerken, Status der Ansicht `ersatz` statt `umgesetzt`.
+- ENTSCHEIDUNGEN + Journal ergänzen und den Nachholauf (z. B. `flutter test <pfad>`) als offenen Punkt im Bericht der Spur führen.
+Grund: Ein ungeprüfter Test als „umgesetzt“ meldet Grün für nie gelaufenen Code; ein lokaler Lauf riskiert den OOM-Absturz der Sitzung.
+
+## Endläufe und Integration nacheinander
+Auf dem Remote-Rechner laufen schon die Prüfläufe anderer Spuren: den Endlauf (`wpq check`) eines weiteren Pakets erst starten, wenn der vorige Endlauf/`integ` der eigenen Spur beendet ist (`pgrep -af "wpq.py (check|integ)"`); Status solange „prüfen: … endlauf folgt“. Grund: Zwei parallele Remote-Läufe erzeugen Last-Flakes und doppelte Wartezeit statt Durchsatz.
