@@ -1,10 +1,12 @@
 # glm-Worker einsetzen und Endlauf-Rot durch fremden Test selbst beheben
 
 ## glm-Worker (wenn der Plan ein günstigeres Modell neben Claude erlaubt)
-- `wpq.py next` nennt das Modell; Start per `subagent` mit `model: "zai-coding-cn/glm-5.3"`. Die Grenze „2 Claude-Läufe global“ gilt nur für Claude; glm läuft zusätzlich, solange `ram-ok.sh` JA sagt und die Spur ≤ 2 Worker hat.
-- Der Auftragstext (wp/<WP>.md) nennt noch „Dein Modell: sonnet“ → im Start-Task ausdrücklich überschreiben. Pflichtregeln (Hotspots, Netz-Tor, Decision::Ask, Fremdtext-Reihenfolge, Commit ≤72, Status-YAML, nur remote.sh) wörtlich in den Task schreiben; ein anderes Modell kennt sie nicht.
-- Jedes glm-gebaute Paket bekommt vor dem Einbau ein Review durch Claude (auch unter 500 Zeilen). Status: `läuft <runId> glm`.
+- `wpq.py next` nennt das Modell; Start per `subagent` mit `model: "zai-coding-cn/<glm-Modell>"`. Die Grenze „2 Claude-Läufe global“ gilt nur für Claude; glm läuft zusätzlich, solange `ram-ok.sh` JA sagt und die Spur ≤ 2 Worker hat.
+- Meldet das subagent-Werkzeug „Unknown subagent model“ (Modellliste der laufenden Sitzung ist älter als die CLI: `pi --list-models | grep glm` zeigt mehr), das zuletzt akzeptierte glm-Modell (listet das Fehlertext als „Closest registry model“) nehmen, nicht blockieren; im Journal vermerken.
+- Der Auftragstext (wp/<WP>.md) nennt noch „Dein Modell: sonnet“ → im Start-Task ausdrücklich überschreiben. Pflichtregeln (Hotspots, Netz-Tor, Decision::Ask, Fremdtext-Reihenfolge, Commit ≤72, Status-YAML, nur remote.sh, kein `wpq.py check`) wörtlich in den Task schreiben; ein anderes Modell kennt sie nicht.
+- Jedes glm-gebaute Paket (auch Nacharbeit) bekommt vor dem Einbau ein Review durch Claude (auch unter 500 Zeilen; bei Nacharbeit nur den Nacharbeit-Diff). P0-Nacharbeiten bleiben bei Claude. Status: `läuft|nacharbeit <runId> glm`.
 - Claude-Plätze zuerst für wartende Reviews/Nacharbeiten, glm baut daneben das nächste Paket. Vor jedem Start `ram-ok.sh` neu prüfen (Builds drücken avail unter 5 GB); bei NEIN den Herzschlag kurz (`--max 600`) statt 3600 laufen lassen, solange Reviews warten.
+- Fragt ein Worker per Supervisor-Anfrage nach einer Hotspot-Änderung (net_huelle.rs, Cargo.toml/lock), nie freigeben: zuerst im Hotspot nachlesen, ob die Hülle den Fall schon deckt (Test dafür verlangen), sonst ehrlich als „bewusst offen“/ersatz im Bericht ausweisen; Antwort per `subagent_supervisor reply`.
 
 ## Endlauf rot durch einen Test aus fremdem, schon integriertem Paket
 1. `grep -n 'FAIL\|panicked' <logs>/wpq-<wp>-nextest.log` → Test + Datei:Zeile; liegt er nicht im eigenen Diff, Ursache im Code suchen statt Rerun.
