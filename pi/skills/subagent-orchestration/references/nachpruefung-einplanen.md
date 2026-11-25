@@ -26,6 +26,16 @@ rutscht ans Ende der Welle. Dort sind ihre Funde am teuersten, weil alle später
 7. Die Zusatzläufe in die Kontingent-Hochrechnung aufnehmen (jeder Teil zählt wie ein Paket, Fix-Läufe dazu) und dem Nutzer die
    geänderte Schätzung ausdrücklich nennen (`kontingent-hochrechnung.md`).
 
+## Review-/Einbau-Stau (gebaut, aber nicht eingebaut)
+- Als Spur den Stau selbst begrenzen, bevor der Leitstand eingreifen muss: Warten mehr als 2 Pakete auf Review oder Einbau (Endlauf/integ), startet
+  die Spur KEIN neues Bau-Paket; frei werdende Plätze gehen der Reihe nach an Reviews (ältestes fertiges Paket zuerst, immer anderes
+  Modell als der Erbauer), dann an Nacharbeit, erst dann an neue Pakete. Grund: Jedes ungeprüfte Paket baut Folgepakete auf unbewiesenem
+  Stand, und das Wochenkontingent wird für Gebautes ausgegeben, das noch nicht in der Integrationslinie liegt.
+- Einbau strikt nacheinander in der Reihenfolge der Abhängigkeiten (Endlauf und integ nie parallel; erst nach integ des Vorgängers der
+  nächste Endlauf). Konflikte in gemeinsamen Hotspot-Dateien (Werkzeug-Register, erzeugtes Handbuch) beide Seiten behalten bzw. neu erzeugen.
+- Steht im Auftrag eine feste Review-Reihenfolge, per Journalzeile quittieren und bei jedem Wecken die Liste „wartet auf Review / Endlauf /
+  integ“ aus dem Stand nachziehen.
+
 ## Hinweise
 - Der erste Teil einer Nachprüfung zeigt die Fehlerquote: Findet er schwere Mängel, die übrigen Teile nicht strecken, sondern
   vorziehen, und dem Nutzer die Quote nennen.
