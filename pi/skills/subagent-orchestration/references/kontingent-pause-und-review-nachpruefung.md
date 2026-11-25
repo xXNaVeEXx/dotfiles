@@ -15,7 +15,8 @@
 
 ## Review-Modell ist immer das ANDERE Modell
 - Worker opus → Reviewer sonnet; Worker sonnet → Reviewer opus. Das gilt auch für Nachprüfung bereits eingebauter Pakete:
-  Bündel nach Bau-Modell trennen (opus-gebaute Pakete mit sonnet prüfen, sonnet-gebaute mit opus), nicht ein Modell für alles.
+  Bündel nach Bau-Modell trennen (opus-gebaute Pakete mit sonnet prüfen, sonnet-gebaute mit opus), nicht ein Modell für alles;
+  gemischte Bündel (z. B. Slack-Pakete mit einzelnen opus-Bauten) als zwei Reviewer-Läufe (b-opus / b-sonnet) schneiden.
   Journal-Zeile nennt das Review-Modell konkret, nie „opus/opus“.
 - Reviewer-Subagenten haben kein Schreibwerkzeug und keinen git-Zugriff: Auftrag „nur lesen, keine Tests“, Antwort als Markdown
   mit fester Kopfzeile und Schlusszeile `BEFUND: <n> P1, <m> P2`; Ergebnis mit einem Python-Lauf über `events.jsonl` des
@@ -24,12 +25,21 @@
   Endmeldung des Reviewers ist Lernpass-Rauschen; im Auftrag „KEIN Lernpass, nichts speichern“ voranstellen.
 - Reviewer-Auftrag mit Prüfraster aus den früheren REVIEW-Dateien (Pfade nennen) + paketspezifischen Hotspots, Diff-Basis
   (`git diff <letzter Integrationscommit> HEAD`) und Pfadliste; bei bereits integrierten Paketen Integrationscommit-Hashes
-  je Paket angeben (`git log --grep 'integrate LC-WP-…'`). Das spart dem Reviewer die Suche.
+  je Paket angeben (`git log --grep 'integrate LC-WP-…'`). Das spart dem Reviewer die Suche. Bei Bündeln (viele Pakete) den
+  Auftrag als Datei `nacharbeit/NACHPRUEF-<bündel>-auftrag.md` ablegen (Pfade, Schwerpunkte, Erbauer-Modell je Paket) und dem
+  Reviewer nur „lies den Auftrag + ein Stil-Vorbild“ geben; so bleibt der Subagent-Task kurz und der Auftrag wiederverwendbar.
+- Bündel-Reviewer-Zelle: Hat ein Nachprüf-Bündel kein eigenes Queue-Paket, den Lauf in der Zelle eines enthaltenen, bereits
+  fertigen Pakets als `nacharbeit review läuft <runId> <modell>` führen (zählt als Claude-Platz) und nach dem Review die Zelle
+  zurück auf `fertig` setzen; sonst sieht der Platzzähler den Lauf nicht.
 - Platz-Reihenfolge: ein Reviewer zählt als Claude-Worker. Wird nach Abnahme eines Pakets der Platz frei, geht er an die vom
-  Leitstand priorisierte Prüfung (Nachprüf-Bündel) vor dem nächsten Bau-Paket; Fairness-Platz-Meldungen der Schwesterspur
+  Leitstand priorisierte Prüfung (Nachprüf-Bündel) vor dem nächsten Bau-Paket – auch wenn `next` ein Bau-Paket vorschlägt: die
+  ausdrückliche L0-Reihenfolge („im Wechsel Bau-Paket / Bündel“) schlägt die Empfehlung von `next`; vorher die Journalzeile mit der
+  Reihenfolge als Quittung schreiben. Fairness-Platz-Meldungen der Schwesterspur
   heißen „jetzt `next` ausführen und starten“, ggf. mit `.pfade` als Kopie eines Geschwister-Pakets derselben Crate.
   Ist kein Platz frei, Brief/Worktree/`.pfade` trotzdem sofort fertigmachen und in der Journalzeile „startet beim nächsten
   freien Platz“ vermerken – dann kostet der Start später nur noch einen Aufruf.
+- Rust-Schlüsselwörter als Modulordner (`loop`, `type`, …): der Modul-Scan erzeugt `r#loop`; das kompiliert ohne Eingriff, auch im
+  Testkit – dem Worker im Brief mitgeben, nur bei Fehlern per Supervisor melden.
 
 ## Nacharbeit nach Review (P1 → Worker im selben Worktree)
 - Brief `nacharbeit/<WP>-nacharbeit.md`: P1 mit Pflicht-Regressionstest (vorher rot, Rot-Log nach `.tmp/` des Worktrees),
@@ -56,3 +66,11 @@
   Agenten-Werkzeuge (edit/delete/react/search) ohne Bindung an die eigene Konversation, Dedup-Schlüssel ohne Absender/Ziel,
   Namens→ID-Auflösung bei Mehrdeutigkeit fail-open statt fail-closed, Webhook-Prüfung (Signatur/Token) die ohne konfiguriertes
   Geheimnis `true` liefert, Prozess-Signale an eine gespeicherte PID ohne Identitätsprüfung.
+- Weitere wiederkehrende Funde (auch P2, die Bausteine vor dem Verdrahten treffen): Zähler-/Bremsen-Logik mit leerer oder
+  fehlender Ereignis-ID (jede Nachricht muss zählen), Normalisierung (trim + ASCII-Kleinschreibung) für Schlüssel von Paaren/
+  Allowlists, Bereinigung mit dem Fenster des Aufrufers statt des eigenen Fensters, Verlaufszeilen mit fremdem Text ohne
+  Einrücken von Zeilenumbrüchen (Fälschung menschlicher Zeilen), `#[derive(Debug)]` auf Typen mit Token/Geheimnis, Polling-Position
+  rückt trotz fehlgeschlagenem Speichern vor (Update verloren), Giftnachricht ohne Versuchszähler/Dead-Letter blockiert die
+  Queue, Befehle (z. B. `/pair`) vor der DM-Policy-Prüfung ausgeführt, `retry_after`/Wartezeit ungeprüft (Überlauf, Budget),
+  `secret:`-Verweise der Konfiguration von einzelnen Kanälen nie aufgelöst, atomares Schreiben (tmp + rename) setzt Dateirechte
+  auf 0644 zurück (tmp mit Modus 0600 anlegen).
