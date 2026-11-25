@@ -38,10 +38,33 @@ Klasse: Analyse von RAM-/Swap-Verbrauch und sichere Empfehlung, was beendet werd
   1. Zuordnung: `HERDR_PANE_ID` aus `/proc/<pid>/environ` je `pgrep -x pi`, dazu RSS + VmSwap; `PI_ACP_DELEGATE_DEPTH>0` = Worker einer Sitzung, gehört zu deren Pane.
   2. Je Pane `herdr agent get <pane>` (Status, Sitzungsdatei): Stunden seit letzter Änderung der Sitzungs-JSONL und letzte Assistant-Nachricht. Beendbar ist, was fertig berichtet hat und lange still ist; behalten, was auf eine Entscheidung des Nutzers wartet, einen Herzschlag/Worker hat oder von einem aktiven Watchdog-Timer betreut wird (`systemctl --user list-timers` + deren `watchdog.env` mit `PANE=`). Ein Watchdog, der fehlende Panes neu startet, würde die Sitzung sonst wiederbeleben.
   3. Vor dem Schließen Pane, cwd und Sitzungsdatei in eine Liste schreiben (Wiederaufnahme `cd <cwd> && pi --session <datei>`), dann `herdr agent prompt <pane> "/quit"`; eigene Orchestrator-Tabs danach mit `herdr tab close <tab>` schließen, Tabs des Nutzers stehen lassen.
-- `/tmp` ist ein tmpfs und zählt als RAM (Spalte `shared` in `free`): alte `nix-shell.*`-Ordner (`-mmin +90`) und alte Delegate-Logs in `/tmp/acp-delegate` (`-mmin +4320`) löschen, fremde Arbeitsordner stehen lassen.
+- `/tmp` ist ein tmpfs und zählt als RAM; bei Speicherdruck wird sein Inhalt ausgelagert und füllt den Swap, ohne dass ein Prozess ihn zeigt. Ablauf siehe „Swap hoch, aber kein Prozess erklärt es“. Alte Delegate-Logs in `/tmp/acp-delegate` (`-mmin +4320`) löschen, fremde Arbeitsordner stehen lassen.
 - Eigene Hintergrund-Tasks mit `bg_kill <taskId>` oder per PID aus der Task-Datei beenden, nie `pkill -f <skriptname>`: Das Muster trifft die eigene Shell, sobald der Name irgendwo in derselben Befehlszeile steht (auch als Pfad-Argument von sed/grep), und der Klammer-Trick `[x]yz` schützt nur, wenn der Klartext sonst nicht in der Zeile vorkommt. Beim Aufräumen Pi-Prozess UND seinen billion-context-Proxy zusammen killen (eigener Port 1878x; meist PPID-Kind, aber Proxys werden umgehängt oder geteilt → Zuordnung über `ss -tnp` und `BILI_PARENT_PID` in `/proc/<pid>/environ`). Apps, die pi-Pakete laden (Extension-Hosts), starten eigene Proxys — die gehören zur App, nicht zum pi des Nutzers.
 - Sicher killbar: Steam, spectacle, Browser-Tabs, alte Dev-Server — alles, was on-demand neu startet.
 - Swap bleibt nach Kills voller Altlasten (Kernel schreibt nicht zurück): aufräumen per Reboot oder `sudo swapoff -a && sudo swapon -a` (nur bei genug freiem RAM).
+
+## Swap hoch, aber kein Prozess erklärt es (tmpfs als Verursacher)
+
+1. Lücke messen: belegten Swap aus `free -m` gegen die Summe aller Prozesse halten
+   (`awk '/^VmSwap/{s+=$2} END{printf "%d MB", s/1024}' /proc/[0-9]*/status`). Fehlen mehrere GB, liegt der Rest in
+   ausgelagerten tmpfs-Dateien. `Shmem` in `/proc/meminfo` zeigt nur den Teil, der noch im RAM liegt, und wirkt darum
+   harmlos klein.
+2. tmpfs-Belegung: `df -h /tmp /dev/shm /run/user/$(id -u)`, dann `du -xsm /tmp/* | sort -rn | head -20` und nach
+   Namensmuster gruppieren (Anzahl und MB je Muster wie `nix-shell.*`, `pi-*`). Viele kleine Ordner desselben Musters
+   fallen in der Top-Liste nicht auf, summieren sich aber auf GB.
+3. Vor dem Löschen einer Gruppe drei Dinge belegen: Altersverteilung (`find /tmp -maxdepth 1 -name '<muster>' -mmin +1440 | wc -l`),
+   Inhalt (Stichprobe eines großen und eines neuen Ordners; typisch sind Test- und Compile-Caches wie `jest_rt`,
+   `node-compile-cache`) und lebende Verweise: Ordnernamen aus `/proc/[0-9]*/environ` (TMPDIR der laufenden Shells) und
+   aus `ls -l /proc/[0-9]*/cwd` sammeln.
+4. Löschen: nur eigene Ordner (`-user`), älter als ein Tag, nicht in der Liste der lebenden Verweise, und in der
+   Schleife per `case` auf das genaue Namensmuster prüfen, bevor `rm -rf -- "/tmp/$d"` läuft. Die Altersgrenze von einem
+   Tag statt weniger Stunden schützt lange Builds und Testläufe anderer Sitzungen, deren Shell noch offen ist.
+5. Wirkung messen (`df -h /tmp`, `free -m`): Der Swap fällt sofort um die gelöschte Menge, anders als nach dem Beenden
+   von Prozessen.
+6. Dem Nutzer berichten, auch wenn die Aufräumung nur Nebenschritt einer anderen Aufgabe war: was gelöscht wurde (Muster,
+   Anzahl, GB, aus welchen Projekten der Inhalt stammte), was blieb, dass es nicht rückholbar ist, und die Messwerte davor
+   und danach. Bei wiederkehrenden Runden (Orchestrator, Wächter) `df -h /tmp` in die Rundenprüfung aufnehmen, weil sich
+   die Ordner über Tage wieder ansammeln.
 
 ## Akuter Engpass durch laufende Builds/Tests eigener Worker
 
