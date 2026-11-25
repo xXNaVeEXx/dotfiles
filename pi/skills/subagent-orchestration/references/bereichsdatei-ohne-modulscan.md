@@ -25,10 +25,11 @@ Pfadliste steht; sonst meldet es MANGEL „Datei außerhalb der eigenen Pfade“
 - Von einem Geschwisterpaket nur die STEHENDEN Freigaben kopieren (`handbuch.html`, `Cargo.toml` der eigenen Crate); dessen Szenario-Zeilen gehören
   dem Geschwister und passen nicht zum neuen Brief. Fehlt dem Folgepaket ein Szenario, fragt der Worker zurück.
 - Rückfrage wegen fehlender Datei: Zeile mit Grund an `.pfade` anhängen, ENTSCHEIDUNGEN + Journal ergänzen, `subagent_supervisor reply` im selben Turn.
-- Der Endlauf `wpq check` ruft das E2E-Skript mit `--filter <E2E-ID>` und findet das Szenario NUR über den Dateinamen: Die Datei muss `E2E-<ID>.toml`
-  heißen (nicht nach dem Paket benannt), sonst bricht der Check mit Exit 2 ab. Die E2E-ID steht im Brief-Abschnitt „E2E-Szenarien“; die Pfadliste
+- Der Endlauf `wpq check` ruft das E2E-Skript mit `--filter <E2E-ID>` und findet das Szenario NUR über den Dateinamen (Teilstring-Treffer auf ID oder Dateiname): Die Datei muss `E2E-<ID>.toml` heißen
+  (nicht nach dem Paket benannt), sonst bricht der Check mit Exit 2 ab. Die E2E-ID steht im Brief-Abschnitt „E2E-Szenarien“; die Pfadliste
   desselben Briefs nennt dagegen einen paketbenannten Dateinamen (`LC-WP-…toml`) – der ist für den Filter falsch, die ID aus dem Abschnitt gewinnt
   (sie stammt oft aus einem anderen Nummernkreis als das Paket). Den Dateinamen `E2E-<ID>.toml` in `.pfade` UND wörtlich in den Worker-Start-Task schreiben.
+- Nennen ZWEI Pakete dieselbe E2E-ID (z. B. Geschwister teilen sich ein Szenario): dem Folgepaket eine EIGENE Datei mit Suffix geben (`E2E-<ID>-<thema>.toml`) – sie trifft den Filter weiter, kollidiert aber nicht mit der Datei des Geschwisters (kein Merge-Konflikt, kein Überschreiben). In `.pfade`, ENTSCHEIDUNGEN und Worker-Task nennen und dem Worker verbieten, die Geschwister-Datei anzufassen.
 - Ändert das Paket ein Handbuch-Fragment (`docs/manual/claw/**/<WP>.json`), scheitern die UI-Tests `generator-drift`/`handbuch`, bis `handbuch.html`
   per `node tools/manual-gen.mjs` neu erzeugt ist: `docs/manual/handbuch.html` von Anfang an freigeben (nur Generator-Ausgabe, eigener Commit).
 - Eine `.pfade`-Freigabe VOR dem `integ`-Start in eigenem Tool-Block anlegen; im selben Block gestartet verliert `integ` den Wettlauf (MANGEL Pfad).
@@ -39,6 +40,10 @@ Typisch: Rust und E2E committet, UI/Handbuch uncommittet, Bericht und Status-YAM
 - `git status`, `git log <Basis>..HEAD`, `wpq.py abnahme` lesen; kurzen Abschluss-Brief nach `nacharbeit/<WP>.md` schreiben (was committet ist, was laut `abnahme` fehlt, früh committen) und einen frischen Worker auf demselben Worktree starten; Status währenddessen „läuft <runId> <modell> (Abschluss-Worker)“.
 - In JEDEN Start-Task für große Pakete: „nach 60 min zuerst committen, was da ist; Bericht und Status-YAML vorrangig“. Grund: Das Zeitlimit tötet den Worker ohne Vorwarnung, uncommittete Arbeit ist dann nur durch einen weiteren Lauf zu retten.
 - Reviewer bleibt ein anderes Modell als der Abschluss-Worker (Worker opus → Reviewer sonnet).
+
+### Zeitlimit NACH fertigem Bericht (häufiger Fall)
+Meldet `abnahme` „ABNAHME OK“ und steht die Schlusszeile im Bericht, ist das Paket fertig – kein Abschluss-Worker, sondern normal weiter mit Review. Der Worker verbrachte die Restzeit meist mit einem eigenen `wpq check` (läuft im Hintergrund weiter, wartet z. B. 25 min auf einen belegten Remote-Slot): `pgrep -af "wpq.py check <WP>"` und zugehörige `rb.sh`-Prozesse mit `kill <pid>` beenden (keine `pkill -f`), sonst blockiert er den Remote-Slot der Spur. Testzahl selbst nachzählen (Bericht und Realität weichen oft um 1 ab) und dem Reviewer die Abweichung mitgeben.
+- Worker-Tasks verbieten ausdrücklich „`wpq.py check` selbst starten“ (Prüfung nur über `tools/remote.sh`); der Endlauf gehört der Spur.
 
 ## Merge-Konflikte bei der Integration (Exit 4) in gemeinsam genutzten Dateien
 Pakete derselben Gruppe erweitern dieselbe Crate-`Cargo.toml` (neue Abhängigkeiten) und lassen `handbuch.html` neu erzeugen; der erste Einbau
