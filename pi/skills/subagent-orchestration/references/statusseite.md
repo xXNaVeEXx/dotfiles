@@ -163,6 +163,14 @@ still leer.
   abgeschlossene Phase auf `[x]`, die laufende auf `[~]` mit ihrem Live-Platzhalter, und stimmt der Kopf („Text vom
   …“)? Grund: Bei Phasenwechseln (Gate grün, Merge, neue Spur) bleibt der Text sonst eine Phase zurück, während die
   Live-Zahlen weiterlaufen – die Seite wirkt aktuell und zeigt doch die falsche Phase.
+- Bei jedem Nachziehen die ganze Übersicht von oben nach unten lesen, nicht nur Kopf und Engpass-Satz ersetzen: die
+  Ergebnis-Checkliste („Was am Ende da ist“) gegen die inzwischen gelieferten Pakete halten und die Liste der offenen
+  Punkte für den Nutzer gegen die eigenen Chat-Meldungen. Jeder Punkt, der im Chat als „nicht gebaut“, „nicht
+  gelaufen“, „zum Entscheiden“ oder „musst du wissen“ gemeldet wird, kommt im selben Zug in diese Liste; jeder
+  Vorbehalt, den ein Nacharbeits-Paket erledigt hat, wird im selben Zug abgehakt. Grund: Ein Nachzieh-Skript tauscht
+  nur einzelne Zeilen; die übrigen von Hand geschriebenen Abschnitte bleiben über viele Runden stehen, und die Seite
+  nennt dann einen längst behobenen Sonderfall als offen und verschweigt Entscheidungen, die der Nutzer nur aus dem
+  Chat kennt.
 - Endet die Spur-Phase und arbeitet der Leitstand Folgeaufträge selbst ab (eigene Worker, Releases, Datenarbeiten),
   dafür sofort eine eigene Zeile anlegen: Steuerordner mit `PLAN.md` (eine Paketzeile je Auftrag mit Issue-Nummer und
   PRs, eine Logzeile je Meilenstein) und alle neuen Issue-Nummern in der Konfiguration zuordnen (z. B. `mag_weitere`),
