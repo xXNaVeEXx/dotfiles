@@ -48,13 +48,15 @@ Meldet `abnahme` „ABNAHME OK“ und steht die Schlusszeile im Bericht, ist das
 ## Merge-Konflikte bei der Integration (Exit 4) in gemeinsam genutzten Dateien
 Pakete derselben Gruppe erweitern dieselbe Crate-`Cargo.toml` (neue Abhängigkeiten) und lassen `handbuch.html` neu erzeugen; der erste Einbau
 nach einem Geschwisterpaket konfligiert deshalb fast sicher. Lösung im Paket-Worktree (nicht im Integrationsbaum), dann `git add` +
-`git commit --no-edit` und `integ` erneut:
+`git commit --no-edit`, `touch apps/lumi-desktop/crates/*/build.rs` und `integ` erneut:
 - `Cargo.toml`: BEIDE Seiten behalten (Abhängigkeiten und Kommentarzeilen je Paket), doppelte Schlüssel wie `axum.workspace = true` nur einmal.
 - `Cargo.lock`: kein Konfliktmarker nötig, wenn nur ein Abhängigkeitsblock abweicht; im Block der eigenen Crate die neuen Namen alphabetisch
   ergänzen (`"hmac"`, `"sha2"`); Abgleich gegen die Paket-Seite per `git show <paket-commit>:<pfad>/Cargo.lock`. Die endgültige Prüfung macht der
   Endlauf von `integ`, denn ein lokales `cargo metadata --locked --offline` kann am fehlenden Netz scheitern.
-- `handbuch.html`: Konfliktfassung verwerfen (`git checkout --ours`), `node tools/manual-gen.mjs` und `--check`, dann erst `git add`.
-Grund: Von Hand gemischte Hunks in erzeugten Dateien driften; Lockfile-Zeilen sind dagegen reine Listen und sicher von Hand zu ergänzen.
+- Bereichsdatei (`werkz/mod.rs` o. ä.): beide Seiten sind reine Zusatzzeilen (`pub mod`, Enum-Variante, `match`-Arm) → alle behalten; Marker per
+  `sed -i -e '/^<<<<<<< /d' -e '/^=======$/d' -e '/^>>>>>>> /d' <datei>`, danach Ergebnis lesen (je Gruppe genau ein `mod`, eine Variante, ein Arm).
+- `handbuch.html`: Konfliktfassung verwerfen (`git checkout --ours` bzw. `--theirs`), `node tools/manual-gen.mjs` und `--check`, dann erst `git add`.
+Grund: Von Hand gemischte Hunks in erzeugten Dateien driften; Lockfile-Zeilen und Registerzeilen sind dagegen reine Listen und sicher von Hand zu ergänzen.
 
 ## Worker bittet um lokalen Lauf eines Werkzeugs, das auf dem Remote-Rechner fehlt (z. B. Flutter)
 - Ablehnen (RAM-Schutz: keine lokalen Builds/Tests), per `subagent_supervisor reply` im selben Turn: Test sauber schreiben und von Hand gegen Nachbartests auf Typ-/Import-Fehler lesen, im Bericht unter „Nicht umgesetzt oder nur teilweise“ „nicht ausgeführt“ vermerken, Status der Ansicht `ersatz` statt `umgesetzt`.
@@ -63,3 +65,8 @@ Grund: Ein ungeprüfter Test als „umgesetzt“ meldet Grün für nie gelaufene
 
 ## Endläufe und Integration nacheinander
 Auf dem Remote-Rechner laufen schon die Prüfläufe anderer Spuren: den Endlauf (`wpq check`) eines weiteren Pakets erst starten, wenn der vorige Endlauf/`integ` der eigenen Spur beendet ist (`pgrep -af "wpq.py (check|integ)"`); Status solange „prüfen: … endlauf folgt“. Grund: Zwei parallele Remote-Läufe erzeugen Last-Flakes und doppelte Wartezeit statt Durchsatz.
+
+## `integ`/Endlauf bricht ab: Remote-Fehler vs. SIGTERM
+- Endlauf rot NUR in einem Schritt mit `RB_EXIT=255` und „server … not responding“ (andere Schritte grün) = Remote-Ausfall, kein Paketfehler: `touch build.rs`, `integ` einfach neu starten (`rb.sh` nimmt dann den Ersatzrechner). Kein Brief, kein Worker.
+- Endet das integ-Log nach wenigen Sekunden mit „ABGEBROCHEN (Signal/Exit 143)“ und `QUEUE` steht auf „fehler integ abgebrochen“, hat ein Signal die Prozessgruppe des `bg_run`-Tasks getötet; der Herzschlag wartet dann auf nichts. Prüfen: `pgrep -af "wpq.py integ"` leer, Log lesen, `git status` im Paket-Worktree sauber. Neu starten ABGEKOPPELT: `setsid nohup bash -c "python3 $C/wpq.py integ <WP>; echo INTEG_EXIT=\$?" > $C/spuren/<SPUR>/integ-<wp>.out 2>&1 < /dev/null & disown`, Ausgabe später per `tail` lesen. Dieselbe Form für lange Endläufe nutzen. Grund: abgekoppelte Prozesse überleben Werkzeug-/Sitzungszeitlimits und Neustarts der Tool-Gruppe.
+- Nach jedem Task-Ende (Notification) trotzdem `wpq.py stand` lesen und nicht nur „completed“ glauben: Exit 0 des bg_run kann ein abgebrochenes integ verdecken (`echo INTEG_EXIT=$?` steht dahinter).

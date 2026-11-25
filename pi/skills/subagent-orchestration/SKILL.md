@@ -456,7 +456,7 @@ Klasse: Mehrteilige Implementierung (viele Pakete) autonom abarbeiten, während 
    - Fragt der Nutzer „was ist erledigt, was fehlt genau“: Gesamtplan (Phasen erledigt/jetzt/offen), Restarbeit je
      Phase, Engpass, Zeitrahmen und Ressourcen/Kontingent zeigen, nicht nur die Queue – die Queue kennt nur die
      laufende Phase. `scripts/status-page.py` kann das per env (Steps-Checkliste, Übersichts-Markdown, ID-Gruppen,
-     Tor-Befehle, mehrere Queues und Worktrees); Wrapper-Rezept, Pflege und Prüfung: `references/statusseite.md`.
+     Tor-Befehle, mehrere Queues und Worktrees); Wrapper-Rezept, Pflege: `references/statusseite.md`; je Runde `references/rundenpruefung-stille-fehlanzeigen.md`.
    - Einmal von einem Sub-Agent aus Plan, Commit-Log, Paketberichten und Queue erstellen lassen, mit festem Format:
      `- [x] … — <PKG> <sha>` nur mit Beleg; offene Zeilen mit genau EINEM Marker `<!-- pkg:<PKG> -->`;
      Zählertabelle; Anhang der erledigten Pakete. Alles, was nur im Gespräch steht, gebe ich ihm als Stand-Datei mit.
