@@ -1,7 +1,7 @@
-# Rundenprüfung: vier Anzeigen, die still falsch werden
+# Rundenprüfung: fünf Anzeigen, die still falsch werden
 
 Ergänzt `statusseite.md` (Pflege der Seite) und `kontingent-hochrechnung.md`. Jede Kontrollrunde des Leitstands prüft
-diese vier Punkte, bevor die Meldung an den Nutzer geht. Allen gemeinsam: Die Anzeige wirkt gesund, während der Stand
+diese fünf Punkte, bevor die Meldung an den Nutzer geht. Allen gemeinsam: Die Anzeige wirkt gesund, während der Stand
 dahinter falsch oder stehen geblieben ist. Auch der Auftrag „halte die Statusseite aktuell“ beginnt mit Punkt 1 und 2,
 nicht mit dem Neuerzeugen der Seite.
 
@@ -30,7 +30,8 @@ nicht mit dem Neuerzeugen der Seite.
 3. Erledigte Meldungen in einen eigenen Abschnitt am Dateiende verschieben („Ältere Meldungen“) und Live-Platzhalter
    aus ihnen entfernen. Grund: Ein Platzhalter in einem alten Satz zeigt den heutigen Wert unter einem alten Datum.
 4. Beim Umbau den ganzen Text nach Sätzen mit festem Datum oder fester Zahl durchsehen (Wochenende, Grenzwert, „läuft
-   seit …“, Rechnername, Checklisten-Haken abgeschlossener Phasen) und sie berichtigen oder zeitlos fassen.
+   seit …“, Rechnername, Checklisten-Haken abgeschlossener Phasen) und sie berichtigen oder zeitlos fassen. Ändert der
+   Nutzer einen Grenzwert, die alte Zahl in der ganzen Datei suchen (`grep -n '<alte Zahl> %'`), nicht nur im Kopf.
 5. Dem Nutzer sagen, was live ist (Zahlen, Takt des Timers) und was nur je Runde erneuert wird (der Handtext).
 
 ## 3. Läuft der Einbau wirklich noch?
@@ -60,3 +61,17 @@ auf nichts, und alle davon abhängigen Pakete stehen mit.
    Sitzungsdateien mit Änderung in der letzten Stunde je Projektordner zählen).
 4. Läuft der Leitstand auf einem Modell mit eigener, knapper Grenze: Kontrolltakt nicht verkürzen und den Kontext
    klein halten, statt die Seite öfter von Hand zu erneuern.
+
+## 5. Wartet Arbeit, obwohl ein Platz frei ist?
+
+1. Laufende Worker aus dem Lauf-Register zählen, nicht aus der Queue, und gegen die Obergrenze halten. Ist ein Platz
+   frei und stehen in der Queue Pakete mit „prüfen“, „wartet auf Slot“ oder einer bereiten Nacharbeit, den Grund
+   belegen: das Start-Werkzeug der Spur selbst fragen (`<queue-werkzeug> next <Spur>`). Es nennt das Tor, das sperrt
+   (Kontingent, Arbeitsspeicher, Abhängigkeit).
+2. Sperrt das Speicher-Tor nur, solange ein Build auf demselben Rechner läuft: die Spur anweisen, das Tor in kurzen
+   Abständen (etwa 10 min) neu zu prüfen, solange Prüfungen oder Nacharbeiten warten, und die Reihenfolge der
+   wartenden Arbeit nennen. Grund: Die Spur prüft das Tor einmal und legt sich dann mit ihrem langen Wecker schlafen;
+   der Speicher ist Minuten später wieder frei, der Platz bleibt aber bis zum Wecker leer.
+3. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
+4. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
+   einschalten), statt nur „wartet“ zu melden.
