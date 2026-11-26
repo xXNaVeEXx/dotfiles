@@ -78,7 +78,7 @@ API nicht doppelt schlagen. Refresh via systemd-User-Timer
   Ruht die Session, ist ihr `nextResetTime` ein weit entfernter Anker, und das 5-h-Fenster sieht wie ein Monatsfenster
   aus. Grund: Die API ist undokumentiert, und eine Verwechslung zeigt still falsche Prozente (Panel „Session 0 %“,
   während Anfragen mit 429 Code 1308 scheitern). Kontingent-Tore, die diese Records lesen, nehmen deshalb das Maximum
-  aller Nicht-Wochen-Limits statt eines Labels.
+  aller Nicht-Wochen-Limits statt eines Labels. Das Skript `~/.config/omarchy/bar/scripts/zai-usage` selbst hatte bis 26.11.2026 genau diese Zuordnung vertauscht (`TIME_LIMIT` = session, `unit 3` = monthly) – fünf Wochen lang still falsch (Panel „Session 0 %“, 5-h-Fenster unter Monthly), obwohl dieser Abschnitt die richtige Zuordnung beschrieb: Doku schützt nicht, eine Prüfung schon. Seit der Korrektur ordnet `window_slot` nach Typ + Einheit, `running_reset` verwirft den fernen Anker eines ruhenden Fensters (Termin weiter als Fensterlänge + 30 min), und `zai-usage --selftest` (7 Prüfungen, kein API-Aufruf) meldet die alte Zuordnung mit 4 Fehlern – nach jeder Änderung am Skript laufen lassen. Beleg aus Live-Daten: der unit-3-Eintrag steigt während der Arbeit und sein Reset wandert mit (Fensterbeginn + 5 h), der TIME_LIMIT-Eintrag bleibt bei 0 %.
 - Token-Analyse (Tokens by day / by model, undokumentiert, verifiziert 10/2026):
   `GET https://open.bigmodel.cn/api/monitor/usage/model-usage?startTime=&endTime=` (Format `%Y-%m-%d %H:%M:%S`, ≤7 Tage = hourly; größere Fenster liefern stillschweigend DAILY-Granularität (nutzbar für Langzeit-Historie: 30-Tage-Chunks rückwärts, auch 90/180 d funktionieren, Konto-weit über alle Geräte); `x_time`-Buckets sind Asia/Shanghai +08 → vor Tages-Bucketing in lokale TZ konvertieren). Intl: `https://api.z.ai/api/monitor/usage/model-usage`.
   Response `data`: `x_time[]`, `tokensUsage[]`, `modelCallCount[]` (parallel zu x_time), `modelDataList[]` ({modelName, tokensUsage[], totalTokens — totalTokens überspannt das RAW-Fenster, NICHT die lokalen 7 Tage}), `granularity:"hourly"`. Kein In/Out-Split → alles in `inputTokens` des Records. Beim Einlesen `len(x_time)` gegen die erwartete Stundenzahl prüfen und den Zeitstempel-Parser beide Formate akzeptieren lassen (`%Y-%m-%d %H:%M` UND `%Y-%m-%d`) — die Granularität kann kippen, ohne dass ein Fehler auftritt.
@@ -121,7 +121,7 @@ Dynamische Workspace-Leiste und Handy-artige Widget-Karten pro Workspace (Home-D
 
 ## Verifikation
 
-1. Script-Modi manuell ausführen, JSON prüfen.
+1. Script-Modi manuell ausführen, JSON prüfen – bei zai-usage: `--selftest`, dann `--json` neben den rohen `data.limits` in `~/.cache/omarchy/agent-usage/zai-api.json` halten (gleiche Prozente je Fenster?) und `systemctl --user start omarchy-zai-usage.service` danach `jq .limits ~/.local/state/omarchy/agents/usage/zai.json`.
 2. Bar: `omarchy capture screenshot fullscreen save` → Top-Strip croppen (PIL) und ansehen.
 3. Panel: `omarchy-shell omarchy.agents open` (+ ggf. `next`) → Screenshot-Check.
 4. Timer: `systemctl --user list-timers omarchy-<id>-usage.timer`.

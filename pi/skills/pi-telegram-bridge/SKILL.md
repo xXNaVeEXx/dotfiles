@@ -100,6 +100,14 @@ Fehler, Zeilen ≤ 120).
   „DejaVu-Sans“ fehlt hier). glm-5.3 hat keinen Bild-Input, glm-5.4 schon – beide Fälle prüfen.
 - Reader-Thread: Wrappersignaturen exakt übernehmen (`_settle(self, chat, aborted, *, handled=False)`) – ein
   TypeError im RPC-Leser-Thread hinterlässt einen hängenden Chat ohne Fehlermeldung im Journal.
+- RPC-Client: den Waiter für eine Anfrage-Id **vor** dem Schreiben eintragen. Kommt die Antwort unter Last
+  schneller zurück, als der Aufrufer nach `write` weiterläuft, verwirft der Leser-Thread sie als unbekannte Id →
+  Zeitüberschreitung (gemessen 1 von 300 `get_state`, nur unter Last reproduzierbar). Die ~2 Erweiterungs-
+  Datensätze/s auf stdout sind normal und nicht die Ursache. Regressionstest mit einem Leser-Thread, der
+  dauernd solche Datensätze sendet (`ChatterPi`); `/status` zeigt nach 5 s Stille „Modell: – (pi antwortet
+  gerade nicht)“ statt zu hängen.
+- Statuszeile gehört zum Auftrag: schon beim Erledigen des Auftrags aus dem Chat nehmen, sonst benutzt der
+  nächste Auftrag dieselbe Nachricht und die Antwort überschreibt sie.
 - Statuszeile und chat action „typing“ synchron beim Eingang senden, bevor der Prozess startet: Telegram zeigt
   „schreibt …“ am Namen nur 5 s (alle 4 s erneut senden), und synchrone Hinweise („Eingereiht“) überholen die
   Statuszeile aus dem Pool-Thread, wenn mehrere Updates in einem Abruf kommen – die Reihenfolge wirkt vertauscht.

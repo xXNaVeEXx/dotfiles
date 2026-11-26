@@ -32,6 +32,11 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
   `threading.Event` steuern und mit `addCleanup(setattr, Klasse, "attr", alter_wert)` zurücksetzen.
 - Größenabhängige Bildverarbeitung testen: Rauschbild on the fly per `magick -size 2600x1900 plasma:fractal png:-`
   (flächige Farbbilder komprimieren zu klein, taugen dafür nicht); fehlt das Werkzeug → `skipTest`.
+- Skripte ohne `.py`-Endung (Starter `bin/pi-telegram`, Bar-Skript `zai-usage`) prüft der Write-Hook nicht
+  („no analyzer handles this file type“) – dort nach jedem Edit selbst `ruff check --output-format concise`
+  laufen lassen; vorbestehende Befunde (BLE001, UP017) sind keine Blocker, nur der Vergleich vorher/nachher zählt.
+- Das edit-Tool verlangt vorher einen Aufruf des read-Werkzeugs auf derselben Datei (ein Ausschnitt genügt);
+  `sed`/`cat` über bash zählt nicht („Edit without read“) – Fremddateien erst lesen, dann editieren.
 
 ## Ablauf
 
@@ -61,3 +66,6 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 - Laufzeit messen (`time ./script > /dev/null`) und gegen das geplante Poll-Intervall stellen; alles unter ~10 % des Intervalls ist unkritisch.
 - Screenshot-Crop ohne PIL (fehlt systemweit): `magick <src> -crop WxH+X+Y +repage -resize 200% out.png`.
 - Erfolgreiche Sammlungsquellen (Pfade, Parser) mit einem Beispiel-Output in den nutzenden Skill patchen, nicht hier.
+- Skripte, die undokumentierte API-Felder auf Namen abbilden (Fenster, Slots): `--selftest` einbauen, der das
+  Zuordnen mit einer beispielförmigen Antwort prüft und ohne API-Aufruf läuft; Gegenprobe mit der alten Zuordnung
+  muss fehlschlagen. Grund: Eine falsche Zuordnung zeigt still falsche Zahlen, eine richtige Doku allein verhindert das nicht.
