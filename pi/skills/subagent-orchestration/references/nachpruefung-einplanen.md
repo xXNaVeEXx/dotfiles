@@ -47,6 +47,19 @@ rutscht ans Ende der Welle. Dort sind ihre Funde am teuersten, weil alle später
   erweitern (Kommentar mit Grund). Weicht der Worker begründet vom Review ab (Fundstelle in anderer Datei, Fund nur teilweise
   umgesetzt), steht das im Bericht: lesen und gegenprüfen lassen, nicht blind übernehmen.
 
+## Mehrlauf-Anschluss im selben Worktree (Lauf 1..n nacheinander)
+- Läufe strikt nacheinander, ein Schreiber je Worktree; vor jedem Lauf `feat` einmergen (bei `handbuch.html`-Konflikt `--ours` +
+  `node tools/manual-gen.mjs`, dann `--check`) und den Stand-Commit nennen. Jeder Lauf: eigene Abnahme + Prüflauf grün, Bericht-Abschnitt
+  „Stufe 2 – <Bereich>“ mit „Offen (mit Konsument)“, KEIN integ. Der Kanalstart/Konsument, der in Lauf 1/2 „Offen“ blieb, wandert
+  als Aufgabe in den letzten Lauf, sonst bleiben Bausteine verwaist.
+- Ist der zweite Claude-Platz frei, darf der Review von Lauf 1..k-1 (fester Commit-Bereich, Reviewer nur lesend) PARALLEL zum
+  Schreiber laufen; im Auftrag den Bereich benennen und „Änderungen außerhalb der Liste ignorieren“. Die Nacharbeit aller
+  Befunde (Teil A + B + angestaute Hinweise anderer Spuren) läuft danach gebündelt in EINEM Lauf im selben Worktree, nicht je Teil.
+- Rückfragen des Workers (Option A/B mit Empfehlung) beantwortet die Spur sofort per `subagent_supervisor reply` plus `subagent steer`;
+  übernimmt sie die Empfehlung, das in einer Zeile begründen. Eine kleine fehlende Gegenstelle, die die UI schon ruft, lieber mitbauen
+  lassen („falls ≈40 Zeilen“) als als Offen stehen lassen.
+- Meldungen des Lint-Hooks zu fremden Status-Dateien, die per `feat`-Merge in den Worktree kamen, nicht anfassen (nicht Paketumfang).
+
 ## Review-/Einbau-Stau (gebaut, aber nicht eingebaut)
 - Als Spur den Stau selbst begrenzen, bevor der Leitstand eingreifen muss: Warten mehr als 2 Pakete auf Review oder Einbau (Endlauf/integ), startet
   die Spur KEIN neues Bau-Paket; frei werdende Plätze gehen der Reihe nach an Reviews (ältestes fertiges Paket zuerst, immer anderes
