@@ -1,9 +1,9 @@
-# Rundenprüfung: fünf Anzeigen, die still falsch werden
+# Rundenprüfung: sechs Anzeigen, die still falsch werden
 
 Ergänzt `statusseite.md` (Pflege der Seite) und `kontingent-hochrechnung.md`. Jede Kontrollrunde des Leitstands prüft
-diese fünf Punkte, bevor die Meldung an den Nutzer geht. Allen gemeinsam: Die Anzeige wirkt gesund, während der Stand
-dahinter falsch oder stehen geblieben ist. Auch der Auftrag „halte die Statusseite aktuell“ beginnt mit Punkt 1 und 2,
-nicht mit dem Neuerzeugen der Seite.
+die Punkte 1 bis 5, bevor die Meldung an den Nutzer geht; Punkt 6 gilt, sobald ein Prüfschritt wegen fremder Dateien
+rot wird. Allen gemeinsam: Die Anzeige wirkt gesund, während der Stand dahinter falsch oder stehen geblieben ist. Auch
+der Auftrag „halte die Statusseite aktuell“ beginnt mit Punkt 1 und 2, nicht mit dem Neuerzeugen der Seite.
 
 ## 1. Summenzeile der Statusseite gegen eine eigene Zählung halten
 
@@ -64,7 +64,8 @@ auf nichts, und alle davon abhängigen Pakete stehen mit.
 
 ## 5. Wartet Arbeit, obwohl ein Platz frei ist?
 
-1. Laufende Worker aus dem Lauf-Register zählen, nicht aus der Queue, und gegen die Obergrenze halten. Ist ein Platz
+1. Laufende Worker aus dem Lauf-Register zählen, nicht aus der Queue, und gegen die Obergrenze halten. Gilt die
+   Obergrenze nur für den knappen Anbieter, das Modell je Lauf mit ausgeben und nur dessen Läufe zählen. Ist ein Platz
    frei und stehen in der Queue Pakete mit „prüfen“, „wartet auf Slot“ oder einer bereiten Nacharbeit, den Grund
    belegen: das Start-Werkzeug der Spur selbst fragen (`<queue-werkzeug> next <Spur>`). Es nennt das Tor, das sperrt
    (Kontingent, Arbeitsspeicher, Abhängigkeit).
@@ -72,6 +73,39 @@ auf nichts, und alle davon abhängigen Pakete stehen mit.
    Abständen (etwa 10 min) neu zu prüfen, solange Prüfungen oder Nacharbeiten warten, und die Reihenfolge der
    wartenden Arbeit nennen. Grund: Die Spur prüft das Tor einmal und legt sich dann mit ihrem langen Wecker schlafen;
    der Speicher ist Minuten später wieder frei, der Platz bleibt aber bis zum Wecker leer.
-3. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
-4. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
+3. Sind alle Plätze belegt, je Spur zählen, wer sie hält. Hält eine Spur alle und wartet bei der anderen Arbeit seit
+   mehr als einer Runde (letzte Journalzeile der wartenden Spur ist Stunden alt), die Plätze teilen: Solange die
+   andere Spur wartende Arbeit für den knappen Anbieter hat, hält jede Spur höchstens einen Platz. Laufende Worker
+   laufen zu Ende; die abgebende Spur startet nach dem ersten fertigen Lauf keinen neuen, bis auch der zweite fertig
+   ist. Der wartenden Spur die Reihenfolge für den Platz nennen, schwerste Funde zuerst. Grund: Jede Spur füllt freie
+   Plätze sofort selbst nach; eine eingebaute Fairness-Regel des Start-Werkzeugs greift oft nur in einer Betriebsart
+   und ist nach einem Umschalten außer Betrieb.
+4. Der wartenden Spur zugleich Arbeit geben, die ohne den knappen Platz geht: Nacharbeiten ohne schwerste Funde mit
+   dem Modell des anderen Anbieters, danach prüft das starke Modell nur den Nacharbeit-Diff. Nacharbeiten mit
+   schwersten Funden bleiben beim starken Modell.
+5. Meldet eine Spur „alle Plätze belegt“, die Läufe, die sie aufzählt, gegen das Register mit Modellspalte halten.
+   Grund: Die Spur liest Ordnernamen aus dem Register und zählt Läufe des anderen Anbieters als belegte Plätze mit;
+   der Platz bleibt dann leer, obwohl ihr eigenes Journal schlüssig klingt.
+6. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
+7. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
    einschalten), statt nur „wartet“ zu melden.
+
+## 6. Bedingter Prüfschritt: löst er auch beim Gegenstück aus?
+
+Wird ein Prüfschritt (z. B. der Build für eine zweite Plattform) im Einbau rot, obwohl das Paket die roten Dateien
+nicht angefasst hat, stehen die Fehler schon im gemeinsamen Zweig. Dann zuerst klären, warum der Schritt bei den
+verursachenden Paketen nicht lief:
+
+1. Die Auslöse-Bedingung des Schritts im Queue-Werkzeug lesen (`grep -n -i '<plattform>' <werkzeug>`). Löst sie nur
+   bei Zeilen aus, die die Plattform selbst nennen, fehlt das Gegenstück: Code, der nur für die ANDERE Plattform gilt
+   (`cfg(unix)`, `cfg(not(windows))`, `target_os = "linux"`), lässt auf der geprüften Plattform unbenutzte Importe
+   und Variablen zurück, ohne den Schritt je auszulösen.
+2. Die Bedingung um das Gegenstück erweitern, die neue Fassung mit einer Handvoll Beispielzeilen prüfen (soll
+   auslösen / soll nicht auslösen, etwa `cfg(test)` und `cfg(feature = …)`), den Test des Werkzeugs fahren, atomar
+   ersetzen.
+3. Die Altfehler EINMAL beheben lassen: im Paket, das sie zuerst trifft, mit Zusatzfreigabe der fremden Dateien und
+   dem Auftrag „nur Importe und Bedingungen, keine Logik“. Beiden Spuren sagen, dass ein Rot nur wegen dieser Dateien
+   auf den Einbau dieses Pakets wartet und nicht ein zweites Mal behoben wird. Grund: Sonst beheben zwei Pakete
+   dieselben Zeilen, und der zweite Einbau endet im Konflikt.
+4. Dem Nutzer sagen, welche Fälle die erweiterte Bedingung abdeckt und dass sie nicht jeden denkbaren Fall fängt; ein
+   voller Lauf des Schritts gehört in die Abschlussprüfung der Welle.

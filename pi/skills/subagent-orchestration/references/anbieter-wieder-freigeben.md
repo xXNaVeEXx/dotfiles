@@ -23,7 +23,9 @@ Zahl gilt nur für den Anbieter, den der Nutzer nennt; die Grenze des anderen ä
    Quelle und führt sie aus; ohne das Recht scheitern alle Fälle mit Exit 126 und sehen wie ein Fehler der Änderung aus.
 5. Schalter-Datei in den Sicherungsordner verschieben, nicht löschen; der Rückweg ist ein `mv`. Danach den Test des
    Queue-Werkzeugs laufen lassen. Am Code ist meist nichts zu ändern, wenn der Weg ohne Schalter dort schon geprüft
-   wird.
+   wird. Prüfen, welche Regeln des Werkzeugs nur MIT Schalter liefen (`grep -n '<schalter-funktion>' <werkzeug>`):
+   Eine Fairness- oder Weck-Regel in diesem Zweig ist nach dem Umschalten außer Betrieb und muss als Anweisung an die
+   Spuren ersetzt werden (`rundenpruefung-stille-fehlanzeigen.md` Punkt 5).
 6. Texte nachziehen, die das Verbot noch aussprechen: Startdateien der Spuren und die Vorlage im Queue-Werkzeug
    (Startfehler-Regel, Kontingent-Abschnitt). Neue Fassung: Plan-Modell gilt; Ausweichen auf den freigegebenen
    Anbieter bei gesperrtem Tor oder vollen Plätzen des anderen; Review durch das starke Modell für JEDES Paket des
@@ -33,8 +35,8 @@ Zahl gilt nur für den Anbieter, den der Nutzer nennt; die Grenze des anderen ä
    zuerst an Prüfungen gehen. Quittung als Journalzeile verlangen und in der nächsten Runde am ersten Start belegen
    (`kontingent.md` §10 Punkt 5, mit umgekehrter Erwartung).
 8. Platzregel klären und in den Auftrag schreiben: Die Obergrenze gleichzeitiger Worker gilt oft nur für den knappen
-   Anbieter; Läufe des freigegebenen begrenzen dann nur Höchstzahl je Spur und RAM-Tor. Vor der Freigabe den freien
-   Arbeitsspeicher prüfen.
+   Anbieter; Läufe des freigegebenen begrenzen dann nur Höchstzahl je Spur und RAM-Tor. Ausdrücklich dazuschreiben,
+   dass nur Läufe des knappen Anbieters als belegter Platz zählen. Vor der Freigabe den freien Arbeitsspeicher prüfen.
 9. Entscheidung mit Wortlaut des Nutzers, geänderten Dateien, Testergebnissen und Rückweg in Entscheidungs- und
    Standdatei eintragen; Übersicht und Nutzerliste nachziehen.
 
@@ -53,7 +55,7 @@ Zahl gilt nur für den Anbieter, den der Nutzer nennt; die Grenze des anderen ä
 
 1. Im Modellverzeichnis prüfen, dass das Modell unter genau diesem Namen geführt wird (`pi --list-models | grep -i
    <name>`), dann ein Probelauf mit Ein-Wort-Antwort: `pi -p --provider <anbieter> --model <modell> --no-session
-   "Antworte nur mit: OK"`.
+   "Antworte nur mit: OK"`. Beides belegt nur, dass ein FRISCH gestarteter Prozess das Modell kennt.
 2. Im Queue-Werkzeug eine Konstante für das Modell dieses Anbieters einführen, das alte Plan-Modell beim Laden darauf
    abbilden und die Ausweich-Stelle auf die Konstante umstellen; die Tabelle der Denkstufen ergänzen. Den Paketplan
    nicht umschreiben. Grund: Der Plan nennt das Modell an hunderten Stellen; eine Abbildung an einer Stelle bleibt
@@ -61,7 +63,18 @@ Zahl gilt nur für den Anbieter, den der Nutzer nennt; die Grenze des anderen ä
 3. Test des Queue-Werkzeugs gegen die neue Fassung fahren: Lädt der Test das Werkzeug als Modul über den Dateinamen,
    die neue Fassung unter dem echten Namen in einen eigenen Ordner kopieren und den Test darauf zeigen lassen.
    Erwartungen des Tests, die den alten Modellnamen nennen, mit anpassen.
-4. Spuren anweisen: neue Starts mit dem neuen Modell; laufende Worker des alten Modells laufen zu Ende.
+4. Spuren anweisen: neue Starts mit dem neuen Modell und ausdrücklicher Modellangabe im Startaufruf; laufende Worker
+   des alten Modells laufen zu Ende. Grund: Die Spur gibt das Modell beim Start von Hand an und nimmt ohne den Hinweis
+   den Namen, den sie bisher benutzt hat.
+5. Den ersten Start mit dem neuen Modell am Lauf-Register belegen (Modellspalte), bevor dem Nutzer „aktiv“ gemeldet
+   wird. Bis dahin lautet die Meldung „eingerichtet, erster Start steht aus“. Grund: Eine Orchestrator-Sitzung, die
+   vor dem Erscheinen des Modells gestartet wurde, führt es nicht in ihrem Modellverzeichnis; der Sub-Agent-Start
+   scheitert dort mit „Unknown subagent model …“, obwohl Verzeichnis und Probelauf außerhalb grün sind.
+6. Kennt eine laufende Spur-Sitzung das Modell nicht: die Spur bis zum nächsten ruhigen Punkt (Wellenende, kein
+   Hintergrundlauf der Sitzung) beim alten Modell lassen und das ausdrücklich anweisen, auch wenn das Queue-Werkzeug
+   schon den neuen Namen nennt; das Neuladen der Sitzung als offenen Punkt in die Standdatei schreiben und danach den
+   ersten Start neu belegen. Dem Nutzer die frühere Meldung berichtigen. Grund: Ein Neuladen mitten im Lauf beendet
+   Einbau-Läufe und Wecker, die an der Sitzung hängen.
 
 ## Meldung an den Nutzer
 
