@@ -19,7 +19,8 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
   (falscher Attributname, bool statt Callable), die ruff nicht sieht.
 - `ruff format` bricht Zeilen um – vor exakten Text-Ersetzungen (edit-Tool) die Stelle frisch lesen, sonst
   „File modified since your write“; Ersetzungen per Python-Skript immer mit `count == 1`-Assert vor dem Schreiben.
-- pytest ist nicht installiert → `unittest` (`python3 -m unittest discover -s tests`). Fakes als Unterklassen des
+- pytest ist nicht installiert → `unittest`.
+- Pfade, die aus einer Env-Variable entstehen (Test-Heim statt echtem Konfigurationsordner), NIE nur im Paket-Init `tests/__init__.py` setzen: `python3 -m unittest discover -s tests` nimmt `tests/` als Top-Level und lässt das Paket-Init aus, und ruff/isort sortiert `from <paket> import …` vor `from tests.fakes import …` – das Produktmodul wird dann mit dem echten Pfad geladen und die Tests schreiben in die echten Dateien. Stattdessen: Starter-Modul `tests/__main__.py` (`python3 -m tests`) setzt die Env vor jedem Import und ruft `unittest.main(module=None, argv=["unittest","discover","--start-directory","tests","--top-level-directory",<Repo-Wurzel>, …])`; zusätzlich Wächter im Paket-Init (RuntimeError, wenn der berechnete Pfad nicht dem Env-Wert entspricht). Nachweise je Änderung: Hash der echten Dateien vor/nach dem Lauf muss gleich sein, Gegenprobe mit dem falschen Aufruf muss laut abbrechen.
   echten Typs mit Klassenattributen für Verhalten (`auto_reply`, `reply_delay`), Temp-Ordner per
   `tempfile.TemporaryDirectory()` + `addCleanup`; Warten auf nebenläufige Abläufe über `wait_until(predicate)` mit
   Zeitgrenze statt `sleep`.

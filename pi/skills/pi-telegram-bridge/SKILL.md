@@ -41,16 +41,21 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
    Dann ruff über `~/.pi-lens/pip-tools/bin/ruff` (nicht im PATH):
    `ruff format pi_telegram tests && ruff check --fix --unsafe-fixes pi_telegram tests` – Projekt-Config in
    `pyproject.toml` (select ALL) nötig, sonst entfernt ruff `# noqa`-Kommentare als „unused“.
-2. `python3 -m unittest discover -s tests` (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
+2. `python3 -m tests` – niemals `python3 -m unittest discover -s tests` (ohne Top-Level überspringt das das Paket-Init, `pi_telegram.config` wird mit dem echten Ordner geladen und die Tests überschreiben die state.json des laufenden Diensts; am 26.11.2026 ging so die Sitzung des Nutzers verloren – seitdem wirft `tests/__init__.py` laut RuntimeError). (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
    RPC mit `auto_reply`/`reply(text)`/`model_input`; `make_bridge(root, **cfg)`).
 3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe;
    `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
 4. Commit im Repo; Dienst neu starten (`pi-telegram restart`) – der Starter zeigt per Symlink aufs Repo.
+   Neustart nur bei ruhigem Bot (Journal ohne laufenden Auftrag, keine offene Statuszeile): mitten im Auftrag
+   verliert der Neustart die Antwort.
 
 Regeln aus Skill python-script-authoring gelten (kein `except Exception`, `check=False` explizit, typisierte
 Fehler, Zeilen ≤ 120).
 
 ## RPC-Fakten (pi 1.6.1, docs/rpc*.md im nix-Store-Paket)
+
+Allgemeine Grundlagen und Fallstricke des RPC-Modus (Befehle, Ereignisse, Dialoge, Sitzungsdateien,
+Leser-Thread, Kaltstart) stehen im Skill pi-rpc-client; hier nur das Brücken-spezifische.
 
 - Start `pi --mode rpc [--session Datei] [--name Name]`, strikt JSONL **nur an LF** trennen (`bytes.readline`),
   stdout kontinuierlich lesen, stderr nie als Protokoll, Diagnose dort.
@@ -127,6 +132,7 @@ Fehler, Zeilen ≤ 120).
 | viele „🔔 Hinweis“ | `chat.quiet` greift nur bis der Prozess steht – Meldung aus der Startphase einordnen: auftragsrelevant (Statuszeile) oder unterdrücken |
 | Antwort vom falschen Modell, Bild wird trotz fehlendem Bild-Input nicht beschrieben | Befehl und Auftrag liefen parallel → Befehle nur über `_run_command`, `/modell` muss vor dem Auftrag fertig sein |
 | „antwortet langsam“, kein „schreibt …“ am Namen | fast immer Pi-Kaltstart (20–40 s unter Last) ohne Schreib-Signal während des Starts → Sitzungsdatei nachmessen; Abhilfe: Prozess vorladen/warm halten, „typing“ ab Eingang |
+| `/status` zeigt eine fremde oder leere Sitzung, neuer Chat-Ordner | `state.json` überschrieben (früher durch Tests) → Sitzungsdatei des Chats unter `~/.pi/agent/sessions/<default_cwd>--/` finden (Kopfzeitstempel, erster Nutzerwunsch), `state.json` von Hand ergänzen (`chats.<Chat-Id>.sessions.main.path`, Chat-Id aus `pi-telegram status`), `pi-telegram restart`, Journal auf „Pi für Chat … vorgewärmt“ prüfen |
 
 ## Erweitern
 
