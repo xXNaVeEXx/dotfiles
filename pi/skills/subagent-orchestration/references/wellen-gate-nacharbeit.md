@@ -1,8 +1,8 @@
 # Wellenende: Gesamtlauf starten und Nacharbeit nach rotem Gate / roter CI
 
 Der Leitstand fährt am Wellenende die Voll-Suite über den Integrationsstand und öffnet dann einen PR aus einem
-Schnappschuss-Branch. Der erste Abschnitt gilt für den Leitstand (Start des Gesamtlaufs), die folgenden für die
-Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
+Schnappschuss-Branch. Die ersten beiden Abschnitte gelten für den Leitstand (Start des Gesamtlaufs, Nacharbeit über
+mehrere Spuren führen), die folgenden für die Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
 
 ## Start des Gesamtlaufs (Leitstand, sobald die letzte Spur fertig meldet)
 1. Fertigmeldung belegen: Zähler der Queue, Fertig-Marker, Bericht der Spur, Integrationsbranch = Remote, kein Worker
@@ -28,6 +28,35 @@ Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
 8. Bericht an den Nutzer: gebaut ≠ nutzbar. Ausdrücklich sagen, welche Teile schon im laufenden Programm angeschlossen
    sind und welche nur als getestete Bausteine vorliegen; teilweise behobene ernste Funde als „zum Teil behoben“ mit
    dem Rest nennen, nicht als erledigt.
+
+## Nacharbeit nach rotem Gesamtlauf über mehrere Spuren führen (Leitstand)
+1. Die roten Schritte nach Herkunft der Pakete auf die bestehenden Spur-Sitzungen verteilen, je Spur eine Auftragsdatei
+   (rote Schritte mit Log-Pfad, „Ursache erst belegen, Prüfung nicht lockern“, eigener Worktree, höchstens ein Worker,
+   Ergebnis-Marker OK/ROT erst nach Push). Grund: Die Spur kennt ihre Pakete; neue Pakete dafür kosten Planung und Kontext.
+2. EINEN Warte-Task auf die Marker ALLER Spuren starten (ein Warte-Skript je Spur meldet schon bei der ersten). Er endet
+   mit unterscheidbarem Exit-Code und einer Schlusszeile: alle OK = 0, eine Spur ROT = 3, Frist abgelaufen = 4 mit
+   „WARTE-ENDE zeitablauf“. Grund: Ein Fristende mit Exit 0 kommt als „completed“ an und liest sich wie „fertig“.
+3. Meldet die erste Spur fertig und ist eingebaut, der noch arbeitenden Spur sofort per Prompt sagen: den
+   Integrationsstand vor dem letzten Beleglauf in ihren Nacharbeits-Worktree einmischen, und welche Stelle die andere
+   Spur schon geändert hat (gemeinsame Lauf- und Smoke-Skripte bekommen von beiden denselben Fix; nur eine Fassung
+   behalten). Grund: Der Beleglauf soll den Stand zeigen, den das Gate prüft, und der Einbau läuft ohne Konflikt.
+4. Im Beleglauf einer Spur rot gebliebene Schritte, die der anderen Spur gehören und dort schon eingebaut sind, sind kein
+   Befund; sie verschwinden mit dem Einmischen.
+5. Läuft die Frist ab: Marker, Journal-Ende und laufende Prüfprozesse der Spur ansehen (arbeitet sie oder hängt sie?),
+   dann einen neuen Warte-Task mit Frist bis zur erwarteten Fertigmeldung starten. Erst wenn alle Marker OK sind: Marker
+   ins Log-Verzeichnis verschieben und den Gesamtlauf wie oben neu starten (neuer Log-Name je Lauf).
+6. Fällt das Kontingent-Tor eines Anbieters mitten in der Nacharbeit zu: Die Pausen-Mechanik der Spuren (Pausen-Dateien,
+   Sparstufe) passt hier nicht, weil die Spuren als fertig gelten und der Leitstand Marker und Gesamtlauf bedienen muss.
+   Stattdessen der arbeitenden Spur ausdrücklich schreiben: keine neuen Worker oder Prüfer dieses Anbieters, die
+   Restschritte (Belegläufe, Einbau, Marker) selbst und sparsam erledigen, Worker nur über den noch offenen Anbieter.
+   Keine neue Kontingent-Wache bis zum Reset starten (sie würde sofort wieder auslösen). In die Nutzer-Liste als wichtigen
+   Punkt: Stand des Kontingents, was trotzdem weiterläuft und warum, und das Angebot, bis zum Reset ganz zu ruhen.
+   Die Grenze selbst ändert nur der Nutzer.
+7. Trifft danach eine Hintergrund-Meldung ein, die schon verarbeitet ist (abgelaufener alter Warte-Task, Kontingent-Wache
+   mit bereits bekanntem Auslöser): mit einem kurzen Blick bestätigen (Marker, letzte Journalzeile) und dem Nutzer in zwei,
+   drei Sätzen sagen, welche Meldung das war, dass sich am Stand nichts geändert hat und wann die nächste echte Meldung
+   kommt. Keine volle Runde und keine neue Statuspflege. Grund: Der Nutzer liest jede Meldung mit und hält eine stumme
+   oder lange Reaktion für ein neues Ereignis.
 
 ## Ablauf (rotes Gate)
 1. Ursache am Quelltext der roten Tests und am verantwortlichen Paket-Commit belegen (`git log -- <Datei>`, Dateigrößen,
@@ -71,6 +100,10 @@ Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
 - Tour-/GUI-Smoke-Fehler „Marke fehlt“: zuerst Screenshot und Seitentext der Fehlstelle ansehen (der Smoke sollte bei
   Fehlern die vorhandenen `data-tour`-Marken ausgeben), bevor Seiten umgebaut werden; Modal-Einrichtung, fehlende
   Sitzung/Bots im frischen Datenordner oder nicht abgeschlossener Ladezustand verdecken oft nur die Seite.
+- Der GUI-Smoke startet das Gateway mit Datei-Geheimnisspeicher, aber ohne die dazugehörige Bestätigungs-Variable: Das
+  Gateway startet nicht, und alle Schritte dahinter fallen. Beide Variablen gehören zusammen ins Smoke-Skript.
+- Der Smoke nutzt ein veraltetes Oberflächen-Bündel (`ui/dist` von einem früheren Stand): neue Marken fehlen, obwohl der
+  Quelltext sie hat. Das Skript baut das Bündel neu, wenn Quellen jünger sind als das Bündel.
 
 ## Lehren
 - Massenhaft angelegte leere Platzhalter (Gerüst-Generator, ~300 Dateien) sind ein Risiko, wenn ein Build-Skript jede Datei
