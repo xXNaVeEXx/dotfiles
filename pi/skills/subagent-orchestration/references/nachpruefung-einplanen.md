@@ -33,6 +33,20 @@ rutscht ans Ende der Welle. Dort sind ihre Funde am teuersten, weil alle später
 8. Die Zusatzläufe in die Kontingent-Hochrechnung aufnehmen (jeder Teil zählt wie ein Paket, Fix-Läufe dazu) und dem Nutzer die
    geänderte Schätzung ausdrücklich nennen (`kontingent-hochrechnung.md`).
 
+## Reviewer-Aufträge praktisch
+- Auftrag als Datei mit festem Ausgabeformat (`BEFUND: n P0, n P1, n P2`, je Fund `P?: Datei:Zeile – Problem – Vorschlag`,
+  Urteil FREI/BLOCK); der Reviewer hat kein Schreibwerkzeug, das Ergebnis aus seinem Lauf-Ordner in die Befunddatei ziehen.
+  Die Abschlussmeldung „nichts gespeichert“ ist Lernpass-Rauschen und kein Fehler.
+- Ein Reviewer mit `cwd` im Integrationsordner hat kein `git` und liest nur den Branch-Stand; die Zeilenangaben vorab im
+  Sammel-Fix-Brief als „Worker vor dem Ändern selbst prüfen“ kennzeichnen. Für die Gegenprüfung eines Fix-Diffs den Reviewer
+  mit `cwd` im Paket-Worktree starten und die lesenden git-Befehle (`git diff <Prüfstand>..HEAD`, `git log`) im Auftrag nennen.
+- Wächter-Tests, die den Quelltext nach verbotenen Aufrufen durchsuchen, brechen oft an der ersten Zeile `mod tests;` bzw.
+  `#[cfg(test)]` ab und lesen echten Code dahinter nie. Der Reviewer sucht solche Aufrufe selbst per `rg`; beim Beheben den
+  Wächter korrigieren UND prüfen, dass er danach keine neuen Treffer in anderen Dateien findet.
+- Der Sammel-Fix läuft im Worktree EINES Pakets des Bündels; dessen `.pfade` um alle Code-Ordner des Bündels und den Bericht
+  erweitern (Kommentar mit Grund). Weicht der Worker begründet vom Review ab (Fundstelle in anderer Datei, Fund nur teilweise
+  umgesetzt), steht das im Bericht: lesen und gegenprüfen lassen, nicht blind übernehmen.
+
 ## Review-/Einbau-Stau (gebaut, aber nicht eingebaut)
 - Als Spur den Stau selbst begrenzen, bevor der Leitstand eingreifen muss: Warten mehr als 2 Pakete auf Review oder Einbau (Endlauf/integ), startet
   die Spur KEIN neues Bau-Paket; frei werdende Plätze gehen der Reihe nach an Reviews (ältestes fertiges Paket zuerst, immer anderes
