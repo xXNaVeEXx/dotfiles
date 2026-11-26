@@ -26,6 +26,12 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 - Ausgabereihenfolge bei Pipes: Python-`print` ist blockgepuffert, Kindprozesse (systemctl, pi) schreiben sofort –
   in Protokollen steht ihre Ausgabe VOR den eigenen Zeilen und lenkt bei der Fehlersuche. Beim Debuggen `python3 -u`
   oder `flush=True`; Testdaten für Binärerkennung realistisch wählen (JPEG-Magic `\xff\xd8\xff`, nicht `\xff\xd8j`).
+- In Tests Methoden am Objekt ersetzen: der Hook meldet `obj._cmd = fn` und `fake.download = lambda …` (method-assign
+  bzw. unbekanntes Attribut) – `setattr(obj, "_cmd", fn)` nehmen (dafür per-file-ignore `B010` für tests) oder den
+  Fake als Unterklasse mit überschriebener Methode bauen. Gegenstücke aus Nebenläufigkeit (Threads, Timer) per
+  `threading.Event` steuern und mit `addCleanup(setattr, Klasse, "attr", alter_wert)` zurücksetzen.
+- Größenabhängige Bildverarbeitung testen: Rauschbild on the fly per `magick -size 2600x1900 plasma:fractal png:-`
+  (flächige Farbbilder komprimieren zu klein, taugen dafür nicht); fehlt das Werkzeug → `skipTest`.
 
 ## Ablauf
 

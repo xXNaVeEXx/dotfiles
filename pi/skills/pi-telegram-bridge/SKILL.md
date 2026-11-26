@@ -5,8 +5,6 @@ description: "Die eigene Telegram-Brücke für den Pi-Coding-Agent einrichten, w
 
 # pi-telegram-bridge
 
-# pi-telegram-bridge
-
 Telegram-Brücke für den Pi-Coding-Agent: ein Daemon (Python, nur Standardbibliothek) liest Telegram per Long
 Polling und steuert das **installierte** `pi` per RPC (`pi --mode rpc`). Alle Erweiterungen des Nutzers bleiben
 aktiv; es wird kein eigenes Pi eingebettet (Vorart mit eingebettetem SDK war wegen der 1.6.1-Erweiterungen unbrauchbar).
@@ -39,9 +37,10 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
 1. Eigener Worktree (`wt switch -c`), dann ruff über `~/.pi-lens/pip-tools/bin/ruff` (nicht im PATH):
    `ruff format pi_telegram tests && ruff check --fix --unsafe-fixes pi_telegram tests` – Projekt-Config in
    `pyproject.toml` (select ALL) nötig, sonst entfernt ruff `# noqa`-Kommentare als „unused“.
-2. `python3 -m unittest discover -s tests` (31 Tests, Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf,
-   FakePi spielt RPC mit `auto_reply`/`reply(text)`; `make_bridge(root, **cfg)`).
-3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe.
+2. `python3 -m unittest discover -s tests` (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
+   RPC mit `auto_reply`/`reply(text)`/`model_input`; `make_bridge(root, **cfg)`).
+3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe;
+   `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
 4. Commit im Repo; Dienst neu starten (`pi-telegram restart`) – der Starter zeigt per Symlink aufs Repo.
 
 Regeln aus Skill python-script-authoring gelten (kein `except Exception`, `check=False` explizit, typisierte
@@ -59,7 +58,14 @@ Fehler, Zeilen ≤ 120).
   `{"sessionPath": …}`; `set_session_name` `{"name": …}`.
 - `extension_ui_request` blockiert Pi bis zur Antwort; `timeout` in ms → Rechtzeitig antworten oder verfällt.
   Startup-Flut: `notify`-Meldungen („80 skills loaded“, Hinweise) kommen **vor** dem ersten `prompt` und bei
-  jedem `new_session`/Neustart – Brücke unterdrückt sie per `chat.quiet` bis zum ersten Auftrag.
+  jedem `new_session`/Neustart – Brücke unterdrückt sie per `chat.quiet`, aber nur bis der Prozess steht
+  (`quiet = False` direkt nach `_proc_for`, nicht erst nach der `prompt`-Antwort): Meldungen zwischen
+  `get_state` und `prompt`-Antwort sind schon Auftragsmeldungen (z. B. der Bild-Hinweis unten).
+- Bilder: `get_state.model.input` sagt, ob das Modell Bilder versteht. Ohne Bild-Input greift die Erweiterung
+  `image-paste` (Skill image-ocr-fallback): sie beschreibt per Vision-Modell und meldet das mit
+  `notify` „image-paste: N Bild(er) als Text für <Modell> (via <Vision-Modell>)“ **vor** der `prompt`-Antwort.
+  Die Brücke zeigt das als Statuszeile (`IMAGE_NOTE` in bridge.py) statt als 🔔-Nachricht. `setWorkingMessage`
+  der Erweiterung ist im RPC-Modus ein No-Op – die Fortschrittsanzeige macht die Brücke selbst.
 
 ## Stolperfallen
 
@@ -76,6 +82,18 @@ Fehler, Zeilen ≤ 120).
 - Base64-Testdaten: `\xff\xd8jpeg` ergibt `/9hq…`, nicht `/9j` – Bytes mit `\xff\xd8\xff` nehmen.
 - `--user`-Dienst erbt den systemd-Nutzer-PATH (mise-Shims, ~/.nix-profile/bin) – `pi_bin` deshalb als
   absoluten Pfad (`default_pi_bin()` bevorzugt `~/.nix-profile/bin/pi`).
+- Nebenläufige Befehle am pi-Prozess (/modell, /denken, /kompakt, /letzte) laufen über `_run_command` und
+  erhöhen `chat.commands`: ein Auftrag, der direkt hinter `/modell` kommt, wird sonst vor `set_model`
+  ausgeführt (Wettlauf → falsches Modell, Bild nicht beschrieben). Neuer nebenläufiger Befehl: immer
+  `_pool.submit(self._run_command, chat, self._cmd_x, …)`, nie `_cmd_x` direkt.
+- Telegram-Dateinamen lügen: PNG als „photo.jpg“. Bildformat aus den Bytes lesen (`sniff_image`), als Datei
+  geschickte Fotos sind unkomprimiert und groß → über 1,5 MB per ImageMagick verkleinern (`shrink_image`,
+  Kante höchstens 2000), sonst lehnt die Modell-API ab.
+- Test mit echtem Bild: `magick -background white -fill black -font Adwaita-Sans -pointsize 30 -size 560x
+  caption:'…' /tmp/tg-bild.png` und `python3 -u -m tests.live_check_image /tmp/tg-bild.png` (Font
+  „DejaVu-Sans“ fehlt hier). glm-5.3 hat keinen Bild-Input, glm-5.4 schon – beide Fälle prüfen.
+- Reader-Thread: Wrappersignaturen exakt übernehmen (`_settle(self, chat, aborted, *, handled=False)`) – ein
+  TypeError im RPC-Leser-Thread hinterlässt einen hängenden Chat ohne Fehlermeldung im Journal.
 
 ## Typische Störungen
 
@@ -85,10 +103,13 @@ Fehler, Zeilen ≤ 120).
 | Nachricht bleibt unbeantwortet, Journal „403 … bot can't initiate conversation“ | Konto nicht freigeschaltet → dem Bot zuerst schreiben, Id per `pi-telegram status` prüfen, `pi-telegram allow <Id>` |
 | „❌ Pi wurde beendet (Exit N)“ | Erweiterung/Modell lief nicht; `pi-telegram logs -f`, im selben Ordner `pi` im Terminal probieren |
 | Statusnachricht bleibt stehen | Prozess hängt → `/stopp`, sonst `pi-telegram restart` (Sitzung bleibt erhalten) |
-| viele „🔔 Hinweis“ | `chat.quiet` umgangen (neue Ereignisquelle) → nur nach erstem Auftrag weiterleiten |
+| viele „🔔 Hinweis“ | `chat.quiet` greift nur bis der Prozess steht – Meldung aus der Startphase einordnen: auftragsrelevant (Statuszeile) oder unterdrücken |
+| Antwort vom falschen Modell, Bild wird trotz fehlendem Bild-Input nicht beschrieben | Befehl und Auftrag liefen parallel → Befehle nur über `_run_command`, `/modell` muss vor dem Auftrag fertig sein |
 
 ## Erweitern
 
 Neuer Brücken-Befehl: `_cmd_<name>` in `bridge.py` + Verzweigung in `_command` + HELP-Text (HTML-escaped!) +
 README-Tabelle + Test in `tests/test_bridge.py` (FakePi, `wait_until`). Neues Ereignis: `_on_event`-Zweig.
-Neues Zielkonto: `pi-telegram allow <Id>`. Void-/Voice-Nachrichten sind bewusst nicht umgesetzt.
+Neues Zielkonto: `pi-telegram allow <Id>`. Sprach- und Videonachrichten sind nicht umgesetzt: den
+Spracherkennungs-Motor nicht selbst wählen (lokal oder API ist eine Nutzerentscheidung; Auswahlkriterien und
+Messverfahren in Skill selfhosted-speech-stack), erst nach der Entscheidung bauen.

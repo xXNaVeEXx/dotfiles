@@ -27,6 +27,14 @@ Nutzer kann keine Bilder einfügen, Bild-Paste über SSH/tmux, `[[ image N ]]`-P
 
 ## Pitfalls
 
+- Die Fortschrittsmeldung der Extension läuft über `ctx.ui.setWorkingMessage` – im RPC-Modus (`pi --mode rpc`,
+  dort kein Terminal-Status) ist das ein No-Op: ein RPC-Klient (z. B. die Telegram-Brücke) muss den Fortschritt
+  selbst anzeigen, sonst wirkt es 10–20 s, als käme nichts. Die `input`-Verarbeitung feuert dort genauso
+  (`event.source == "rpc"`, Bilder kommen als `images` beim `prompt`-Kommando mit).
+- Der Abschluss wird per `ctx.ui.notify("image-paste: N Bild(er) als Text für <Modell> (via <Vision-Modell>)")`
+  gemeldet, und die Telegram-Brücke parst genau diesen Wortlaut (`IMAGE_NOTE` in
+  `~/projects/pi-telegram/pi_telegram/bridge.py`, Skill pi-telegram-bridge). Wortlaut ändern → Regex mitziehen;
+  sonst steht die Meldung dort nur als normaler Hinweis.
 - Kein `-threshold`/`-negate` beim Vorverarbeiten dunkler Themes — beide können die gesamte Ausgabe leeren. Resize+Unsharp genügt fast immer.
 - Nicht nach einem OCR-Versuch aufgeben: erster Durchlauf oft leer (falsches psm/kein preprocessing), zweiter brauchbar.
 - Log-Level-Tokens wie "[inFa]" = `[info]` — Stufe aus dem Kontext erschließen, bevor etwas als "Fehler" an den Nutzer gemeldet wird.
