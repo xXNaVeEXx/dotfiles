@@ -19,11 +19,18 @@ rutscht ans Ende der Welle. Dort sind ihre Funde am teuersten, weil alle später
    `kontingent-pause-und-review-nachpruefung.md`.
 4. Schwere Funde sofort als Fix im eigenen Lauf mit eigenem Commit und Einbau, mittlere je Teil in eine Befunddatei sammeln.
    Die Spur meldet erst fertig, wenn alle Teile geprüft und die schweren Funde behoben sind.
-5. Quittung als Journalzeile verlangen, die die Reihenfolge nennt.
-6. Bei jedem Wecken gegenprüfen: Steht für jeden vergebenen Teil eine Start- oder Befundzeile im Journal? Liste der offenen Teile in
+5. Den Fix für schwere Funde vor dem Einbau gegenprüfen lassen, sobald er Sicherheitsfunde behebt (Befehlsausführung, Netz-Tor,
+   Anmeldung, Geheimnisse) oder mehrere schwere Funde in einem Lauf: Reviewer mit dem starken Modell, nur der Diff seit dem
+   Prüfstand, mit der Frage „ist jeder schwere Fund behoben, und gibt es je Fund einen Test über den echten Aufrufweg?“. Ohne
+   schweren Restfund einbauen, sonst zurück an den Worker. Das im Auftrag ausdrücklich verlangen und die Befunddatei nennen.
+   Grund: Beim Paket-Review ist die Gegenprüfung der Nacharbeit eingeübt, beim Sammel-Fix einer Nachprüfung plant die Spur
+   nur Abnahme, Prüflauf und Einbau; ein Fix, der die Lücke nur am Testweg schließt, landet dann ungeprüft im gemeinsamen Zweig.
+6. Quittung als Journalzeile verlangen, die die Reihenfolge nennt.
+7. Bei jedem Wecken gegenprüfen: Steht für jeden vergebenen Teil eine Start- oder Befundzeile im Journal? Liste der offenen Teile in
    die Stand-Datei schreiben und mitführen. Ist seit dem Auftrag mehr als ein neues Paket gestartet, aber kein weiterer Teil, die
-   Reihenfolge sofort nachschärfen (Schritt 1), nicht bis zum Wellenende warten.
-7. Die Zusatzläufe in die Kontingent-Hochrechnung aufnehmen (jeder Teil zählt wie ein Paket, Fix-Läufe dazu) und dem Nutzer die
+   Reihenfolge sofort nachschärfen (Schritt 1), nicht bis zum Wellenende warten. Bei jedem neuen Befund den geplanten Weg des
+   Fixes lesen (letzte Journalzeile der Spur) und Schritt 5 nachtragen, wenn die Gegenprüfung fehlt.
+8. Die Zusatzläufe in die Kontingent-Hochrechnung aufnehmen (jeder Teil zählt wie ein Paket, Fix-Läufe dazu) und dem Nutzer die
    geänderte Schätzung ausdrücklich nennen (`kontingent-hochrechnung.md`).
 
 ## Review-/Einbau-Stau (gebaut, aber nicht eingebaut)
@@ -35,6 +42,10 @@ rutscht ans Ende der Welle. Dort sind ihre Funde am teuersten, weil alle später
   nächste Endlauf). Konflikte in gemeinsamen Hotspot-Dateien (Werkzeug-Register, erzeugtes Handbuch) beide Seiten behalten bzw. neu erzeugen.
 - Steht im Auftrag eine feste Review-Reihenfolge, per Journalzeile quittieren und bei jedem Wecken die Liste „wartet auf Review / Endlauf /
   integ“ aus dem Stand nachziehen.
+- Wird ein Endlauf rot, nachdem der gemeinsame Stand in ein wartendes Paket eingemischt wurde, dem Nutzer nur melden, was belegt ist:
+  welcher Schritt rot ist, seit wann, was dahinter wartet und dass die Ursache offen ist. Vor einem Eingriff prüfen, ob die Spur
+  schon selbst untersucht (Kindprozesse der Spur-Sitzung, Statuszelle, Journal), und die Ursache in der nächsten Runde belegen.
+  Grund: Ein zweiter Auftrag in eine laufende Untersuchung unterbricht sie, und eine vermutete Ursache im Bericht wird als Befund gelesen.
 
 ## Hinweise
 - Der erste Teil einer Nachprüfung zeigt die Fehlerquote: Findet er schwere Mängel, die übrigen Teile nicht strecken, sondern
