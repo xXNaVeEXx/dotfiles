@@ -55,6 +55,23 @@ Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
    Phasen-Skript ihn pusht und beim Merge `--match-head-commit` nutzt.
 4. Ändert der Fix nur `.github/`, braucht es kein neues Gate; Ergebnis-Datei mit SHA und Dateiliste schreiben.
 
+## Typische Ursachen eines roten Gesamttests (erst diese prüfen, dann tiefer graben)
+- Test liest die Rechner-Konfiguration des Bauhosts (`~/.pi/agent/mcp.json`, Settings): Eine eingebaute MCP-Erweiterung
+  verbindet dort konfigurierte Server, meldet „need attention“ vor der erwarteten Nachricht oder überschreibt per
+  Hintergrund-Refresh die vom Test angehängten Werkzeuge. Erkennung: Test fällt fast jedes Mal, aber in 0,05 s und
+  abwechselnd verschiedene Tests (Zustand, kein Zeit-Wettlauf); Beleg `LUMI_NO_MCP=1`/`HOME=<leerer Ordner>` grün. Fix im
+  Test: MCP bzw. die eingebaute Erweiterung abschalten (`no_mcp = true`, `disabledBuiltinExtensions: ["mcp"]`), Erwartung
+  unverändert. Vorher/nachher-Beleg fahren (ohne Fix muss genau der Test rot sein).
+- Szenarien oder Skripte bauen im selben Ziel-Ordner neu (`cargo run`, GUI-Smoke mit `cargo build -p <app>`): Das Binary
+  des Testlaufs verliert Feature/Testmodus, alle Folge-Szenarien melden „Gateway beendete sich ohne Meldung“ nach 0 s.
+  Fix im Lauf-Skript: Test-Binary nach dem Bau in den Arbeitsordner kopieren und `LUMI_*_BIN` darauf zeigen lassen; in
+  Szenarien nie `cargo run`, nur die Variable.
+- Ein Szenario erwartet noch den Zustand vor einer späteren Verschärfung (z. B. „unbekannte Sitzung → Cursor“, jetzt
+  Fehler -32004): Szenario an den heutigen Vertrag anpassen, die alte Abdeckung bleibt im Rust-Test.
+- Tour-/GUI-Smoke-Fehler „Marke fehlt“: zuerst Screenshot und Seitentext der Fehlstelle ansehen (der Smoke sollte bei
+  Fehlern die vorhandenen `data-tour`-Marken ausgeben), bevor Seiten umgebaut werden; Modal-Einrichtung, fehlende
+  Sitzung/Bots im frischen Datenordner oder nicht abgeschlossener Ladezustand verdecken oft nur die Seite.
+
 ## Lehren
 - Massenhaft angelegte leere Platzhalter (Gerüst-Generator, ~300 Dateien) sind ein Risiko, wenn ein Build-Skript jede Datei
   im Ordner einbettet und Tests Nicht-Leere verlangen. Platzhalter nur anlegen, wenn kein Konsument sie als Eingabe liest;
@@ -63,6 +80,7 @@ Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
 - Der Paket-Endlauf wählt Schritte aus den geänderten Pfaden: reine JSON-/Doku-Änderungen lösen keinen Rust-Test aus, obwohl
   `build.rs` sie einbettet. Ein Paket, das viele Dateien in einem von `build.rs`/Tests gelesenen Ordner anlegt, muss den
   Test des einbettenden Crates im Endlauf haben (Queue-Werkzeug-Regel oder Zusatzschritt), sonst fällt es erst im Gate auf.
+  Ebenso zeigen Pakete einzeln nie das Zusammenspiel (gemeinsamer Ziel-Ordner, Touren/Szenarien erstmals gemeinsam).
 - Ein Hilfsskript und der `bg_run`, der es startet, gehören in getrennte Tool-Blöcke: Beide laufen parallel, der Start
   findet die Datei sonst nicht (Exit 127).
 - Eine Warte-Schleife auf `gh pr checks` muss den Stand des NEUEN Kopf-Commits abwarten (Run-SHA prüfen); ein altes „fail“
