@@ -39,7 +39,7 @@
     "{\"source\":\"npm:pi-mcp-adapter\",\"scope\":\"user\"}": "7.0.1",
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.48.0",
     "{\"source\":\"npm:pi-subagents\",\"scope\":\"user\"}": "0.90.0",
-    "{\"source\":\"npm:bigpowers\",\"scope\":\"user\"}": "2.96.1",
+    "{\"source\":\"npm:bigpowers\",\"scope\":\"user\"}": "2.96.4",
     "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.22.0",
     "{\"source\":\"npm:pi-lens\",\"scope\":\"user\"}": "4.5.2",
     "{\"source\":\"npm:@narumitw/pi-usage\",\"scope\":\"user\"}": "0.70.0"
