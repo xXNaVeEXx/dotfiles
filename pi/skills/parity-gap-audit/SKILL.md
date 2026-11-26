@@ -23,7 +23,10 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
    der Checkout alle fehlenden Blobs des Stands nachlädt.
    Vorher `free -m` prüfen; Klone sind RAM-neutral, Analyse-LLMs nicht (RAM-Regeln des Rechners gelten).
    Folge-Audit: die alten Klone liegen lassen und frisch daneben klonen (eigener Ordner mit Datum). Dann
-   `diff -rq --exclude=.git <alt> <neu> | wc -l` je Vorbild. So weiß jeder Researcher, was seit dem letzten Audit
+   `diff -rq --exclude=.git <alt> <neu> | wc -l` je Vorbild. Hat das Vorbild ein CHANGELOG, dessen Abschnittsgrenzen
+   je Version (`grep -n '^## ' CHANGELOG.md`) zusammen mit der Liste der geänderten Dateien in den Brief schreiben –
+   ein Worker mit COMMON-AUDIT-Regeln und ~12 Prüfpunkten (je Eintrag: Beleg im neuen, Suche im alten Stand und in
+   der eigenen App, Gegenprobe aller alten Lücken als Abschnitt G) lieferte so ein vollständiges Delta in ~10 min. So weiß jeder Researcher, was seit dem letzten Audit
    dazukam, und Abschnitt G (siehe 3) wird belegbar. Umfang je Paket messen
    (`find <pkg>/src -name '*.ts' | xargs cat | wc -l`), um den Schnitt in Schritt 3 festzulegen.
    **Doku als Quellenliste:** Hat das Vorbild eine Doku-Seite, deren `llms.txt` holen (`<doku-basis>/llms.txt` listet
