@@ -1,8 +1,33 @@
-# Nacharbeit nach rotem Wellen-Gate / roter Wellen-CI (Spur-Orchestrator, Integrationsbranch ist frei)
+# Wellenende: Gesamtlauf starten und Nacharbeit nach rotem Gate / roter CI
 
 Der Leitstand fährt am Wellenende die Voll-Suite über den Integrationsstand und öffnet dann einen PR aus einem
-Schnappschuss-Branch. Meldet er rote Tests (Gate) oder einen roten CI-Job (PR), die jede Paket-Prüfung übersehen hat,
-beheben die Spur-Orchestratoren das selbst (kein neues Paket, kein Worker nötig, wenn es mechanisch ist).
+Schnappschuss-Branch. Der erste Abschnitt gilt für den Leitstand (Start des Gesamtlaufs), die folgenden für die
+Spur-Orchestratoren (Nacharbeit; der Integrationsbranch ist dann frei).
+
+## Start des Gesamtlaufs (Leitstand, sobald die letzte Spur fertig meldet)
+1. Fertigmeldung belegen: Zähler der Queue, Fertig-Marker, Bericht der Spur, Integrationsbranch = Remote, kein Worker
+   mehr im Lauf-Register, keine Prüf-/Einbau-Prozesse mehr.
+2. Abschlussbericht JEDER Spur ganz lesen, bevor gestartet wird, und die Abschnitte „Offen“ und „Risiken“ in die
+   Stand-Datei übernehmen (mit Dateipfad des Berichts). Grund: Dort steht, was gebaut, aber noch ohne Aufrufer ist; das
+   ist der Auftrag der nächsten Welle und geht sonst mit dem Schließen der Spur-Sitzungen verloren.
+3. Speichergrenzen des Laufs am Rechner bemessen, auf dem er tatsächlich baut, nicht am Rezept: Summe der Deckel aller
+   gleichzeitig laufenden Bau-Slots unter dem verfügbaren Speicher dieses Rechners halten (Rezept-Werte gelten für den
+   Haupt-Bauhost; auf dem Ersatzrechner laufen daneben Sitzungen und Dienste). Lieber kleinere Deckel je Slot und den
+   eingebauten Neuversuch mit weniger Jobs nach OOM hinnehmen (kostet nur Zeit), als den Rechner in den Swap zu treiben
+   (der Speicherwächter beendet dann die größte Sitzung). Abweichung vom Rezept in Stand-Datei und Bericht nennen.
+4. Lauf als Hintergrundtask mit `set -o pipefail; … | tee <log>` starten (Exit-Code bleibt wahr), nach ~20 s die ersten
+   Zeilen des Logs lesen: Queues fertig, Hauptzweig eingemischt, Push, Gate gestartet.
+5. Daneben eine kleine Speicher-Wache als zweiten Hintergrundtask starten, die mit dem Lauf endet: Schleife im
+   Minutentakt, Meldung und Ende bei Swap über ~80 % oder wenig verfügbarem Speicher. Den Prozess per `pgrep -f` mit
+   Klammer-Trick suchen (`'phase[.]py …'`), damit die Schleife sich nicht selbst findet. Grund: Aufsicht und Watchdog
+   der Spuren sind am Wellenende gestoppt; ohne eigene Wache meldet sich bis zum Lauf-Ende niemand.
+6. Aufsichten fertiger Spuren nicht neu starten (ihr Watchdog-Timer stoppt beim Fertig-Marker von selbst).
+7. Aufgeschobene Umstellungen jetzt nachholen, solange die Spuren ruhen (z. B. Sitzungen neu laden für ein neues
+   Modell): Befehl senden, danach am Bildschirm der Sitzung die Bestätigung lesen. Als „aktiv“ gilt die Umstellung erst
+   nach dem ersten belegten Start.
+8. Bericht an den Nutzer: gebaut ≠ nutzbar. Ausdrücklich sagen, welche Teile schon im laufenden Programm angeschlossen
+   sind und welche nur als getestete Bausteine vorliegen; teilweise behobene ernste Funde als „zum Teil behoben“ mit
+   dem Rest nennen, nicht als erledigt.
 
 ## Ablauf (rotes Gate)
 1. Ursache am Quelltext der roten Tests und am verantwortlichen Paket-Commit belegen (`git log -- <Datei>`, Dateigrößen,
