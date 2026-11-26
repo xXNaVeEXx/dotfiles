@@ -34,7 +34,11 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
 
 ## Ändern und prüfen
 
-1. Eigener Worktree (`wt switch -c`), dann ruff über `~/.pi-lens/pip-tools/bin/ruff` (nicht im PATH):
+1. Eigener Worktree (`wt switch -c <name>` → `~/projects/pi-telegram.<name>`); der laufende Dienst nutzt den
+   Haupt-Checkout – dort nie ändern, nur mergen und `pi-telegram restart`. Arbeiter bekommen den Paket-Abschnitt
+   aus `docs/PLAN.md` als Brief (Architektur, Regeln, Reihenfolge). Bei beladener Maschine (Load > 10) dauert der
+   Pi-Kaltstart 30–40 s: Live-Prüfungen mit großzügigen Wartezeiten (240 s je Schritt), fremde Prozesse nie beenden.
+   Dann ruff über `~/.pi-lens/pip-tools/bin/ruff` (nicht im PATH):
    `ruff format pi_telegram tests && ruff check --fix --unsafe-fixes pi_telegram tests` – Projekt-Config in
    `pyproject.toml` (select ALL) nötig, sonst entfernt ruff `# noqa`-Kommentare als „unused“.
 2. `python3 -m unittest discover -s tests` (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
@@ -53,8 +57,10 @@ Fehler, Zeilen ≤ 120).
 - `prompt` → `{"disposition": "started"|"queued"|"handled"}`; „handled“ = kein Lauf (Extension-Kommando) →
   2 s Schonfrist, dann erledigen. Ende erst bei `agent_settled` (nach `agent_end` kommen Retry/Compaction/
   Follow-up). `images` = base64 + mimeType. Während eines Laufs nur `steer`/`follow_up` oder Extension-Kommandos.
-- Kaltstart mit allen Erweiterungen ca. 7 s (bigpowers, pi-lens, MCP); Antworten 10–20 s – Statusmeldungen sind
-  Pflicht. `get_state` liefert sessionFile/sessionId/isStreaming/model/thinkingLevel; `switch_session` braucht
+- Kaltstart mit allen Erweiterungen und Skills 7–40 s je nach Last (Erweiterungen ≈ 16 s, Skills ≈ 20 s bei
+  Load 15; ohne beides 0,6 s) – er dominiert die Latenz, das warme Pi antwortet in 4–5 s. Messen: Zeit bis zur
+  ersten `get_state`-Antwort, einmal normal, einmal mit `--no-extensions`/`--no-skills`. Prozess deshalb warm
+  halten (beim Dienststart vorladen, Hauptsitzung nicht beenden); Antworten 10–20 s – Statusmeldungen sind Pflicht. `get_state` liefert sessionFile/sessionId/isStreaming/model/thinkingLevel; `switch_session` braucht
   `{"sessionPath": …}`; `set_session_name` `{"name": …}`.
 - `extension_ui_request` blockiert Pi bis zur Antwort; `timeout` in ms → Rechtzeitig antworten oder verfällt.
   Startup-Flut: `notify`-Meldungen („80 skills loaded“, Hinweise) kommen **vor** dem ersten `prompt` und bei
@@ -94,6 +100,13 @@ Fehler, Zeilen ≤ 120).
   „DejaVu-Sans“ fehlt hier). glm-5.3 hat keinen Bild-Input, glm-5.4 schon – beide Fälle prüfen.
 - Reader-Thread: Wrappersignaturen exakt übernehmen (`_settle(self, chat, aborted, *, handled=False)`) – ein
   TypeError im RPC-Leser-Thread hinterlässt einen hängenden Chat ohne Fehlermeldung im Journal.
+- Statuszeile und chat action „typing“ synchron beim Eingang senden, bevor der Prozess startet: Telegram zeigt
+  „schreibt …“ am Namen nur 5 s (alle 4 s erneut senden), und synchrone Hinweise („Eingereiht“) überholen die
+  Statuszeile aus dem Pool-Thread, wenn mehrere Updates in einem Abruf kommen – die Reihenfolge wirkt vertauscht.
+- Trägheit messen: Die Brücken-Sitzung liegt im selben Ordner wie die eigene Terminal-Sitzung (beide cwd ~) →
+  anhand Kopfzeitstempel und erstem Nutzerwunsch erkennen. Die Zeitstempel der Einträge gliedern die Wartezeit
+  (Sitzungskopf = Prozessstart, `model_change`, erste Nutzernachricht = Auftrag gesendet, Assistentennachricht =
+  Antwort); fehlen Auftrag-Zeilen im Journal, ist die Sitzungsdatei die einzige Zeitmessung.
 
 ## Typische Störungen
 
@@ -105,10 +118,14 @@ Fehler, Zeilen ≤ 120).
 | Statusnachricht bleibt stehen | Prozess hängt → `/stopp`, sonst `pi-telegram restart` (Sitzung bleibt erhalten) |
 | viele „🔔 Hinweis“ | `chat.quiet` greift nur bis der Prozess steht – Meldung aus der Startphase einordnen: auftragsrelevant (Statuszeile) oder unterdrücken |
 | Antwort vom falschen Modell, Bild wird trotz fehlendem Bild-Input nicht beschrieben | Befehl und Auftrag liefen parallel → Befehle nur über `_run_command`, `/modell` muss vor dem Auftrag fertig sein |
+| „antwortet langsam“, kein „schreibt …“ am Namen | fast immer Pi-Kaltstart (20–40 s unter Last) ohne Schreib-Signal während des Starts → Sitzungsdatei nachmessen; Abhilfe: Prozess vorladen/warm halten, „typing“ ab Eingang |
 
 ## Erweitern
 
-Neuer Brücken-Befehl: `_cmd_<name>` in `bridge.py` + Verzweigung in `_command` + HELP-Text (HTML-escaped!) +
+Vor jeder Erweiterung `docs/PLAN.md` lesen (Ausbau: Fundament mit `registry.py`/`commands/core.py`/`features/<x>.py`;
+Pakete Flüssigkeit, Reaktion/Zitat, Dateien/Export, Sprachnachrichten, Schutzschild, Orte/Zeitpläne/Kontingent,
+Gruppe). Ist das Fundament gemergt, ist ein neues Feature `pi_telegram/features/<x>.py` mit `register(reg)` +
+Eintrag in der FEATURE-Liste + Tests. Solange nicht: neuer Brücken-Befehl = `_cmd_<name>` in `bridge.py` + Verzweigung in `_command` + HELP-Text (HTML-escaped!) +
 README-Tabelle + Test in `tests/test_bridge.py` (FakePi, `wait_until`). Neues Ereignis: `_on_event`-Zweig.
 Neues Zielkonto: `pi-telegram allow <Id>`. Sprach- und Videonachrichten sind nicht umgesetzt: den
 Spracherkennungs-Motor nicht selbst wählen (lokal oder API ist eine Nutzerentscheidung; Auswahlkriterien und
