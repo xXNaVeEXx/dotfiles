@@ -51,6 +51,14 @@ strukturiertem Brief; der Orchestrator konsolidiert nur.
    und Schwächen stehen in Reviews und Video-Transkripten.
 2. **Vergleichsbasis benennen:** Die EIGENE Funktions-/Integrations-Doku mit stabilen IDs
    (z. B. FEATURES.md mit LC-Nummern, INTEGRATION_TODO.md mit LX-Nummern). Absolute Pfade in den Brief.
+   **Verhältnis zum Vorbild festlegen** und in COMMON-AUDIT.md sowie in jeden Brief schreiben: (a) Abhängigkeit
+   oder nur Vorbild? Ist das Vorbild in einer anderen Sprache/Laufzeit geschrieben als die eigene App, ist nur
+   sein Verhalten übernehmbar (Semantik, Dateiformat, Fehlerklassen), nicht sein Code; Lücken wie Paket-API,
+   Hot-Reload oder Objektmodell des Vorbilds entfallen dann von vornherein. (b) Setzt der Hersteller es in seinem
+   eigenen Hauptprodukt ein (Abhängigkeitsliste des Produkts prüfen, nicht die Ankündigung)? Was dort nicht
+   eingebaut ist, ist unausgereift und senkt die Dringlichkeit aller Lücken dieses Bereichs. Beides als
+   Prioritätsgrund in die Lückenliste schreiben. Grund: Sonst werden Teilpakete für ein Objektmodell geplant,
+   das zur eigenen Architektur nicht passt, und ein experimentelles Paket wird wie produktionsreif behandelt.
 3. **Je Vorbild einen Analyse-Delegate** (async, 45–60 min Timeout, große Code-Kacheln bis ~150 min), Brief self-contained.
    Rolle: researcher für Berichte, die in einem Zug per Heredoc entstehen; worker mit der Regel „nur die eigene
    Berichtsdatei schreiben, kein git/Build/Netz“ für große Inventare, die inkrementell wachsen und nachgearbeitet werden.
