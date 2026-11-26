@@ -37,11 +37,11 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
 1. Eigener Worktree (`wt switch -c <name>` → `~/projects/pi-telegram.<name>`); der laufende Dienst nutzt den
    Haupt-Checkout – dort nie ändern, nur mergen und `pi-telegram restart`. Arbeiter bekommen den Paket-Abschnitt
    aus `docs/PLAN.md` als Brief (Architektur, Regeln, Reihenfolge). Bei beladener Maschine (Load > 10) dauert der
-   Pi-Kaltstart 30–40 s: Live-Prüfungen mit großzügigen Wartezeiten (240 s je Schritt), fremde Prozesse nie beenden.
+   Pi-Kaltstart 30–40 s: Live-Prüfungen mit großzügigen Wartezeiten (240 s) für den Kaltstart, aber eigenem kleinem Limit (≤ 90 s) und einer Protokollzeile je gesehenem Ereignis für Dialog-Warteschritte – ein verfehltes Warte-Prädikat läuft sonst stillos minutenlang; fremde Prozesse nie beenden.
    Dann ruff über `~/.pi-lens/pip-tools/bin/ruff` (nicht im PATH):
    `ruff format pi_telegram tests && ruff check --fix --unsafe-fixes pi_telegram tests` – Projekt-Config in
    `pyproject.toml` (select ALL) nötig, sonst entfernt ruff `# noqa`-Kommentare als „unused“.
-2. `python3 -m tests` – niemals `python3 -m unittest discover -s tests` (ohne Top-Level überspringt das das Paket-Init, `pi_telegram.config` wird mit dem echten Ordner geladen und die Tests überschreiben die state.json des laufenden Diensts; am 26.11.2026 ging so die Sitzung des Nutzers verloren – seitdem wirft `tests/__init__.py` laut RuntimeError). (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
+2. `python3 -m tests` – niemals `python3 -m unittest discover -s tests` (ohne Top-Level überspringt das das Paket-Init, `pi_telegram.config` wird mit dem echten Ordner geladen und die Tests überschreiben die state.json des laufenden Diensts; so ging einmal die Sitzung des Nutzers verloren – seitdem wirft `tests/__init__.py` laut RuntimeError). (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
    RPC mit `auto_reply`/`reply(text)`/`model_input`; `make_bridge(root, **cfg)`).
 3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe;
    `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
