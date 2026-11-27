@@ -10,6 +10,7 @@ description: "Zweitprüfung eines Lumi-Claw-Arbeitspakets (Worker hat gebaut, Pr
 Arbeitspaket (Katalog-IDs, Status-YAML, Bericht, Handbuch-Fragment) wurde von einem Worker gebaut; der Prüfer liest nur und urteilt `URTEIL: ok|nacharbeit` mit Funden P1/P2/Hinweis als Datei:Zeile. Orchestrator-Seite: Skill subagent-orchestration.
 
 ## Orchestrator: Prüfer starten und Befund holen
+0. **Integrations-Tor:** die letzte Zeile des Berichts muss `ERGEBNIS: fertig – …` heißen (`wpq.py integ` prüft strikt; `abnahme` meldet „teilweise“ nur als Warnung, `integ` bricht mit „MANGEL Bericht“ ab). „Bewusst offen“ gehört in den Text der Zeile, nie als `ERGEBNIS: teilweise` – das selbst als reiner Docs-Commit im Worker-Worktree korrigieren, `abnahme`, dann `integ` neu.
 1. Prüfer-Wahl nach Weisung der Leitstelle: von glm gebaute Pakete brauchen einen Claude-Prüfer (sonnet reicht); von Claude gebaute Pakete darf glm prüfen. Bei geschlossenem Claude-Tor: abnehmen + Endlauf, Zelle „wartet auf Claude-Prüfung“, nicht einbauen.
 2. Vorher selbst: `wpq.py abnahme <WP>` OK, Endlauf grün, Fremdpfad-Check `git diff $(git merge-base HEAD feat/lumi-claw) --stat` (nur Modulordner, Status, Bericht, freigegebene Pfade). Prüfer ohne Shell können das nicht.
 3. Die Benachrichtigung des Prüfers enthält oft nur den Lernpass-Text. Das echte URTEIL steht in `<session>/<runId>/run-0/session.jsonl`: letzte assistant-Textstelle mit „URTEIL“ (ohne „skill_manage“) per Python extrahieren und wörtlich in `spuren/<Spur>/nacharbeit/<WP>.md` ablegen, darunter den verbindlichen Auftrag des Orchestrators.
