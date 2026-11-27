@@ -24,6 +24,14 @@ Ergänzt references/wellen-gate-nacharbeit.md (Abschnitt „Typische Ursachen ei
    zusätzlich neu bauen, wenn irgendeine Datei in `ui/src` jünger als `ui/dist/index.html` ist. Beleg: derselbe
    Tourlauf grün, sobald der Smoke „baue die Oberfläche …“ meldet.
 6. Fremde, bereits abgenommene Seiten (andere Spur) nur melden, nicht anfassen.
+7. Sporadisch rote ERSTE Navigation (nur der erste Schritt rot, alles danach grün, lokal und in anderen CI-Läufen
+   grün): Die Navigation läuft über ein Ereignis (Tauri `app://navigate` per `plugin:event|emit`), dessen Listener
+   die UI erst asynchron nach dem ersten Rendern anmeldet — ein Ereignis direkt nach „Fenster zeigt Oberfläche“ geht
+   verloren und wird nicht wiederholt. Fix im Smoke-Skript, nicht in der Seite: Hilfsfunktion „navigiere und warte“,
+   die das Ereignis alle ~5 s erneut sendet, bis die Marke da ist oder die Frist (Startseite ~60 s) endet; Fehlt die
+   Seite wirklich, bleibt der Prüfpunkt rot (Diagnosezeile mit Seitentext, URL, Marken). Ursache vor dem Fix im Skript
+   und im Listener (`useEffect` in der App-Wurzel) belegen; ohne Reproduktion ehrlich als „Vermutung“ markieren.
+   Solche Nacharbeiten bei laufendem CI-Wiederholungslauf nur auf dem Nacharbeit-Zweig vorbereiten, nicht pushen.
 
 ## Prüfläufe für die eigenen Änderungen
 - `cargo fmt --check` über das ganze Crate schlägt an fremden, vorbestehenden Dateien an: nur die eigenen Dateien mit
