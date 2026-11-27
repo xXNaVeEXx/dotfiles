@@ -65,6 +65,8 @@ Nach **3 gescheiterten Fixes**: STOPP. Das Muster „jeder Fix enthüllt ein neu
 
 Echt umgebungs-/timing-/extern-bedingt? Dann: Untersuchung dokumentieren, angemessenes Handling bauen (Retry, Timeout, Fehlermeldung), Monitoring/Logging ergänzen. Aber: 95 % der „keine Ursache"-Fälle sind unvollständige Untersuchung.
 
+**Ausgebliebener periodischer Auftrag ohne Spur** (Timer, Statusleisten-Auslöser): erst belegen, was sicher war — Rechner wach (Uptime, Journal-Zeilen pro Stunde), Auslöser gelaufen (zwei bekannte Startzeiten modulo Intervall = durchlaufende Phase), keine Fremdkills (Kernel-Journal: OOM-Zeilen samt memcg-Scope) — und dann nicht raten: Spur je Lauf (Start/Ende/Fehler) und Herzschlag des Auslösers einbauen, die gefundenen Schwachstellen härten (Start im `finally`, Auffangnetz je Quelle) und dem Nutzer „ungeklärt, ab jetzt belegbar“ sagen. Die Spur trennt beim nächsten Mal „Auslöser tot“ von „Auftrag gelaufen und gescheitert“.
+
 ## Verwandte Skills hier
 
 - `diagnose-crash` (Omarchy/.agents) — Coredump-Analyse, Backtrace-Symbolisierung

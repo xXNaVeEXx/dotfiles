@@ -25,7 +25,7 @@ Gebaut als reines Lokal-Setup auf omarchy (nicht via nix-conf; Rollout auf ander
   unlesbar → gelbe Zeile in `list`, Standardwerte aktiv.
 - Zustand `~/.local/state/release-watch/state.json` (schema 1: `first_run`, `last_check`, `system.pending_count`,
   `sources{id:{name,kind,pkg,installed,repo,url,names,latest,seen,since,updated_from,updated_at,error,stale,released_at}}`),
-  dazu `lock` (flock) und `last-check.log`. Cache `~/.cache/release-watch/*.txt` (Datei-mtime = Zeitstempel).
+  dazu `lock` (flock), `last-check.log` (Ausgabe des letzten Prüfauftrags), `events.log` (Spur: Prüfung gestartet/ok/übersprungen/gescheitert, unerwarteter Fehler einer Quelle, Bar-Anzeige gescheitert; max. 4 KB) und `heartbeat` (von `bar` höchstens stündlich berührt = Lebenszeichen der Bar). Cache `~/.cache/release-watch/*.txt` (Datei-mtime = Zeitstempel).
 - Intervalle: Prüfung alle 3 h (`CHECK_SECONDS`), Bar ruft `bar` alle 120 s, Startversuch höchstens alle 10 min
   (`RETRY_AFTER`); Bar zeigt `󰚰 !`, wenn die letzte Prüfung > 12 h alt ist (und Uptime > 1 h).
 
@@ -62,7 +62,10 @@ gleich-/höheren Überschrift. Ausgabe im TTY mit Pager, in `foot` mit `--pause`
 
 ## Verifizieren
 
-1. `release-watch selftest` → „9 von 9 Prüfungen bestanden“.
+1. `release-watch selftest` → „10 von 10 Prüfungen bestanden“.
+1b. Nach jeder Änderung am Skript zuerst das Syntax-Gate (`python3 -c "import ast; ast.parse(open(<pfad>).read())"`),
+   dann `ruff format`/`ruff check` (Default und streng), dann selftest — Regel und Grund: Skill
+   `python-script-authoring` (Skripte ohne Endung sind nach jedem Speichern live).
 2. `release-watch list --all`, `release-watch bar | python3 -m json.tool`, `release-watch check --auto`
    (→ „Übersprungen: letzte Prüfung …“, wenn nicht fällig).
 3. Zustellungs-/Ereignispfade ohne den echten Zustand anzufassen: `HOME=/tmp/<test>` + Test-Config, Shim
@@ -78,3 +81,11 @@ gleich-/höheren Überschrift. Ausgabe im TTY mit Pager, in `foot` mit `--pause`
 - `evaluate` ändert den übergebenen Zustand an Ort und Stelle → alte Werte vorher kopieren.
 - `bash -lc` im Bar-Modul: Shebang `#!/usr/bin/python3` und absolute Pfade halten den Start unabhängig vom PATH.
 - `foot -e` schließt bei Programmende → `--pause` am Ende jedes Fensters.
+- `observe` fängt nur `FetchError` → ein unerwarteter Fehler EINER Quelle (z. B. `json.JSONDecodeError` bei
+  verstümmelter Antwort, `http.client.IncompleteRead`) riss früher die ganze Prüfung ab (kein Zustand, keine
+  Meldung, stummer Retry alle 10 min). Jetzt `observe_safely` (Auffangnetz → `error` des Eintrags + Spur-Eintrag)
+  und `http.client.HTTPException` in `fetch_text`; `main` protokolliert Restfehler in der Spur.
+- Auslöser robust: `spawn_check()` steht im `finally` von `cmd_bar`, damit kein Anzeigefehler die Prüfung blockiert.
+- Eine erste Lücke (viele Stunden ohne automatische Prüfung bei laufendem Rechner) blieb ungeklärt; die Timer-
+  Phase sprach für durchlaufende Takte, OOM-Kills betrafen nur fremde Build-Scopes. Seither Spur + Herzschlag →
+  bei erneuter Lücke zuerst `events.log` und `heartbeat`-mtime lesen (Timer tot vs. Prüfung gescheitert).

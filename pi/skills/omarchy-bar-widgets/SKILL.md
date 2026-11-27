@@ -26,6 +26,7 @@ In `~/.config/omarchy/shell.json` unter `bar.layout.<section>` eintragen:
 - Unterstützte Settings je Entry: `text, tooltip, onClick, onMiddleClick, onRightClick, keepSpace, horizontalMargin (7.5), verticalPadding (6), fontSize (12)`.
 - `shell.json` hot-reloadedt beim Speichern — kein Restart nötig. Vorher Kopie `shell.json.bak.<name>`; Entry **textuell** einfügen (die Datei ist nicht byte-identisch zu `json.dumps` — neu Serialisieren schreibt sie ganz um); die Position in `bar.layout.<section>` ist die Anzeigereihenfolge.
 - Implementierung: `CustomCommandModule` in `/usr/share/omarchy/shell/plugins/bar/Bar.qml` (~Zeile 1800), Parser `Util.parseModuleJson`.
+- Diagnose stiller Takte: stdout/stderr der Shell gehen an journald → `journalctl _PID=$(pidof quickshell) --since "<zeit>" -o short-iso` zeigt QML-/Prozess-Warnungen. Ein Takt, der ohne Ausgabe scheitert oder gar nicht startet, hinterlässt dort NICHTS — deshalb braucht ein auslösendes Command-Modul eine eigene Spur (Start/Ende/Fehler) und einen Herzschlag im Skript (Abschnitt Meldungs-Widget).
 
 ## Weg 2: Eigener Provider im `omarchy.agents`-Panel (reich)
 
@@ -98,6 +99,12 @@ Datenquellen auf Asahi/Apple Silicon:
 - PIL fehlt auf Omarchy-ARM → Screenshot-Crop mit `magick <src> -crop WxH+X+Y +repage -resize 200% out.png`.
 
 ## Meldungs-Widget: Bar-Modul als Auslöser statt systemd-Timer (verifiziert 11/2026)
+
+Auslöser nie hinter Anzeigelogik hängen: der Hintergrund-Start gehört ans Ende von `cmd_bar` (möglichst im
+`finally`), weil `Bar.qml` mit `runProcess` nur startet, wenn der vorige Prozess beendet ist (single-flight) —
+ein hängender oder vor dem Start abbrechender Prozess stoppt alle weiteren Takte ohne jede Spur. Deshalb immer
+eine kleine Ereignis-Spur (Start/Ende/Fehler) und einen stündlich berührten Herzschlag mitschreiben, damit eine
+Lücke hinterher zwischen „Timer tot“ und „Prüfung gescheitert“ unterschieden werden kann.
 
 Muster für „ich will benachrichtigt werden“ (Instanz: Release-Watch, Skill `release-watch`): ein Command-Modul zeigt einen Zähler und startet selbst die periodische Prüfung.
 - Entry: `{"id":"gamzat.<x>","type":"command","exec":"<skript> bar","interval":120,"horizontalMargin":0,"onClick":"foot -e <cli> notes --pause","onRightClick":"foot -e <cli> list --pause"}`.

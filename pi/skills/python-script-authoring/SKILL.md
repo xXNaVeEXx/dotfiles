@@ -36,11 +36,17 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 - Skripte ohne `.py`-Endung (Starter `bin/pi-telegram`, Bar-Skript `zai-usage`) prüft der Write-Hook nicht
   („no analyzer handles this file type“) – dort nach jedem Edit selbst `ruff check --output-format concise`
   laufen lassen; vorbestehende Befunde (BLE001, UP017) sind keine Blocker, nur der Vergleich vorher/nachher zählt.
+- Wird das Skript ohne Endung von einer Statusleiste, einem Timer oder einem Daemon aufgerufen, ist es nach JEDEM
+  Speichern sofort live: zuerst das Syntax-Gate (`python3 -c "import ast; ast.parse(open('<file>').read())"`),
+  dann ruff, dann weiterbauen. Grund: Ein edit-Aufruf mit vielen Blöcken hat einmal das Docstring-Ende `"""`
+  zerlegt (zwei Anführungszeichen standen am Ende des eingefügten Blocks), `ruff format` verweigerte mit
+  Syntaxfehlern, und das Widget blieb bis zur Reparatur stumm. oldText deshalb nie an einem schließenden `"""`
+  enden lassen — an der folgenden `def`-Zeile oder an ganzen Code-Zeilen ansetzen.
 - Für den strengen Lauf ohne pyproject hat sich bewährt: `ruff check --line-length 100 --select ALL --ignore
   S603,S607,S310,PLR2004,EM101,EM102,TRY003,TRY301,FBT001,FBT002,FBT003,D203,D213,D212,D400,D415,COM812,ISC001,
   INP001,S608,CPY001,SIM112,T201` – damit ist „All checks passed“ erreichbar; was bleibt, sind echte
   Komplexitätsmeldungen (C901, PLR0915), gelöst durch Zerlegen in Helfer (Anzeigeblöcke, Nebeneffekt-Teile),
-  nicht durch `noqa`.
+  nicht durch `noqa`. Die Nutzer-Config meldet `BLE001` schon im Default-Lauf: ein bewusstes Auffangnetz mit `# noqa: BLE001` kennzeichnen und BLE001 im strengen Lauf dann NICHT zusätzlich ignorieren (sonst RUF100 „unused noqa“).
 - Funktionen, die ihr Eingabe-Dict an Ort und Stelle ändern (Zustandsautomaten): Werte, die man danach braucht
   („was war gesehen?“), VOR dem Aufruf kopieren – hinterher liest man nur noch den neuen Stand.
 - Selftest schlägt fehl, obwohl dieselben Aufrufe von Hand gelingen → Testdaten in der Datei byteweise ansehen
@@ -63,7 +69,7 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 ## Exception-Muster für unattended/Bar-Scripts
 
 - `except Exception:` / `except: pass` blockieren (BLE001, S110). Stattdessen typisiert fangen und in eine Noop-Funktion leiten:
-  `except (OSError, ValueError, subprocess.SubprocessError) as e: _quiet(e)` — `_quiet` ist eine leere Funktion mit Docstring (bewusstes Schweigen, kein Log-Rauschen in Poll-Scripts).
+  `except (OSError, ValueError, subprocess.SubprocessError) as e: _quiet(e)` — `_quiet` ist eine leere Funktion mit Docstring (bewusstes Schweigen, kein Log-Rauschen in Poll-Scripts). Ausnahme: Auffangnetz an einer Quellen-/Nebenläufigkeitsgrenze, das den Fehler als Ergebnisfeld plus Logzeile festhält → `except Exception as error:  # noqa: BLE001`; eine Typ-Aufzählung ließe dort Lücken, und ein durchrutschender Fehler bräche sonst den ganzen Lauf ab (alle Quellen, kein Zustand, stummer Retry).
 - `json.JSONDecodeError` ist ValueError-Subklasse — mitfangen durch `ValueError`, nicht extra listen.
 - `subprocess.run(...)` IMMER `check=False` explizit setzen (PLW1510), außer Fehler sollen knallen.
 - KeyError-Gefahr bei dict-Zugriffen auf gecachten/deserialisierten State: Bedingung um eine Key-Existenz-Prüfung erweitern (`if st_prev and "cpu" in st_prev`), nicht blind zugreifen.
