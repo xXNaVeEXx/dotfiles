@@ -56,7 +56,8 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
    `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
 4. Commit im Repo; Dienst neu starten (`pi-telegram restart`) – der Starter zeigt per Symlink aufs Repo.
    Neustart nur bei ruhigem Bot (Journal ohne laufenden Auftrag, keine offene Statuszeile): mitten im Auftrag
-   verliert der Neustart die Antwort.
+   verliert der Neustart die Antwort. `config.json` liest die Brücke nur beim Start (heiß gelesen werden allein die
+   Sperren-Schlüssel in `features/sperre.py`) – nach Änderungen an der Konfiguration neu starten.
 
 Regeln aus Skill python-script-authoring gelten (kein `except Exception`, `check=False` explizit, typisierte
 Fehler, Zeilen ≤ 120).
@@ -130,6 +131,14 @@ Leser-Thread, Kaltstart) stehen im Skill pi-rpc-client; hier nur das Brücken-sp
   `reaction: []` zurücksetzen, Pausen einhalten – sonst 429 oder Verbindungsabbrüche).
 - Dienst-Kontext prüfen, ohne den Dienst zu stören: `systemd-run --user --quiet --wait --pipe --collect
   -E PYTHONPATH=<Repo> python3 -c '…'` (PATH, Wayland-Socket-Rückfall für grim).
+- `tsc` liegt nur im nix-Store (nicht im PATH der Agenten-Shell): Node-Prüfskripte mit Typprüfung starten mit
+  `TSC=$(ls /nix/store/*-typescript-5.9.3/bin/tsc | head -1) node tools/<check>.ts`.
+- ruff format macht aus einem freistehenden mehrzeiligen Text (`"""…"""`) nach einer Zuweisung eine verkettete
+  Zeichenkette (`""" ""`): Erklärungen zu Konstanten als `#`-Kommentare schreiben.
+- Anderer Rechner (`/maschine`, Config `machines`): Fern-Pi hinter `ssh -o BatchMode=yes -o ServerAliveInterval=15
+  -o ServerAliveCountMax=3 -o ConnectTimeout=10 [-l user] <host> "cd <Ordner> && <pi_bin> --mode rpc"`; Schutzschild
+  und `/foto` nur lokal; Sitzungen und Dateien des Zielrechners per `find`/`base64` über ssh; dort muss `auth.json`
+  vorhanden sein (einmal kopieren, 0600).
 - Statuszeile gehört zum Auftrag: schon beim Erledigen des Auftrags aus dem Chat nehmen, sonst benutzt der
   nächste Auftrag dieselbe Nachricht und die Antwort überschreibt sie.
 - Statuszeile und chat action „typing“ synchron beim Eingang senden, bevor der Prozess startet: Telegram zeigt
@@ -163,7 +172,7 @@ Hook `tool_call` (einziger Hook vor der Ausführung; `block: true` verhindert de
 ## Erweitern
 
 Vor jeder Erweiterung `docs/PLAN.md` lesen. Das Fundament ist gemergt (`registry.py`, `commands/core.py`,
-`features/<x>.py`; Features: komfort, reaktionen, dateien, sperre, sitze). Neues Feature =
+`features/<x>.py`; Features: komfort, reaktionen, dateien, sperre, sitze, rechner, stimme). Neues Feature =
 `pi_telegram/features/<x>.py` mit `register(reg)` + Eintrag in `FEATURES` (`features/__init__.py`), bei Bedarf
 neues Ereignis in `registry.EVENTS`, Befehle per `reg.command(...)`, Tests in `tests/test_<x>.py`.
 Pakete bauen Arbeiter in eigenen Worktrees (agent „worker“; Brief = Paketzeile aus PLAN + Ziele + DATEI-GRENZEN
@@ -176,7 +185,16 @@ EINER `&&`-Kette und Konfliktmarker vor dem Commit zählen (ein abgebrochenes Sk
 einmal Marker committet). Wächter nie durch Rohre führen (`ruff check | tail` maskiert den Exit-Code).
 Zeitüberschreitung eines Arbeiters: uncommittete Arbeit sichern, `main` hinein mergen, selbst fertigstellen –
 und Arbeiter früh steuern, wenn sie einem Zeitfehler der Suite nachjagen (Ursachen unter „Ändern und prüfen“).
+Was der Arbeiter zuletzt tat, zeigt seine Sitzungsdatei (JSONL unter
+`~/.pi/agent/sessions/--home-gamzat--/<eigene Sitzung>/<Lauf-Id>/run-0/session.jsonl`; je Zeile `message.role` und
+`content[]` mit `type` toolCall, `name`, `arguments`): die letzten Werkzeugaufrufe lesen und genau dort
+weitermachen – zweimal lag nach 90 min nur noch README, Plan oder Prüfskript offen.
 Neues Zielkonto: `pi-telegram allow <Id>`. Sprache: Werkzeuge `tools/stt` (Parakeet v3 int8,
 Umgebung `~/.local/share/pi-telegram/stt-env`) und `tools/tts` (Supertonic 3, Modellordner des Nutzers) sind
-gebaut, Messwerte und Stolperfallen (Opus kippt ins Englische, Telegram verlangt Ogg Opus, 110 s je Stück) in
-`docs/fakten/`; der Einbau in die Brücke ist Paket H („Stimme“).
+gebaut und als Paket „Stimme“ eingebaut (`features/stimme.py`: Sprachnachrichten über den Hook `attachment` →
+`tools/stt` → Auftrag, `/vor`, `/vor immer|aus`, `/sprich <Text>`; Config `stt_command`, `tts_command`,
+`ffmpeg_command`); Messwerte und Stolperfallen (Opus-Dateien werden schlechter erkannt als WAV, Teilstücke kippen
+ins Englische; Telegram verlangt Ogg Opus; 110 s je Stück;Kette im Dienstkontext mit `systemd-run` und
+`PATH=/usr/bin:/bin` prüfen) in `docs/fakten/spracherkennung.md` und `docs/fakten/sprachausgabe*.md`. Ansichten
+(OpenUI): Phase 1 und pi-Seite auf main (`extensions/telegram-ansicht.ts`, Werkzeug `telegram_ansicht`), die
+Brückenseite war beim Schreiben in Arbeit; Fakten in `docs/fakten/ansichten.md`.
