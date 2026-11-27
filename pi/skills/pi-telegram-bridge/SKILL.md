@@ -196,5 +196,9 @@ gebaut und als Paket „Stimme“ eingebaut (`features/stimme.py`: Sprachnachric
 `ffmpeg_command`); Messwerte und Stolperfallen (Opus-Dateien werden schlechter erkannt als WAV, Teilstücke kippen
 ins Englische; Telegram verlangt Ogg Opus; 110 s je Stück;Kette im Dienstkontext mit `systemd-run` und
 `PATH=/usr/bin:/bin` prüfen) in `docs/fakten/spracherkennung.md` und `docs/fakten/sprachausgabe*.md`. Ansichten
-(OpenUI): Phase 1 und pi-Seite auf main (`extensions/telegram-ansicht.ts`, Werkzeug `telegram_ansicht`), die
-Brückenseite war beim Schreiben in Arbeit; Fakten in `docs/fakten/ansichten.md`.
+(OpenUI): pi-Seite und Brückenseite auf main und im Dienst (`extensions/telegram-ansicht.ts`, Werkzeug
+`telegram_ansicht`; `pi_telegram/ansichten.py` lauscht nur auf 127.0.0.1:8797, Id unratbar, Eingaben nur mit
+geprüfter `initData`). Der Taste fehlt noch die HTTPS-Adresse: `tailscale serve --bg 8797` endet ohne root mit
+„Access denied: serve config denied“ – der Nutzer setzt einmalig `sudo tailscale set --operator=$USER`, danach
+`tailscale serve --bg 8797`, in config.json `"ansicht_basis": "https://<Rechner>.<Tailnet>.ts.net"`, Neustart,
+Handy-Test (Handy braucht die Tailscale-App). Fakten in `docs/fakten/ansichten.md`.
