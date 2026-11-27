@@ -48,11 +48,21 @@ in einem halben Tag aufgebraucht.
    Quittungen in den Journalen der Spuren lesen. Grund: Nach einer Kontextverdichtung mitten in der Runde fehlt die Erinnerung an die
    eigenen Schritte, und eine zweite gleiche Anweisung erzeugt doppelte Quittungen und Rückfragen. Dasselbe gilt für Übersicht,
    Nutzer-Liste und Statusseite: erst lesen, dann nur das Fehlende nachziehen.
-2. Jede Spur anweisen: keine neuen Pakete mit dem knappen Anbieter (die wartenden beim Namen nennen), neue Pakete nur mit dem freien
-   Anbieter; der knappe nur noch für Pflicht-Prüfer (mit dem günstigeren Modell, wo der Auftrag das starke nicht verlangt) und für
-   Laufendes. Quittung im Journal verlangen. Grund: Ein mitten im Lauf pausierter Worker kostet beim Fortsetzen erneut den vollen Kontext.
+2. Jede Spur anweisen: keine neuen Pakete mit dem knappen Anbieter (die wartenden beim Namen nennen); der knappe nur noch für
+   Pflicht-Prüfer (mit dem günstigeren Modell, wo der Auftrag das starke nicht verlangt) und für Laufendes. Quittung im Journal
+   verlangen. Grund: Ein mitten im Lauf pausierter Worker kostet beim Fortsetzen erneut den vollen Kontext.
+   Den Satz zum freien Anbieter eng fassen: Er baut nur Pakete, deren Modell-Spalte ihn nennt; Pakete, die für den knappen Anbieter
+   geplant sind, bleiben zurück und wechseln nicht das Modell. Grund: „Neue Pakete nur mit dem freien Anbieter“ liest eine Spur als
+   Erlaubnis, das nächste wartende Paket einfach mit dem billigeren Modell zu bauen, auch wenn es wegen Schwierigkeit oder Sicherheit
+   (Geheimnisse, Anmeldung, Rechte) dem starken Modell zugeteilt war.
+   Beim nächsten Wecken gegenprüfen: Modell jedes laufenden Laufs im Lauf-Register gegen die Modell-Spalte seines Pakets halten.
+   Läuft ein solches Paket schon mit dem billigeren Modell, es nicht abbrechen, sondern die Prüfung durch das starke Modell vor dem
+   Einbau zur Pflicht mit Vorrang machen und kein abhängiges Paket vorher starten lassen; die Entscheidung protokollieren.
 3. In der Queue zählen, wie viele Pakete der freie Anbieter laut Modell-Spalte überhaupt bauen darf, und dessen eigenen Wochenwert
    gegen seine Grenze halten. Beides im Bericht nennen, damit klar ist, wie lange die Umstellung trägt.
+   Die Prüfpaarung dabei ausdrücklich regeln: Jedes Paket des freien Anbieters braucht vor dem Einbau die Prüfung durch den knappen.
+   Ist dessen Tor dann zu, schreibt die Spur „wartet auf Prüfung“ in die Zelle, baut nicht ein und nimmt das nächste Paket, das von
+   dem wartenden nicht abhängt. Grund: Ohne diese Regel baut die Spur ungeprüft ein oder bleibt ganz stehen.
 4. Neuen Eintrag in die Nutzer-Liste: aktueller Wert, Spanne bis zur Grenze, bisheriger Fortschritt, und was der Nutzer tun kann
    (Kontingent zurücksetzen und Bescheid sagen, Grenze ändern, nichts tun = Pause bis zum Wochenwechsel).
 5. In der Übersicht den ganzen Kontingent-Absatz neu schreiben, nicht nur die Kopfzeile: Verlaufswerte von heute, geltende Grenze je
