@@ -80,6 +80,7 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 - `sorted(x.get(k) for k in …)` blockt wegen `None` im Generator: `sorted(f for f in (…get…) if f is not None)`.
 - Loop-Variable, die im Body ungenutzt bleibt (`for ifn, v in …` ohne `ifn`): über `.values()` iterieren oder Variable nutzen.
 - Variablenname `l` (E741) nie verwenden — `row`/`line`.
+- Konstante Listen (Endungen, Namen, Schlüssel) als Literal schreiben (`frozenset({".pdf", ".html"})`), nicht als `"...".split()`: der Hook blockt `str.split` an Konstanten („Consider using a list literal instead of str.split“).
 
 ## Verifikations-Disziplin
 
