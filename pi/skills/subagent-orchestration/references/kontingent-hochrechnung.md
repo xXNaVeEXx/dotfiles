@@ -40,6 +40,26 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
     mit starkem Modell): Jeder solche Lauf zählt wie ein eigenes Paket. Grund: Die Rate je Paket stammt aus der Zeit ohne diese Läufe;
     die Grenze kommt dann Stunden früher als angesagt.
 
+## Grenze rückt näher: rechtzeitig auf den freien Anbieter umstellen
+Zeigt die Hochrechnung, dass die Grenze in wenigen Stunden erreicht ist (Faustwert: früher, als ein großes Paket samt Prüfung und
+Nacharbeit dauert), nicht auf die Wache warten. Das gilt genauso kurz nach einer Anhebung durch den Nutzer: Der neue Abstand ist oft
+in einem halben Tag aufgebraucht.
+1. Vor dem Senden prüfen, ob diese Runde die Anweisung schon geschickt hat: letzte Zeile der Stand-Datei und die jüngsten
+   Quittungen in den Journalen der Spuren lesen. Grund: Nach einer Kontextverdichtung mitten in der Runde fehlt die Erinnerung an die
+   eigenen Schritte, und eine zweite gleiche Anweisung erzeugt doppelte Quittungen und Rückfragen. Dasselbe gilt für Übersicht,
+   Nutzer-Liste und Statusseite: erst lesen, dann nur das Fehlende nachziehen.
+2. Jede Spur anweisen: keine neuen Pakete mit dem knappen Anbieter (die wartenden beim Namen nennen), neue Pakete nur mit dem freien
+   Anbieter; der knappe nur noch für Pflicht-Prüfer (mit dem günstigeren Modell, wo der Auftrag das starke nicht verlangt) und für
+   Laufendes. Quittung im Journal verlangen. Grund: Ein mitten im Lauf pausierter Worker kostet beim Fortsetzen erneut den vollen Kontext.
+3. In der Queue zählen, wie viele Pakete der freie Anbieter laut Modell-Spalte überhaupt bauen darf, und dessen eigenen Wochenwert
+   gegen seine Grenze halten. Beides im Bericht nennen, damit klar ist, wie lange die Umstellung trägt.
+4. Neuen Eintrag in die Nutzer-Liste: aktueller Wert, Spanne bis zur Grenze, bisheriger Fortschritt, und was der Nutzer tun kann
+   (Kontingent zurücksetzen und Bescheid sagen, Grenze ändern, nichts tun = Pause bis zum Wochenwechsel).
+5. In der Übersicht den ganzen Kontingent-Absatz neu schreiben, nicht nur die Kopfzeile: Verlaufswerte von heute, geltende Grenze je
+   Anbieter, was bei Erreichen passiert. Grund: Die Kopfzeile wird jede Runde erneuert, die Absätze darunter veralten unbemerkt um
+   Tage (alte Grenze, alte Vorhersage, altes Modell), und der Nutzer liest auf einer Seite widersprüchliche Zahlen.
+6. Im Bericht die Bitte wiederholen, beim Zurücksetzen Bescheid zu sagen, und sagen, was ohne Zurücksetzen geschieht.
+
 ## Grenze erreicht: Pause fahren
 1. Die Wache nennt Wert, Tor und Pausenende. Antwortet der Nutzer bis dahin nicht, gilt der angekündigte Standard – keine weitere Rückfrage.
    Das Pausenende der Wache gegen die Aussage des Tor-Skripts halten („frei ab …“): Ist die Endspurt-Rampe abgeschaltet (Rampen-Höchstwert
@@ -83,6 +103,8 @@ Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Te
    Zwischenspeicher), ihn sofort beheben und die Spur ausdrücklich freigeben: Sie wartet sonst trotz aufgehobener Pause.
 7. Im Bericht: neue Grenze, aktueller Wert und Abstand, was gestartet ist, was noch ohne Quittung ist. Kündigt der Nutzer ein
    Zurücksetzen des Kontingents an, um Bescheid bitten, damit die Wache auf die neue Woche gestellt wird.
+8. Ab dem Messpunkt des Wiederanlaufs neu hochrechnen und bei jedem Wecken nachziehen; rückt die neue Grenze näher, nach dem
+   Abschnitt „Grenze rückt näher“ handeln.
 
 ## Pausenende: erst messen, dann wecken
 - Ein Pausenende vor dem Wochenwechsel (z. B. Beginn einer Endspurt-Rampe, die das Tor anhebt) gilt nur, wenn das Kontingent dann
@@ -119,7 +141,8 @@ Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Te
 3. Prüfen, warum die eigene Messung alt war. Häufig steigt die eigene Probe früh aus, sobald der Login des Anbieter-Werkzeugs wieder
    gültig ist, und überlässt die Messung einem anderen Dienst mit längerem Takt.
 4. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
-   nächste Welle). Eine Kontingent-Wache auf die Grenze neu aufsetzen, bevor wieder Worker starten.
+   nächste Welle). Eine Kontingent-Wache auf die Grenze neu aufsetzen, bevor wieder Worker starten. Galt vorher eine Einschränkung
+   wegen der nahenden Grenze („nur der freie Anbieter baut“), sie bei den Spuren ausdrücklich aufheben.
 
 ## Voller Zwischenspeicher (/tmp) hält eine Spur an
 Spuren dürfen dort nichts Fremdes löschen und melden den Zustand; der Leitstand räumt, aber nur Belegbares.
@@ -137,9 +160,11 @@ Spuren dürfen dort nichts Fremdes löschen und melden den Zustand; der Leitstan
 - Die Rate je Paket schwankt mit der Modellmischung (starkes Modell für Prüfer und lange Pakete kostet ein Mehrfaches).
   Stehen im Rest viele Pakete mit starkem Modell oder mehrstufige Sammelpakete (ein Paket, mehrere lange Läufe), sie als mehrere
   Pakete zählen und den Endstand als Spanne angeben.
+- Am Anfang einer Welle ist die Rate je Paket noch nicht belastbar: Die ersten großen Pakete verbrauchen mit Prüfung und Nacharbeit
+  viele Punkte, bevor eines fertig ist. Dann nur mit Punkten je Stunde rechnen und das im Bericht so sagen.
 - Kurzzeitfenster und Wochenfenster getrennt betrachten; fehlt die Messung des Kurzzeitfensters, das im Bericht sagen statt 0 % zu melden.
-- Nähert sich der Wert der Grenze, keine neuen langen Pakete mit starkem Modell mehr beginnen lassen, die sicher in die Pause laufen:
-  Ein mitten im Lauf pausierter Worker kostet beim Fortsetzen erneut den vollen Kontext.
 - Der Wochenwert ist der Verbrauch des ganzen Kontos, nicht der eigenen Arbeit. Im Bericht trennen: „durch dieses Vorhaben von X auf Y,
   der Rest anderer Verbrauch“, sonst wirkt ein voller Zähler wie ein Fehler der Orchestrierung.
 - Zeitstempel in Stand-Datei und Berichten per `date` holen, nicht schätzen – auch im eigenen Lauf nach einer langen Pause.
+- Zählbefehle am Ende einer Runde, die bei null Treffern mit Exit 1 enden (`grep -c`), mit `|| true` abschließen.
+  Grund: Sonst sieht die ganze erfolgreiche Runde wie ein Fehler aus.
