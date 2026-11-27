@@ -1,6 +1,6 @@
 ---
 name: omarchy-bar-widgets
-description: Eigene Widgets in die Omarchy-Statusbar und ins omarchy.agents-Panel bringen — Command-Module in shell.json, Usage-Record-Collector fürs Agents-Panel (Schema, percent-Bruch-Falle), inkl. z.ai/bigmodel.cn Usage-API. Use when adding custom data/widgets to the Omarchy bar or agents panel, querying z.ai GLM Coding Plan usage, or when the Claude usage record shows empty limits or a quota gate reading it suddenly reports 0 %.
+description: Eigene Widgets in die Omarchy-Statusbar und ins omarchy.agents-Panel bringen — Command-Module in shell.json, Usage-Record-Collector fürs Agents-Panel (Schema, percent-Bruch-Falle), inkl. z.ai/bigmodel.cn Usage-API. Use when adding custom data/widgets to the Omarchy bar or agents panel, querying z.ai GLM Coding Plan usage, or when the Claude usage record shows empty limits or a quota gate reading it suddenly reports 0 %, or when a bar widget shall count and notify about background events (update watcher) and act as trigger instead of a systemd timer.
 ---
 
 # omarchy-bar-widgets
@@ -24,7 +24,7 @@ In `~/.config/omarchy/shell.json` unter `bar.layout.<section>` eintragen:
 - Script läuft via `bash -lc` alle `interval` Sekunden (**Default 5s — interval immer explizit setzen!**).
 - Ausgabe: Plaintext oder Waybar-JSON `{"text","tooltip","class"}`; `class:"active"` hebelt das Widget farblich hervor.
 - Unterstützte Settings je Entry: `text, tooltip, onClick, onMiddleClick, onRightClick, keepSpace, horizontalMargin (7.5), verticalPadding (6), fontSize (12)`.
-- `shell.json` hot-reloadedt beim Speichern — kein Restart nötig.
+- `shell.json` hot-reloadedt beim Speichern — kein Restart nötig. Vorher Kopie `shell.json.bak.<name>`; Entry **textuell** einfügen (die Datei ist nicht byte-identisch zu `json.dumps` — neu Serialisieren schreibt sie ganz um); die Position in `bar.layout.<section>` ist die Anzeigereihenfolge.
 - Implementierung: `CustomCommandModule` in `/usr/share/omarchy/shell/plugins/bar/Bar.qml` (~Zeile 1800), Parser `Util.parseModuleJson`.
 
 ## Weg 2: Eigener Provider im `omarchy.agents`-Panel (reich)
@@ -97,6 +97,17 @@ Datenquellen auf Asahi/Apple Silicon:
 - Ausführung ~0.3s (sensors+df+ps subprocesses) — interval 3s unkritisch.
 - PIL fehlt auf Omarchy-ARM → Screenshot-Crop mit `magick <src> -crop WxH+X+Y +repage -resize 200% out.png`.
 
+## Meldungs-Widget: Bar-Modul als Auslöser statt systemd-Timer (verifiziert 11/2026)
+
+Muster für „ich will benachrichtigt werden“ (Instanz: Release-Watch, Skill `release-watch`): ein Command-Modul zeigt einen Zähler und startet selbst die periodische Prüfung.
+- Entry: `{"id":"gamzat.<x>","type":"command","exec":"<skript> bar","interval":120,"horizontalMargin":0,"onClick":"foot -e <cli> notes --pause","onRightClick":"foot -e <cli> list --pause"}`.
+  `horizontalMargin: 0` nötig, weil leeres `text` sonst einen leeren Rand lässt; Pfade in `onClick` absolut (läuft über `root.run` → `Util.execDetached`, Nutzer-PATH nicht garantiert).
+- `foot -e <befehl>` schließt das Fenster mit Programmende → Ausgabebefehle brauchen ein `--pause`-Flag (`input("[Enter] schließt das Fenster ")`, EOF-tolerant); Pager nur bei TTY und länger als das Terminal.
+- **Auslöser**: der `bar`-Modus startet die Prüfung nur, wenn die letzte älter als das Prüftintervall ist: `Popen([sys.executable, skript, "check", "--auto"], start_new_session=True, stdout=<logfile>)`; dazu Sperrzeit nach jedem Startversuch (Log-mtime, z. B. 10 min) und `flock` in `check` gegen Doppelläufe. Läuft genau dann, wenn eine Meldung auch ankommen kann: Die Bar-Umgebung (`/proc/<quickshell-pid>/environ`) trägt `DBUS_SESSION_BUS_ADDRESS` und `/usr/bin` im PATH. Schreiben unter `~/.config/systemd/user/` verlangt in Telegram-Brücken-Sitzungen der Schutzschild eine Bestätigung (120 s, Skill pi-telegram-bridge) — der Bar-Auslöser braucht kein Unit. Zu wissen: ohne laufende Bar (nur TTY/SSH) passiert nichts; für Meldungs-Widgets richtig, denn ein Timer ohne Benachrichtigungsstelle würde „gesehen“ setzen, ohne zu melden.
+- **Zustellung gehört zum Ergebnis**: `notify-send` mit `check=False` aufrufen und den Exit-Code prüfen, Fehlerzeile nach stderr (landet so im Log). Scheitert die Zustellung, darf der Zustand die Fassung nicht als „gesehen“ führen — sonst ist die Meldung dauerhaft verloren: alte Werte vor der Auswertung kopieren und zurückschreiben, damit der nächste Lauf erneut meldet.
+- Erste Sichtung einer Quelle = Grundlinie ohne Meldung (sonst Flut beim ersten Lauf); Ereignis ist nur „dieselbe Quelle hat eine andere Fassung schon gesehen“. Später hinzugefügte Quellen mit älterer Installationsversion melden deshalb sofort.
+- Verifikation ohne den echten Zustand anzufassen: alle Pfade aus `HOME` ableiten, mit `HOME=/tmp/<test>` und einer Test-Config laufen lassen; Shim `notify-send` im PATH protokolliert argv und ruft das echte (Fehlerpfad: `exit 1`). „Neues Release“ simulieren = `seen` im Test-Zustand zurücksetzen. Hash des echten Zustands vorher/nachher vergleichen.
+
 ## Eigenes Bar-Widget-Plugin (Third-Party, verifiziert 10/2026)
 
 Statt command-Widget in shell.json: aufklappendes Panel wie omarchy.agents/monitor via eigenem Plugin `~/.config/omarchy/plugins/<id>/`:
@@ -123,6 +134,6 @@ Dynamische Workspace-Leiste und Handy-artige Widget-Karten pro Workspace (Home-D
 ## Verifikation
 
 1. Script-Modi manuell ausführen, JSON prüfen – bei zai-usage: `--selftest`, dann `--json` neben den rohen `data.limits` in `~/.cache/omarchy/agent-usage/zai-api.json` halten (gleiche Prozente je Fenster?) und `systemctl --user start omarchy-zai-usage.service` danach `jq .limits ~/.local/state/omarchy/agents/usage/zai.json`.
-2. Bar: `omarchy capture screenshot fullscreen save` → Top-Strip croppen (PIL) und ansehen.
+2. Bar: `grim /tmp/bar-full.png` → oberen Rand croppen (`magick <src> -crop 1500x80+1956+0 +repage` bei 3456 px Bildbreite; PIL fehlt) und erst im NÄCHSTEN Aufruf mit read ansehen.
 3. Panel: `omarchy-shell omarchy.agents open` (+ ggf. `next`) → Screenshot-Check.
-4. Timer: `systemctl --user list-timers omarchy-<id>-usage.timer`.
+4. Timer: `systemctl --user list-timers omarchy-<id>-usage.timer`. Beim Bar-Auslöser stattdessen: Log im Zustandsordner (`~/.local/state/<id>/last-check.log`) und `<cli> check --auto` (meldet „Übersprungen“, wenn nicht fällig).

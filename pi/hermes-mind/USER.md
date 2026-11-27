@@ -6,7 +6,7 @@ Likes proactive execution: research → build → verify in one go, without cons
 §
 Will dauerhafte Einmal-Lösungen statt wiederkehrender manueller Schritte — z. B. Credentials nur einmal einrichten (SSH-Key/Keyring), nie pro Pull/Push erneut.
 §
-Bei Nebenthemen (z. B. Tool-Störung) in jeder Zwischenmeldung auch den Stand des Hauptauftrags nennen; lange stille Diagnosen ohne Meldung stören ihn.
+Lange stille Diagnosen stören ihn: nach ~20 Min. kurz melden (Stand, Funde, Plan); bei Nebenthemen den Hauptauftrag mitnennen.
 §
 Desktop-Fensterregeln: Omarchy-Defaults NICHT dauerhaft ändern, wenn ein manueller Toggle existiert (z. B. mpv-Floating per SUPER+T); Einmal-Lösungen gelten für Credentials/Prozesse, nicht für Desktop-Look-Defaults.
 §

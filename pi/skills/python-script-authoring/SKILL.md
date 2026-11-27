@@ -36,6 +36,19 @@ description: Standalone-Python-Scripts (CLI-Tools, Bar-Widgets, Collector, Probe
 - Skripte ohne `.py`-Endung (Starter `bin/pi-telegram`, Bar-Skript `zai-usage`) prüft der Write-Hook nicht
   („no analyzer handles this file type“) – dort nach jedem Edit selbst `ruff check --output-format concise`
   laufen lassen; vorbestehende Befunde (BLE001, UP017) sind keine Blocker, nur der Vergleich vorher/nachher zählt.
+- Für den strengen Lauf ohne pyproject hat sich bewährt: `ruff check --line-length 100 --select ALL --ignore
+  S603,S607,S310,PLR2004,EM101,EM102,TRY003,TRY301,FBT001,FBT002,FBT003,D203,D213,D212,D400,D415,COM812,ISC001,
+  INP001,S608,CPY001,SIM112,T201` – damit ist „All checks passed“ erreichbar; was bleibt, sind echte
+  Komplexitätsmeldungen (C901, PLR0915), gelöst durch Zerlegen in Helfer (Anzeigeblöcke, Nebeneffekt-Teile),
+  nicht durch `noqa`.
+- Funktionen, die ihr Eingabe-Dict an Ort und Stelle ändern (Zustandsautomaten): Werte, die man danach braucht
+  („was war gesehen?“), VOR dem Aufruf kopieren – hinterher liest man nur noch den neuen Stand.
+- Selftest schlägt fehl, obwohl dieselben Aufrufe von Hand gelingen → Testdaten in der Datei byteweise ansehen
+  (`sed -n '…p' | cat -A`, `od -c`) statt sie neu abtippen; URLs haben gleichaussehende Formen (scp-Form
+  `git@github.com:owner/repo` vs. ssh-URL `ssh://git@github.com/owner/repo`).
+- Zustandsübergänge als reine Funktion bauen (alter Zustand, Beobachtungen, Zeitstempel → neuer Zustand +
+  Ereignisse; Netz und Prozesse außerhalb), dann im Selftest Schritte mit festen Zeitstempeln durchspielen –
+  inklusive Gegenprobe „gleiche Fassung nochmal → kein Ereignis“.
 - Das edit-Tool verlangt vorher einen Aufruf des read-Werkzeugs auf derselben Datei (ein Ausschnitt genügt);
   `sed`/`cat` über bash zählt nicht („Edit without read“) – Fremddateien erst lesen, dann editieren.
 

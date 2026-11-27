@@ -1,6 +1,6 @@
 ---
 name: pi-telegram-bridge
-description: "Die eigene Telegram-Brücke für den Pi-Coding-Agent einrichten, warten und erweitern (Repo ~/projects/pi-telegram, Starter ~/.local/bin/pi-telegram, systemd-User-Dienst pi-telegram) – RPC-Unterprozess, Warteschlange, Dialoge per Tasten, Sitzungen, Tests ohne Netz, Live-Prüfung; use when the Telegram bridge for Pi shall be set up or changed, the bot does not answer or spams, a Telegram account shall be allowed, or pi is to be driven via RPC mode (pi --mode rpc) from Python."
+description: "Die eigene Telegram-Brücke für den Pi-Coding-Agent einrichten, warten und erweitern (Repo ~/projects/pi-telegram, Starter ~/.local/bin/pi-telegram, systemd-User-Dienst pi-telegram) – RPC-Unterprozess, Warteschlange, Dialoge per Tasten, Sitzungen, Tests ohne Netz, Live-Prüfung; use when the Telegram bridge for Pi shall be set up or changed, the bot does not answer or spams, a Telegram account shall be allowed, or pi is to be driven via RPC mode (pi --mode rpc) from Python, or a tool call needs the user's Telegram confirmation (Schutzschild/guard) or got blocked for lack of it."
 ---
 
 # pi-telegram-bridge
@@ -134,10 +134,17 @@ Leser-Thread, Kaltstart) stehen im Skill pi-rpc-client; hier nur das Brücken-sp
 | „antwortet langsam“, kein „schreibt …“ am Namen | fast immer Pi-Kaltstart (20–40 s unter Last) ohne Schreib-Signal während des Starts → Sitzungsdatei nachmessen; Abhilfe: Prozess vorladen/warm halten, „typing“ ab Eingang |
 | `/status` zeigt eine fremde oder leere Sitzung, neuer Chat-Ordner | `state.json` überschrieben (früher durch Tests) → Sitzungsdatei des Chats unter `~/.pi/agent/sessions/<default_cwd>--/` finden (Kopfzeitstempel, erster Nutzerwunsch), `state.json` von Hand ergänzen (`chats.<Chat-Id>.sessions.main.path`, Chat-Id aus `pi-telegram status`), `pi-telegram restart`, Journal auf „Pi für Chat … vorgewärmt“ prüfen |
 
+## Schutzschild (telegram-guard, `extensions/telegram-guard.ts`)
+
+Hook `tool_call` (einziger Hook vor der Ausführung; `block: true` verhindert den Aufruf, `reason` geht als Fehler ans Modell); prüft Werkzeugname plus Befehl (bash/powershell) bzw. den absolut aufgelösten Pfad (write/edit). **Nur im RPC-Modus wirksam** – in TUI/print/json läuft alles ungeprüft durch.
+- Stufen: *gefährlich* fragt immer nach; *wirkungsvoll* fragt außer bei Treffer auf der Erlaubt-Liste – dazu zählt write/edit auf eine Datei außerhalb des Arbeitsordners (ctx.cwd). Wirkungsvoll-Standardmuster sind z. B. Pfade unter `…/.config/systemd/` und `rm -r …`. Listen im Ordner `PI_TELEGRAM_GUARD_DIR` (Standard `~/.config/pi-telegram`): `guard_dangerous.txt`, `guard_powerful.txt`, `guard_allow.txt`; eine vorhandene Datei ersetzt die Standardliste komplett. Muster: je Zeile ein Regex, `#` = Kommentar. In Telegram anzeigen/ändern: `/gefaehrlich`, `/wirkungsvoll`, `/erlaubt` (ohne Argument = anzeigen, `MUSTER` hinzufügen, `-MUSTER` entfernen).
+- Ablauf: Dialog „Bestätigung nötig“ mit Tasten in Telegram, Zeitlimit 120 s; Nein oder keine Antwort → blockiert mit „Keine Bestätigung des Nutzers in Telegram innerhalb von 120 s“ und der Aufforderung, es nicht erneut zu versuchen. Die Frage geht immer nach Telegram, auch wenn der Nutzer gerade am Desktop sitzt – dort übersieht er sie leicht, und der Lauf wartet die vollen 120 s.
+- Agentenregel für Brücken-Sitzungen: Schritte mit Bestätigungspflicht vorher ankündigen und bitten, die Telegram-Frage zu bestätigen, oder sie so bauen, dass das Muster nicht gebraucht wird (Dateien im Arbeitsordner, Auslöser ohne systemd-Unit, eigener Testordner in `/tmp` ohne `rm -r`). Nach einem Block nicht wiederholen, sondern die Alternative nehmen und den Schritt im Abschlussbericht als Frage nennen.
+
 ## Erweitern
 
 Vor jeder Erweiterung `docs/PLAN.md` lesen (Ausbau: Fundament mit `registry.py`/`commands/core.py`/`features/<x>.py`;
-Pakete Flüssigkeit, Reaktion/Zitat, Dateien/Export, Sprachnachrichten, Schutzschild, Orte/Zeitpläne/Kontingent,
+Pakete Flüssigkeit, Reaktion/Zitat, Dateien/Export, Sprachnachrichten, Orte/Zeitpläne/Kontingent,
 Gruppe). Ist das Fundament gemergt, ist ein neues Feature `pi_telegram/features/<x>.py` mit `register(reg)` +
 Eintrag in der FEATURE-Liste + Tests. Solange nicht: neuer Brücken-Befehl = `_cmd_<name>` in `bridge.py` + Verzweigung in `_command` + HELP-Text (HTML-escaped!) +
 README-Tabelle + Test in `tests/test_bridge.py` (FakePi, `wait_until`). Neues Ereignis: `_on_event`-Zweig.
