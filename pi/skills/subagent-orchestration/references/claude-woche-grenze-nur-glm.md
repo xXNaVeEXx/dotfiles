@@ -13,8 +13,13 @@
   Endlauf fahren, Queue-Zelle „wartet auf Claude-Prüfung“, nicht einbauen.
 - Ist das Claude-Tor ganz zu (`quota.sh anthropic` meldet NEIN), bietet `wpq.py next` Claude-Pakete als „glm (statt
   sonnet: anthropic-Kontingent)“ an – das ist die Ausweichregel des Werkzeugs, keine Freigabe. Bei der Weisung „nur Pakete
-  mit Modell-Spalte glm“ das Angebot NICHT starten, Zelle „bleibt zurück“ setzen, Journalzeile. Schon gelaufene
+  mit Modell-Spalte glm“ das Angebot NICHT starten, Journalzeile. Schon gelaufene
   Claude-Prüfungen bleiben gültig: deren Paket darf auch bei geschlossenem Tor eingebaut werden.
+- Platz-Zählung bei wartenden Paketen: `next` zählt nur Zellen mit `läuft`/`nacharbeit` als belegt; „wartet auf Claude-Prüfung“
+  gibt den Platz frei, und `next` stoppt die Suche beim ersten startbaren Paket – ist das ein Claude-Paket (Ausweichangebot glm),
+  kommen die glm-Pakete dahinter nie zum Zuge. Dann selbst wählen: aus der Queue der Spur die `offen`-Pakete mit Modell-Spalte
+  glm nehmen, deren Abhängigkeiten alle `fertig` sind und die von keinem wartenden Paket abhängen, das kleinste starten,
+  Journalzeile mit Begründung. Das Werkzeug nicht ändern (gehört dem Leitstand); die Lücke als „offen für L0“ ins Journal.
 - Dem Reviewer nie einen Schreibauftrag („schreibe nach <Datei>“) geben: er hat kein Schreibwerkzeug und meldet das als Text.
   Den Volltext selbst aus `session.jsonl` des Reviewer-Laufs ziehen (letzter Assistant-Text, der `REVIEW:` enthält) und in die
   Review-Datei schreiben; die Benachrichtigung enthält oft nur Lernpass-Rauschen.
@@ -28,10 +33,13 @@
 - Fragt ein Worker per Supervisor-Anfrage nach einer Entscheidung (z. B. generiertes Handbuch außerhalb der eigenen Pfade
   → `abnahme` meldet „Dateien außerhalb der eigenen Pfade“): selbst nach dem Muster eines früheren Pakets entscheiden
   (`$C/vorgaben/<WP>.pfade` anlegen, eine Zeile je Pfad), Journalzeile, dann
-  `subagent_supervisor({action:"reply", replyTo:<id aus der Meldung>, message})`.
+  `subagent_supervisor({action:"reply", replyTo:<id aus der Meldung>, message})`. Vorher den Diff der fremden Datei gegen die
+  Basis lesen (nur additive Zeilen? Abhängigkeit mit fester Version?) und den Worker die Abweichung im Bericht nennen lassen.
 - Endlauf-Schritt `nextest EXIT=255` ohne Fehlertext (Log endet mitten im Kompilieren) = abgebrochen (RAM/Remote), kein
-  Codefehler: Schritt neu fahren, nicht blind ändern. Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen < 200 ms“)
-  getrennt von eigenen roten Tests (i18n-Platzhalter, Design-Wächter) benennen und dem Worker per `steer` beides mitgeben.
+  Codefehler: Schritt neu fahren, nicht blind ändern. Mit weniger Jobs wiederholen (`LUMI_REMOTE_JOBS=2`, bei großem Crate
+  zusätzlich `CLAW_MEM=7G`), weil der Speicherwächter des Build-Hosts sonst rustc beendet und der Wrapper es nicht erkennt.
+  Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen < 200 ms“) getrennt von eigenen roten Tests (i18n-Platzhalter,
+  Design-Wächter) benennen und dem Worker per `steer` beides mitgeben.
 - `wpq.py integ` bricht am Tor „MANGEL Bericht: ERGEBNIS: teilweise …“ ab (strikte Prüfung; `abnahme` warnt nur): Die
   Schlusszeile des Berichts muss `ERGEBNIS: fertig – …` lauten, „bewusst offen“ gehört in den Text der Zeile. Als reiner
   Docs-Commit im Worker-Worktree korrigieren (Betreff ≤ 72 Zeichen), `abnahme`, `integ` neu.
