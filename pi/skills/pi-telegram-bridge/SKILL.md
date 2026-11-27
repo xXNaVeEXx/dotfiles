@@ -43,6 +43,15 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
    `pyproject.toml` (select ALL) nötig, sonst entfernt ruff `# noqa`-Kommentare als „unused“.
 2. `python3 -m tests` – niemals `python3 -m unittest discover -s tests` (ohne Top-Level überspringt das das Paket-Init, `pi_telegram.config` wird mit dem echten Ordner geladen und die Tests überschreiben die state.json des laufenden Diensts; so ging einmal die Sitzung des Nutzers verloren – seitdem wirft `tests/__init__.py` laut RuntimeError). (Fakes in `tests/fakes.py`: FakeTelegram zeichnet auf, FakePi spielt
    RPC mit `auto_reply`/`reply(text)`/`model_input`; `make_bridge(root, **cfg)`).
+   Zeitfehler der Suite nur unter Last oder nur in der vollen Suite = Zustandsleck zwischen Test-Brücken,
+   kein Zeitproblem: (a) alle Test-Brücken teilten sich eine state.json → jede Brücke hat ihren eigenen Pfad
+   (`make_bridge` übergibt `path`); nie `config.STATE_FILE` lesen, sondern `bridge.state.path`; (b) `State.save()`
+   setzte die Zeitmarke erst nach dem Schreiben → eigener Schreibvorgang galt als fremde Änderung →
+   `State.reload_if_changed()` vergleicht Inhalte; (c) `BridgeCase.setUp` legt die Brücke sofort an und ihr
+   tick-Thread läuft los – Unterklassen, die `config.CONFIG_FILE` o. ä. patchen, müssen ERST patchen und DANN
+   `self.bridge, self.tg = self.new_bridge()` aufrufen (Modul-Caches je Test zurücksetzen); (d) `close()` wartet
+   auf den tick-Thread. Beweis führen mit 3 Prozessen parallel (je 8 Läufe) und einer Spur je Test (Hooks und
+   `Config.load/save` umhüllen, Zeit/Thread/Aufrufer in eine Datei), nicht mit Einzelläufen.
 3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe;
    `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
 4. Commit im Repo; Dienst neu starten (`pi-telegram restart`) – der Starter zeigt per Symlink aufs Repo.
@@ -111,6 +120,16 @@ Leser-Thread, Kaltstart) stehen im Skill pi-rpc-client; hier nur das Brücken-sp
   Datensätze/s auf stdout sind normal und nicht die Ursache. Regressionstest mit einem Leser-Thread, der
   dauernd solche Datensätze sendet (`ChatterPi`); `/status` zeigt nach 5 s Stille „Modell: – (pi antwortet
   gerade nicht)“ statt zu hängen.
+- Unerwartete Ausnahme im Arbeitspool (z. B. `FileNotFoundError` beim Prozessstart): `_run_job` fing nur
+  `RpcError`, der Executor verschluckt alles andere → Auftrag blieb für immer „pending“ (Nutzer sieht ewig eine
+  Statuszeile, Test wartet 20 s). Jetzt `except Exception` → `_fail(…)` mit „❌ Interner Fehler der Brücke“;
+  Regressionstest `BrokenPi` in tests/test_bridge.py. Hängt ein Auftrag ohne Journalzeile: Ausnahme im Pool vermuten.
+- Reaktionen des Bots: Telegram nimmt nur bestimmte Emoji (🤔 und 👀 ja; 🕓, ⏳, 📋 → `Bad Request:
+  REACTION_INVALID`). `Telegram.react()` fängt den Fehler selbst und protokolliert nur – Aufrufe wirken
+  erfolgreich. Emoji immer direkt an der Schnittstelle beweisen (urllib `setMessageReaction`, danach mit
+  `reaction: []` zurücksetzen, Pausen einhalten – sonst 429 oder Verbindungsabbrüche).
+- Dienst-Kontext prüfen, ohne den Dienst zu stören: `systemd-run --user --quiet --wait --pipe --collect
+  -E PYTHONPATH=<Repo> python3 -c '…'` (PATH, Wayland-Socket-Rückfall für grim).
 - Statuszeile gehört zum Auftrag: schon beim Erledigen des Auftrags aus dem Chat nehmen, sonst benutzt der
   nächste Auftrag dieselbe Nachricht und die Antwort überschreibt sie.
 - Statuszeile und chat action „typing“ synchron beim Eingang senden, bevor der Prozess startet: Telegram zeigt
@@ -143,11 +162,21 @@ Hook `tool_call` (einziger Hook vor der Ausführung; `block: true` verhindert de
 
 ## Erweitern
 
-Vor jeder Erweiterung `docs/PLAN.md` lesen (Ausbau: Fundament mit `registry.py`/`commands/core.py`/`features/<x>.py`;
-Pakete Flüssigkeit, Reaktion/Zitat, Dateien/Export, Sprachnachrichten, Orte/Zeitpläne/Kontingent,
-Gruppe). Ist das Fundament gemergt, ist ein neues Feature `pi_telegram/features/<x>.py` mit `register(reg)` +
-Eintrag in der FEATURE-Liste + Tests. Solange nicht: neuer Brücken-Befehl = `_cmd_<name>` in `bridge.py` + Verzweigung in `_command` + HELP-Text (HTML-escaped!) +
-README-Tabelle + Test in `tests/test_bridge.py` (FakePi, `wait_until`). Neues Ereignis: `_on_event`-Zweig.
-Neues Zielkonto: `pi-telegram allow <Id>`. Sprach- und Videonachrichten sind nicht umgesetzt: den
-Spracherkennungs-Motor nicht selbst wählen (lokal oder API ist eine Nutzerentscheidung; Auswahlkriterien und
-Messverfahren in Skill selfhosted-speech-stack), erst nach der Entscheidung bauen.
+Vor jeder Erweiterung `docs/PLAN.md` lesen. Das Fundament ist gemergt (`registry.py`, `commands/core.py`,
+`features/<x>.py`; Features: komfort, reaktionen, dateien, sperre, sitze). Neues Feature =
+`pi_telegram/features/<x>.py` mit `register(reg)` + Eintrag in `FEATURES` (`features/__init__.py`), bei Bedarf
+neues Ereignis in `registry.EVENTS`, Befehle per `reg.command(...)`, Tests in `tests/test_<x>.py`.
+Pakete bauen Arbeiter in eigenen Worktrees (agent „worker“; Brief = Paketzeile aus PLAN + Ziele + DATEI-GRENZEN
++ REGELN: kein push/merge, `python3 -m tests` + ruff vor jedem Commit, Betreff ≤ 72 Zeichen, keine echten
+Telegram-Nachrichten, Abschlussbericht ≤ 20 Zeilen). Abnahme: Diff lesen, Tests + ruff im Worktree, Merge
+`--no-ff` nach main, Tests auf main, Neustart bei ruhigem Bot, Journal auf „Befehlsmenü mit N Befehlen gesetzt“.
+Erwartete Konflikte beim Merge paralleler Pakete: `FEATURES`-Liste, `EVENTS`-Tuple, README (Befehlstabelle,
+Config-Zeilen, Zeile `# N Tests`), PLAN-Zeilen → Vereinigung; Auflöse-Skript und `git add && git commit` in
+EINER `&&`-Kette und Konfliktmarker vor dem Commit zählen (ein abgebrochenes Skript + separate Commit-Zeile hat
+einmal Marker committet). Wächter nie durch Rohre führen (`ruff check | tail` maskiert den Exit-Code).
+Zeitüberschreitung eines Arbeiters: uncommittete Arbeit sichern, `main` hinein mergen, selbst fertigstellen –
+und Arbeiter früh steuern, wenn sie einem Zeitfehler der Suite nachjagen (Ursachen unter „Ändern und prüfen“).
+Neues Zielkonto: `pi-telegram allow <Id>`. Sprache: Werkzeuge `tools/stt` (Parakeet v3 int8,
+Umgebung `~/.local/share/pi-telegram/stt-env`) und `tools/tts` (Supertonic 3, Modellordner des Nutzers) sind
+gebaut, Messwerte und Stolperfallen (Opus kippt ins Englische, Telegram verlangt Ogg Opus, 110 s je Stück) in
+`docs/fakten/`; der Einbau in die Brücke ist Paket H („Stimme“).
