@@ -42,20 +42,47 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
 
 ## Grenze erreicht: Pause fahren
 1. Die Wache nennt Wert, Tor und Pausenende. Antwortet der Nutzer bis dahin nicht, gilt der angekündigte Standard – keine weitere Rückfrage.
+   Das Pausenende der Wache gegen die Aussage des Tor-Skripts halten („frei ab …“): Ist die Endspurt-Rampe abgeschaltet (Rampen-Höchstwert
+   = Wochengrenze), gilt die Rücksetzzeit und nicht „Rücksetzzeit minus Rampenfenster“. Grund: Sonst wachen die Spuren Stunden zu früh
+   vor einem noch geschlossenen Tor auf.
 2. Pause mit dem einen Pausen-Befehl des Projekts setzen (Pausen-Datei je Spur, Leitstand-Weckabstand auf einen Tag, Timer für das Ende).
 3. Jede Spur schriftlich anweisen, mit vier Punkten: keine neuen Starts (auch keine Prüfer und keine Nacharbeit); der laufende Worker
    läuft zu Ende und wird noch abgenommen, eingebaut und gepusht; braucht der Endlauf einen neuen Worker, liegen lassen und in der
    Queue vermerken; danach genau ein langer Herzschlag bis zum Pausenende. Eine Quittung im Journal mit der Reihenfolge nach der Pause
    verlangen. Grund für das Fertigbauen: Ein halbfertiger Worktree über mehrere Tage veraltet gegen den Integrationszweig, und der
    wenige Rest kostet kaum Kontingent.
-4. Die alten Aufsichten enden durch die Pause von selbst; mit dem langen Pausen-Takt neu starten. Diese Endmeldungen sind erwartet,
-   dem Nutzer dazu höchstens einen Satz schreiben.
-5. Übersicht, Nutzer-Liste, Stand-Datei und Statusseite auf „Pause von … bis …“ stellen; im Bericht sagen, was noch fertig wird,
+4. Arbeiten die Spuren mit zwei Anbietern und ist nur einer an der Grenze, prüfen, ob der andere allein weiterarbeiten kann: Laufen die
+   Spur-Sitzungen selbst auf dem gesperrten Anbieter, oder braucht jedes Paket des freien Anbieters eine Prüfung durch den gesperrten,
+   ruht der freie mit. Das dem Nutzer mit Grund sagen und die Umstellung („freier Anbieter baut und trägt die Spur-Sitzungen, der
+   gesperrte prüft später in Schüben“) als Möglichkeit anbieten, aber nicht selbst einschalten.
+5. Die alten Aufsichten enden durch die Pause von selbst oder werden beendet; mit dem langen Pausen-Takt neu starten. Diese
+   Endmeldungen (auch „killed“ für selbst beendete Aufgaben) sind erwartet: dem Nutzer je Meldung höchstens zwei Sätze schreiben,
+   keine neue Runde fahren.
+6. Übersicht, Nutzer-Liste, Stand-Datei und Statusseite auf „Pause von … bis …“ stellen; im Bericht sagen, was noch fertig wird,
    was sich verschiebt und dass eine höhere Grenze sofort weiterlaufen ließe.
-6. Ist beim Überschreiten der Grenze nur noch der Abschluss offen (Gesamttest, Antrag, kleine Nacharbeit ohne neue Worker), die
+7. Ist beim Überschreiten der Grenze nur noch der Abschluss offen (Gesamttest, Antrag, kleine Nacharbeit ohne neue Worker), die
    Pausen-Mechanik nicht einschalten: Sie hielte auch die Spur-Sitzungen an, die den Abschluss tragen. Stattdessen keine neuen
    Worker und Prüfer des betroffenen Anbieters starten, Nacharbeit von den bestehenden Spur-Sitzungen selbst erledigen lassen, die
    Entscheidung festhalten und dem Nutzer anbieten, alles bis zum Wochenwechsel ruhen zu lassen.
+
+## Nutzer hebt die Grenze an, während die Pause läuft
+Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Teile, und jeder vergessene hält eine Spur an.
+1. Schwelle im Tor-Skript ändern (Wochengrenze und Rampen-Höchstwert auf den neuen Wert, Kommentar mit Datum und Vorgabe; Sicherung,
+   `.new`, `bash -n`, `mv`). Prüfen, dass keine Umgebungsdatei den alten Wert überschreibt, und das Tor frisch fragen.
+   Die Grenze anderer Anbieter bleibt, wenn der Nutzer nur einen genannt hat.
+2. Pause vollständig abbauen: Pausen-Befehl „aus“, Pausen-Dateien je Spur löschen, den Ende-Timer stoppen. Grund: „aus“ stellt oft
+   nur den Weckabstand zurück; liegengebliebene Pausen-Dateien halten die Platzvergabe an, und der Timer feuert Tage später ins Leere.
+3. Jede Spur wecken, in einem Text: Pause aufgehoben, neue Grenze und aktueller Wert; frühere Einschränkungen, die nur wegen der
+   nahenden Grenze galten, ausdrücklich aufheben (die Spur hält sie sonst weiter ein); langen Pausen-Herzschlag beenden, normalen
+   starten; zuerst offene Prüfungen und Nacharbeiten, dann neue Pakete; Sparregel für die knappen Punkte (bauen mit dem freien
+   Anbieter, der knappe prüft); Worker-Obergrenze unverändert; Quittung mit dem ersten Start.
+4. Pausen-Aufsichten beenden, Aufsichten im Normaltakt und eine neue Kontingent-Wache auf die neue Grenze starten.
+5. Entscheidung protokollieren, Messpunkt schreiben, Übersicht und Statusseite umstellen, die Frage in der Nutzer-Liste als erledigt
+   kennzeichnen, Übergabe-Notiz um die neuen Hintergrundaufgaben ergänzen.
+6. Nach etwa einer Minute die Quittungen lesen. Meldet eine Spur dabei einen eigenen Halt („offen für L0“, z. B. voller
+   Zwischenspeicher), ihn sofort beheben und die Spur ausdrücklich freigeben: Sie wartet sonst trotz aufgehobener Pause.
+7. Im Bericht: neue Grenze, aktueller Wert und Abstand, was gestartet ist, was noch ohne Quittung ist. Kündigt der Nutzer ein
+   Zurücksetzen des Kontingents an, um Bescheid bitten, damit die Wache auf die neue Woche gestellt wird.
 
 ## Pausenende: erst messen, dann wecken
 - Ein Pausenende vor dem Wochenwechsel (z. B. Beginn einer Endspurt-Rampe, die das Tor anhebt) gilt nur, wenn das Kontingent dann
@@ -93,6 +120,18 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
    gültig ist, und überlässt die Messung einem anderen Dienst mit längerem Takt.
 4. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
    nächste Welle). Eine Kontingent-Wache auf die Grenze neu aufsetzen, bevor wieder Worker starten.
+
+## Voller Zwischenspeicher (/tmp) hält eine Spur an
+Spuren dürfen dort nichts Fremdes löschen und melden den Zustand; der Leitstand räumt, aber nur Belegbares.
+1. Messen: `df -h /tmp`, die größten Ordner (`du -sh /tmp/* | sort -h | tail`), Zahl und Summe der alten Shell-Umgebungen
+   (`find /tmp -maxdepth 1 -name 'nix-shell.*' -mmin +120 -user "$(id -un)"`).
+2. Benutzung belegen: aus Umgebung und Arbeitsordner aller eigenen Prozesse die genannten Ordner sammeln
+   (`{ for p in /proc/[0-9]*; do tr '\0' '\n' < $p/environ; readlink $p/cwd; done; } 2>/dev/null | grep -o '/tmp/nix-shell\.[A-Za-z0-9]*' | sort -u`).
+   Die Fehlerumleitung gehört um die ganze Schleife, weil die Eingabe-Umleitung vor dem Befehl scheitert und sonst Hunderte
+   Fehlerzeilen kommen. Löschliste = alte Ordner ohne die benutzten (`grep -vxFf`), als Datei ablegen, Form jeder Zeile per Muster prüfen.
+3. Die Benutzungsprüfung unmittelbar vor dem Löschen wiederholen, dann `xargs -d '\n' rm -rf -- < liste`. Lauf-Register der
+   Unter-Agenten, Zwischenspeicher anderer Werkzeuge und fremde Arbeitsordner bleiben, auch wenn sie groß sind.
+4. Ergebnis messen, die Spur mit dem neuen Wert freigeben, Zeile in die Stand-Datei.
 
 ## Hinweise
 - Die Rate je Paket schwankt mit der Modellmischung (starkes Modell für Prüfer und lange Pakete kostet ein Mehrfaches).

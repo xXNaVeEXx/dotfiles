@@ -1,6 +1,6 @@
 ---
 name: pi-telegram-bridge
-description: "Die eigene Telegram-Brücke für den Pi-Coding-Agent einrichten, warten und erweitern (Repo ~/projects/pi-telegram, Starter ~/.local/bin/pi-telegram, systemd-User-Dienst pi-telegram) – RPC-Unterprozess, Warteschlange, Dialoge per Tasten, Sitzungen, Tests ohne Netz, Live-Prüfung; use when the Telegram bridge for Pi shall be set up or changed, the bot does not answer or spams, a Telegram account shall be allowed, or pi is to be driven via RPC mode (pi --mode rpc) from Python, or a tool call needs the user's Telegram confirmation (Schutzschild/guard) or got blocked for lack of it."
+description: "Die eigene Telegram-Brücke für den Pi-Coding-Agent einrichten, warten und erweitern (Repo ~/projects/pi-telegram, Starter ~/.local/bin/pi-telegram, systemd-User-Dienst pi-telegram) – RPC-Unterprozess, Warteschlange, Dialoge per Tasten, Sitzungen, Tests ohne Netz, Live-Prüfung; use when the Telegram bridge for Pi shall be set up or changed, the bot does not answer or spams, a Telegram account shall be allowed, or pi is to be driven via RPC mode (pi --mode rpc) from Python, or a tool call needs the user's Telegram confirmation (Schutzschild/guard) or got blocked for lack of it, or voice messages shall be understood or answers read aloud (Feature Stimme: /vor, /sprich)."
 ---
 
 # pi-telegram-bridge
