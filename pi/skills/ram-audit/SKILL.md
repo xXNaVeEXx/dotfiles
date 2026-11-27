@@ -84,6 +84,27 @@ systemd-oomd ganze Sitzungsbereiche (siehe „Nach einem Absturz“).
    (schwer/E2E plus mittel) überlagern sich danach. Deshalb die Start-Schwellen über die gemessenen Spitzen heben
    (z. B. schwer/E2E ≥ 6,5 GB, mittel ≥ 4 GB) und das Skript atomar ersetzen (`.new` schreiben, `bash -n`, `mv`).
 
+## Speicher-Wache neben einem eigenen schweren Lauf
+
+Für lange Bau- oder Testläufe, die in einem eigenen systemd-Scope mit `MemoryMax` laufen, eine Wache als zweiten
+Hintergrund-Task starten, die unter der Schwelle von systemd-oomd (meist 90 % Swap) eingreift.
+1. Vorher messen, wer den Swap hält: `memory.swap.current` je cgroup unter
+   `/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/app.slice/*/`. Der eigene Lauf ist oft nur
+   ein kleiner Teil; den größten Anteil hält der Terminal-Scope mit allen Agenten-Sitzungen, und genau den beendet
+   oomd. Das dem Nutzer mit Zahlen sagen, denn nur er kann Sitzungen und Programme schließen.
+2. Stufen mit Abstand zur oomd-Schwelle: ab etwa 82 % den Bau-Scope einfrieren (`systemctl --user freeze <scope>`,
+   auftauen unter etwa 76 %), ab etwa 87 % den Scope beenden (`systemctl --user kill --signal=KILL <scope>`) und mit
+   eigenem Exit-Code enden. Takt 5 s: Bei 15 s springt der Wert zwischen zwei Messungen über beide Stufen.
+3. Die Wache erkennt „Lauf lebt noch“ nie mit bloßem `pgrep -f <muster>`, wenn das Muster als Argument in ihrer
+   eigenen Befehlszeile steht: Sie trifft sich selbst, endet nie mit dem Lauf und beendet bei der Notbremse nur sich.
+   Eigene Zeile ausfiltern (`pgrep -af "$m" | grep -v '<name der wache>' | awk '{print $1}'`) oder auf eine PID-Datei
+   bzw. den Scope-Zustand prüfen. Nach dem Schreiben einmal mit einem Muster ohne Treffer proben: Die Wache muss
+   sofort mit ihrer Ende-Zeile aufhören.
+4. Nach einer Notbremse prüfen, was wirklich endete (Steuerprozess, verwaiste Kinder, entfernte Teilläufe), verwaiste
+   Reste per PID beenden und nur die noch fehlenden Schritte einzeln nachfahren statt den ganzen Lauf zu wiederholen.
+   Schlägt die Wache an, obwohl kein eigener Lauf aktiv ist, nichts Fremdes beenden: Verbraucher mit Zahlen melden und
+   bis zur Entspannung keinen schweren Schritt starten.
+
 ## Sessions entschlammen ohne Verlust
 
 Langlaufende pi-Sessions blähen sich per Kontext auf. Pi-Sessions sind persistent: beenden und `pi --continue` (oder `pi --resume <id>`) — Verlauf liegt in `~/.pi/agent/sessions`, RSS fällt auf einen Bruchteil, Arbeit bleibt vollständig erhalten.

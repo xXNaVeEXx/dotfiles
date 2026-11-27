@@ -52,6 +52,10 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
    dem Nutzer dazu höchstens einen Satz schreiben.
 5. Übersicht, Nutzer-Liste, Stand-Datei und Statusseite auf „Pause von … bis …“ stellen; im Bericht sagen, was noch fertig wird,
    was sich verschiebt und dass eine höhere Grenze sofort weiterlaufen ließe.
+6. Ist beim Überschreiten der Grenze nur noch der Abschluss offen (Gesamttest, Antrag, kleine Nacharbeit ohne neue Worker), die
+   Pausen-Mechanik nicht einschalten: Sie hielte auch die Spur-Sitzungen an, die den Abschluss tragen. Stattdessen keine neuen
+   Worker und Prüfer des betroffenen Anbieters starten, Nacharbeit von den bestehenden Spur-Sitzungen selbst erledigen lassen, die
+   Entscheidung festhalten und dem Nutzer anbieten, alles bis zum Wochenwechsel ruhen zu lassen.
 
 ## Pausenende: erst messen, dann wecken
 - Ein Pausenende vor dem Wochenwechsel (z. B. Beginn einer Endspurt-Rampe, die das Tor anhebt) gilt nur, wenn das Kontingent dann
@@ -78,6 +82,17 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
      gestartet hat und wer die Worker-Plätze gerade belegt.
 - Die Quittungen der Spuren gegenlesen: Nach einer langen Pause schleichen sich Regelfehler ein (z. B. Prüfer mit demselben Modell wie
   der Worker angesetzt). Sofort mit einem Satz berichtigen.
+
+## Nutzer sagt, das Kontingent sei wieder da
+1. Sofort frisch beim Anbieter messen (Mess-Werkzeug mit Erzwingen-Schalter, nicht die Limits-Datei lesen) und erst dann antworten.
+   Grund: Die Limits-Datei ist ein Zwischenspeicher, und der Anbieter setzt den Verbrauch manchmal mitten in der Woche zurück. Wer
+   den alten Wert zitiert, widerspricht dem Nutzer mit einer veralteten Zahl und muss ein zweites Mal gefragt werden.
+2. Mit jedem vorhandenen Zugang messen (Agenten-Token und Login des Anbieter-Werkzeugs); stimmen beide überein, gilt der Wert.
+   Danach den Zwischenspeicher über den regulären Aktualisierungs-Befehl nachziehen und das Tor-Skript erneut fragen.
+3. Prüfen, warum die eigene Messung alt war. Häufig steigt die eigene Probe früh aus, sobald der Login des Anbieter-Werkzeugs wieder
+   gültig ist, und überlässt die Messung einem anderen Dienst mit längerem Takt.
+4. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
+   nächste Welle). Eine Kontingent-Wache auf die Grenze neu aufsetzen, bevor wieder Worker starten.
 
 ## Hinweise
 - Die Rate je Paket schwankt mit der Modellmischung (starkes Modell für Prüfer und lange Pakete kostet ein Mehrfaches).
