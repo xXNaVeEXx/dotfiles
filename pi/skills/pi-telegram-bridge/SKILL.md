@@ -193,7 +193,8 @@ Neues Zielkonto: `pi-telegram allow <Id>`. Sprache: Werkzeuge `tools/stt` (Parak
 Umgebung `~/.local/share/pi-telegram/stt-env`) und `tools/tts` (Supertonic 3, Modellordner des Nutzers) sind
 gebaut und als Paket „Stimme“ eingebaut (`features/stimme.py`: Sprachnachrichten über den Hook `attachment` →
 `tools/stt` → Auftrag, `/vor`, `/vor immer|aus`, `/sprich <Text>`; Config `stt_command`, `tts_command`,
-`ffmpeg_command`); Messwerte und Stolperfallen (Opus-Dateien werden schlechter erkannt als WAV, Teilstücke kippen
+`ffmpeg_command`); im Auftrag kündigt die Zeile „🎤 Sprachnachricht (automatisch umgeschrieben, kleine Erkennungsfehler möglich):“ gesprochene Eingaben an – mit Erkennungsfehlern rechnen und nie von „nicht eingebaut“ ausgehen, ohne rekursiv im Code gesucht zu haben (`grep -rn <Muster> pi_telegram`, Features liegen im Unterordner).
+Messwerte und Stolperfallen (Opus-Dateien werden schlechter erkannt als WAV, Teilstücke kippen
 ins Englische; Telegram verlangt Ogg Opus; 110 s je Stück;Kette im Dienstkontext mit `systemd-run` und
 `PATH=/usr/bin:/bin` prüfen) in `docs/fakten/spracherkennung.md` und `docs/fakten/sprachausgabe*.md`. Ansichten
 (OpenUI): pi-Seite und Brückenseite auf main und im Dienst (`extensions/telegram-ansicht.ts`, Werkzeug
