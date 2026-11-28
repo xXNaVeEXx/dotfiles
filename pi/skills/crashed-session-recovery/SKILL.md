@@ -52,6 +52,15 @@ Wenn der Nutzer nach der Sitzung vor einer Übergabe fragt und wissen will, was 
 4. **„Offen“-Notizen aus Logs und Berichten gegen die Tracker halten:** `git grep -n -I -E '<stichwort>' HEAD -- <tracker-doks>`; ohne Treffer gehört der Rest in „steht in keinem Plan“. Offene Kästchen je Abschnitt: Grenzen per `grep -n '^## \|^### '`, dann `awk 'NR>=<a> && NR<=<b> && /\[ \]|\[~\]|\[-\]/'`. Tracker-Zeilen, deren Arbeit längst gemergt ist, per `git merge-base --is-ancestor <commit> origin/main` als veraltet erkennen.
 5. **Bericht:** Tabelle Auftrag → Stand, dann die Gruppen Läuft / Warteschlange (arbeitet der Nachfolger selbst ab) / Steht in keinem Plan / Braucht den Nutzer. Nicht am Code geprüfte Reste als ungeprüft kennzeichnen und jede eigene Änderung offenlegen.
 
+## Variante: Bezuglose Folgenachricht in einer frischen Sitzung („ich meinte …“)
+
+Startet eine Sitzung mit einer Nachricht, die sich auf etwas Unbekanntes bezieht, zuerst den Bezug rekonstruieren, bevor gefragt wird:
+
+1. `session_search {}` (jüngste Sitzungen) und `session_search {query, after:"24h"}` — der Sitzungstitel ist die ERSTE Nachricht, das Thema kann sich inzwischen geändert haben; also nach Aktualität gehen, nicht nach Titel.
+2. Session-Datei per `find ~/.pi/agent/sessions -name '*<id>*'` suchen (liegt in einem Unterordner je Arbeitsverzeichnis, `ls */<id>` findet sie nicht) und per jq die letzten echten Nutzernachrichten und Assistant-Texte lesen (Rezept in `references/session-jsonl.md`); bei laufenden Orchestratoren zusätzlich die letzten `stopReason`/`errorMessage` (eine hängende Sitzung erklärt, warum der Nutzer woanders schreibt).
+3. Rezept zum Auflisten über viele Dateien: `find … -print0 | while read -d ''` mit jq pro Datei und `2>/dev/null` — `xargs`-Ausgaben vermischen sich mit Fehlerzeilen und werden unlesbar.
+4. Bleibt der Bezug nach diesen Schritten unklar: nicht weitersuchen, sondern kurz berichten, was die wahrscheinlichste Sitzung gerade tut (inkl. Fehlern am Ende), und EINE gezielte Frage stellen. Grund: Raten führt bei autonomem Modus zu Arbeit am falschen Objekt.
+
 ## Variante: Arbeit von instabiler Maschine auf diese übernehmen
 
 Wenn die andere Maschine ständig abstürzt und das Projekt HIER weiterlaufen soll:
