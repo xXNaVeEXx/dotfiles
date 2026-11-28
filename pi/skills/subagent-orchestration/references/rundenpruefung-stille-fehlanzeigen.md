@@ -88,6 +88,9 @@ erfüllen.
 6. Enden Worker kurz vor oder nach einem solchen Sprung mit einer Drosselungs-Meldung, das als Ratenlimit des
    Anbieters einordnen (Zeitraum aus dem Proxy-Protokoll nennen), nicht als Fehler des Pakets; die Spur schließt die
    gesicherte Arbeit mit einer Fortsetzung ab.
+7. Die Hochrechnung im Bericht mit ihrer Messstrecke nennen (seit wann, wie viele Punkte) und bei jeder Runde aus dem
+   längeren Abschnitt neu rechnen. Grund: Der Wert über eine oder zwei Stunden schwankt um ein Mehrfaches, wenn auch
+   andere Projekte das Konto nutzen; eine Uhrzeit ohne diese Angabe liest der Nutzer als Zusage.
 
 ## 5. Wartet Arbeit, obwohl ein Platz frei ist?
 
@@ -119,26 +122,47 @@ erfüllen.
    Abständen (etwa 10 min) neu zu prüfen, solange Prüfungen oder Nacharbeiten warten, und die Reihenfolge der
    wartenden Arbeit nennen. Grund: Die Spur prüft das Tor einmal und legt sich dann mit ihrem langen Wecker schlafen;
    der Speicher ist Minuten später wieder frei, der Platz bleibt aber bis zum Wecker leer.
-5. Sind alle Plätze belegt, je Spur zählen, wer sie hält. Hält eine Spur alle und wartet bei der anderen Arbeit seit
-   mehr als einer Runde (letzte Journalzeile der wartenden Spur ist Stunden alt), die Plätze teilen: Solange die
-   andere Spur wartende Arbeit für den knappen Anbieter hat, hält jede Spur höchstens einen Platz. Laufende Worker
-   laufen zu Ende; die abgebende Spur startet nach dem ersten fertigen Lauf keinen neuen, bis auch der zweite fertig
-   ist. Der wartenden Spur die Reihenfolge für den Platz nennen, schwerste Funde zuerst. Grund: Jede Spur füllt freie
-   Plätze sofort selbst nach; eine eingebaute Fairness-Regel des Start-Werkzeugs greift oft nur in einer Betriebsart
-   und ist nach einem Umschalten außer Betrieb.
-6. Der wartenden Spur zugleich Arbeit geben, die ohne den knappen Platz geht: Nacharbeiten ohne schwerste Funde mit
+5. Sind alle Plätze belegt, je Spur zählen, wer sie hält (Arbeitsordner je Lauf im Register der Spur zuordnen). Hält
+   eine Spur alle und wartet bei der anderen Arbeit seit mehr als einer Runde (Zellen „wartet auf Prüfung“, „wartet
+   auf Platz“; letzte Journalzeile der wartenden Spur ist Stunden alt), die Plätze teilen: Solange die andere Spur
+   wartende Arbeit für den knappen Anbieter hat, hält jede Spur höchstens einen Platz. Laufende Worker laufen zu
+   Ende; die abgebende Spur startet nach dem ersten fertigen Lauf keinen neuen (auch keinen Prüfer und keine
+   Nacharbeit), bis auch der zweite fertig ist oder die andere Spur „keine wartende Arbeit“ meldet. Der wartenden
+   Spur die Reihenfolge für den Platz nennen (kurze Prüfungen, die Ketten entsperren, zuerst; schwerste Funde vor
+   leichten) und sie das Register in kurzen Abständen prüfen lassen. Grund: Jede Spur füllt freie Plätze sofort
+   selbst nach; eine eingebaute Fairness-Regel des Start-Werkzeugs greift oft nur in einer Betriebsart und ist nach
+   einem Umschalten außer Betrieb.
+6. Laufen nach einem Start-Rennen (beide Spuren starten in derselben Minute) mehr Läufe als erlaubt, nichts
+   abbrechen, aber die Start-Sperre NICHT als bloße Schwelle für beide aussprechen („kein Start, bis höchstens ein
+   Lauf übrig ist“), sondern sofort mit der Teilung aus Schritt 5: wer den nächsten freien Platz bekommt. Grund: Die
+   Schwelle bindet nur die Spur, die wartet; die Spur, die die Plätze hält, füllt jeden frei werdenden Platz in
+   derselben Minute nach (Prüfer nach Worker, Nacharbeit nach Prüfer), der Zähler fällt nie unter die Schwelle, und
+   die andere Spur steht über Stunden.
+7. Der wartenden Spur zugleich Arbeit geben, die ohne den knappen Platz geht: Nacharbeiten ohne schwerste Funde mit
    dem Modell des anderen Anbieters, danach prüft das starke Modell nur den Nacharbeit-Diff. Nacharbeiten mit
    schwersten Funden bleiben beim starken Modell.
-7. Meldet eine Spur „alle Plätze belegt“, die Läufe, die sie aufzählt, gegen das Register mit Modellspalte halten.
+8. Meldet eine Spur „alle Plätze belegt“, die Läufe, die sie aufzählt, gegen das Register mit Modellspalte halten.
    Grund: Die Spur liest Ordnernamen aus dem Register und zählt Läufe des anderen Anbieters als belegte Plätze mit;
    der Platz bleibt dann leer, obwohl ihr eigenes Journal schlüssig klingt.
-8. Sind die Plätze des Anbieters mit Abstand frei, während der andere an seiner Grenze steht und dort schon Läufe
+9. Sind die Plätze des Anbieters mit Abstand frei, während der andere an seiner Grenze steht und dort schon Läufe
    laufen: das nächste Paket des knappen Anbieters als Leitstand-Ausnahme mit dem günstigeren Modell des freien
    Anbieters bauen lassen und die Zweitprüfung dessen anderem Modell geben. Grund: Ein weiterer Start beim knappen
    Anbieter schießt über dessen Grenze, weil laufende Läufe nicht anhalten.
-9. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
-10. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
-    einschalten), statt nur „wartet“ zu melden.
+10. Sind nicht die Modell-Plätze knapp, sondern die Plätze für den Schlusstest (fertig gebaute Pakete „warten auf
+    Endlauf-Platz“, während ein Modell-Platz frei ist): zählen, wie viele offene Pakete an den wartenden hängen
+    (Ausgabe des Start-Werkzeugs: „wartet <Paket>: Abhängigkeiten …“ zählen und nach Vorgänger gruppieren). Hängt der
+    Rest der Queue daran, die Pflicht-Zweitprüfung vorziehen: Sie startet, sobald die Abnahme bestanden ist, schon
+    während des Wartens auf den Schlusstest, eine Prüfung zugleich auf dem freien Modell-Platz. Wird der Schlusstest
+    danach rot und braucht einen Fix, prüft dasselbe Prüfmodell nur den Fix-Diff nach. Eingebaut wird weiter erst mit
+    grünem Schlusstest UND bestandener Prüfung. Grund: Sonst liegen Prüfung und Schlusstest hintereinander in derselben
+    Warteschlange, der Modell-Platz bleibt leer, und jedes Paket verliert die Dauer eines Schlusstests zweimal.
+    Einen weiteren Schlusstest-Platz auf einem Rechner, den der Nutzer entlastet haben wollte, nicht von selbst
+    öffnen; im Bericht als Möglichkeit nennen.
+11. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen. Nennt eine Zelle noch
+    „läuft <Kennung>“, das Register aber den Lauf nicht mehr, den Zustand dieses einen Laufs im Register nachlesen
+    (beendet oder nie gestartet), bevor ein Hänger gemeldet wird.
+12. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
+    einschalten), statt nur „wartet“ zu melden. Hat eine eigene Anweisung den Stau verstärkt, das im Bericht sagen.
 
 ## 6. Prüfschritt, der nicht bei jedem Paket läuft
 

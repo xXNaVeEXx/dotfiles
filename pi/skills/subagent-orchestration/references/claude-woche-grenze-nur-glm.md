@@ -12,6 +12,11 @@
   Abfrage – Start (Worker + Zelle) unmittelbar nach der Abfrage und nie zwei Claude-Starts hintereinander ohne neue
   Abfrage dazwischen, sonst landen beide Spuren in derselben Minute bei 3 statt 2 Läufen. Hat der Leitstand einen Platz
   der anderen Spur zugesagt (z. B. für Prüfungen), diesen nicht mit eigenen Neustarts belegen, auch wenn `next` ihn anbietet.
+- Platzteilung (Leitstand: „solange die andere Spur wartende Claude-Arbeit hat, höchstens EIN Claude-Platz“): laufende Läufe
+  zu Ende laufen lassen, danach keinen neuen Claude-Lauf – auch keinen Prüfer, keine Nacharbeit –, bis alle eigenen Läufe
+  fertig sind oder die andere Spur im Journal „keine wartende Claude-Arbeit“ meldet. Fertige Pakete weiter ohne Claude
+  voranbringen (Endlauf, `abnahme`, Einbau); das Paket, dessen Prüfer warten muss, bekommt die Zelle „wartet auf Claude-Prüfung
+  (<Modell>)“. Kleine, belegte Nacharbeit-Fixes dürfen nach Leitstand-OK ohne Zweitprüfung einbauen.
 - „Nur glm“ heißt: glm baut nur Pakete mit Modell-Spalte glm. Pakete mit Spalte opus/sonnet nie ersatzweise mit glm
   starten (auch wenn `next` „glm (statt opus: schon 2 anthropic-Kinder)“ anbietet, wenn der Leitstand das ausschließt) –
   sie warten auf Claude; ist kein glm-Paket startbar, bleibt der Platz leer. Wurde ein Sicherheits-Baustein trotzdem mit glm
@@ -26,6 +31,15 @@
   schnell (Leitstand-Meldung), auch kleine Nacharbeit mit sonnet. Ist das Claude-Tor zu oder kein Claude-Platz frei: abnehmen,
   Endlauf fahren, Queue-Zelle „wartet auf Claude-Prüfung (<Modell>; Endlauf grün HEAD …)“, nicht einbauen. Den Prüfauftrag
   (`review-auftrag/<WP>.md`) schon jetzt schreiben, damit der Start beim ersten freien Platz sofort geht.
+- Prüfaufträge für UI-Pakete, die auf Backend-Ereignisse hören, enthalten immer die Frage „Wer sendet dieses Ereignis im
+  Livebetrieb?“ (Aufrufstellen der Publish-Funktion außerhalb von Tests suchen): Sonst wirkt eine sauber getestete Anzeige
+  fertig, die in der echten App nie etwas zeigt. Fehlt der Sender, steht das ehrlich als offene Lücke in Bericht, Status-YAML
+  und Handbuch (nicht „läuft über …“), und die Queue wird nach einem Paket durchsucht, das den Sender besitzt
+  (`grep -l <Ereignisname> spuren/*/wp/*.md`, Abo-/Empfangsseite zählt nicht). Gibt es keins: Journalzeile „offen für L0“ mit
+  Kandidaten, Merkposten, keinen Brief eigenmächtig ändern. Weitere feste Prüffragen: bei Code, der Kindprozesse startet, ob beim
+  Timeout auch deren Enkel beendet werden (Prozessgruppe) und ein offener Ausgabekanal das Lesen nicht bis zum Timeout
+  blockiert; bei Tests mit Mocks, ob die Mock-Antwort dem echten Backend-JSON entspricht; bei Filter-vor-Kürzen-Tests, ob das
+  Geheimnis wirklich über der Schnittgrenze liegt.
 - Ist das glm-Tor zu (`quota.sh zai` meldet NEIN) und ein Paket braucht eine weitere Prüfrunde (Zweit-/Drittprüfung nach
   Nacharbeit): das ANDERE Claude-Modell als der Bauer/Vorprüfer nehmen (opus-Bau → sonnet, sonnet-Bau → opus); Prüfauftrag als
   Datei (`review-auftrag/<WP>-N.md`) mit Stand (Commits, Diff-Bereich), Behauptungen des Workers, nummerierten Prüffragen und
@@ -60,7 +74,8 @@
   Ein Herzschlag mit `WARTE-ENDE herzschlag` ist nur der Zeitablauf: Stand lesen, neu starten, keine Meldung an den Nutzer nötig.
   Vor jedem Neustart `pgrep -af 'warte.sh <Spur>'` gegenlesen (0 = neu starten, 1 = läuft schon): Die Abschlussmeldung eines
   schon ersetzten Herzschlags kommt oft erst nach dem Neustart. Die Dauermeldung „worker hat bash 240 s offen“ eines
-  Workers im Endlauf ist dasselbe Warten, kein Hänger: nicht steuern, nur mit einer Zeile quittieren.
+  Workers im Endlauf ist dasselbe Warten, kein Hänger: nicht steuern, nur mit einer Zeile quittieren (bei Zweifel das
+  nextest-/Schritt-Log auf frische Zeitstempel prüfen).
 - Endet ein Worker durch einen Anbieterfehler (Ratenlimit „HTTP 424 … throttle_terminal“, Absturz) und die Meldung klingt nach
   „fertig“: Zustand belegen statt neu starten – `git log` im Worktree, `git status`, `wpq.py abnahme`, und
   `pgrep -af 'wpq.py check <WP>'`: ein vom Worker gestarteter Endlauf läuft abgekoppelt weiter und liefert sein Ergebnis ins
