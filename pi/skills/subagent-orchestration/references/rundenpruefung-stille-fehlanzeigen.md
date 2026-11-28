@@ -69,25 +69,39 @@ auf nichts, und alle davon abhängigen Pakete stehen mit.
    frei und stehen in der Queue Pakete mit „prüfen“, „wartet auf Slot“ oder einer bereiten Nacharbeit, den Grund
    belegen: das Start-Werkzeug der Spur selbst fragen (`<queue-werkzeug> next <Spur>`). Es nennt das Tor, das sperrt
    (Kontingent, Arbeitsspeicher, Abhängigkeit).
-2. Sperrt das Speicher-Tor nur, solange ein Build auf demselben Rechner läuft: die Spur anweisen, das Tor in kurzen
+2. Nennt das Start-Werkzeug eine andere Zahl laufender Läufe als das Register, oder bietet es für ein Paket ein
+   anderes Modell an als dessen Modell-Spalte, zählt seine eigene Zählung falsch. Die Zeilen suchen, die es zählt,
+   und gegen das Register halten. Häufigste Ursache: Die Zählung sucht den Modellnamen irgendwo in der Statuszelle,
+   und die Zelle eines Laufs des anderen Anbieters nennt das Prüfmodell im Freitext („nacharbeit läuft (<anderes
+   Modell> Run <kennung>; <Prüfmodell>-Prüfung Mängel …)“). Im Werkzeug beheben, nicht in den Zellen: Der Modellname
+   zählt nur DIREKT hinter der Lauf-Kennung (`\b[0-9a-f]{8}(?:-[0-9a-f]{4,12})*\s+(<modellnamen>)\b`). Das neue Muster
+   mit einigen echten Zellen prüfen (zählt / zählt nicht, auch die lange Kennung mit Bindestrichen), den Selbsttest
+   des Werkzeugs fahren, atomar ersetzen, danach die Zählung des Werkzeugs gegen das Register halten und beiden
+   Spuren das Zellenformat nennen. Grund: Zählt das Werkzeug einen fremden Lauf mit, hält es die Grenze für erreicht;
+   Pakete des knappen Anbieters bleiben liegen, oder es weicht auf das falsche Modell aus.
+3. Hält eine Spur Pakete zurück, weil sie einen Anbieter für gesperrt hält, ihre Annahme gegen die Messung halten
+   (Zellen wie „wartet: Tor zu“ suchen, dann das Tor-Skript fragen). Ist das Tor offen, die Spur die Zellen
+   berichtigen und nach der Reihenfolge des Start-Werkzeugs starten lassen. Grund: Die Spur merkt sich eine Sperre
+   aus einer früheren Anweisung und prüft sie nicht neu, wenn das Kontingent zurückgesetzt wurde.
+4. Sperrt das Speicher-Tor nur, solange ein Build auf demselben Rechner läuft: die Spur anweisen, das Tor in kurzen
    Abständen (etwa 10 min) neu zu prüfen, solange Prüfungen oder Nacharbeiten warten, und die Reihenfolge der
    wartenden Arbeit nennen. Grund: Die Spur prüft das Tor einmal und legt sich dann mit ihrem langen Wecker schlafen;
    der Speicher ist Minuten später wieder frei, der Platz bleibt aber bis zum Wecker leer.
-3. Sind alle Plätze belegt, je Spur zählen, wer sie hält. Hält eine Spur alle und wartet bei der anderen Arbeit seit
+5. Sind alle Plätze belegt, je Spur zählen, wer sie hält. Hält eine Spur alle und wartet bei der anderen Arbeit seit
    mehr als einer Runde (letzte Journalzeile der wartenden Spur ist Stunden alt), die Plätze teilen: Solange die
    andere Spur wartende Arbeit für den knappen Anbieter hat, hält jede Spur höchstens einen Platz. Laufende Worker
    laufen zu Ende; die abgebende Spur startet nach dem ersten fertigen Lauf keinen neuen, bis auch der zweite fertig
    ist. Der wartenden Spur die Reihenfolge für den Platz nennen, schwerste Funde zuerst. Grund: Jede Spur füllt freie
    Plätze sofort selbst nach; eine eingebaute Fairness-Regel des Start-Werkzeugs greift oft nur in einer Betriebsart
    und ist nach einem Umschalten außer Betrieb.
-4. Der wartenden Spur zugleich Arbeit geben, die ohne den knappen Platz geht: Nacharbeiten ohne schwerste Funde mit
+6. Der wartenden Spur zugleich Arbeit geben, die ohne den knappen Platz geht: Nacharbeiten ohne schwerste Funde mit
    dem Modell des anderen Anbieters, danach prüft das starke Modell nur den Nacharbeit-Diff. Nacharbeiten mit
    schwersten Funden bleiben beim starken Modell.
-5. Meldet eine Spur „alle Plätze belegt“, die Läufe, die sie aufzählt, gegen das Register mit Modellspalte halten.
+7. Meldet eine Spur „alle Plätze belegt“, die Läufe, die sie aufzählt, gegen das Register mit Modellspalte halten.
    Grund: Die Spur liest Ordnernamen aus dem Register und zählt Läufe des anderen Anbieters als belegte Plätze mit;
    der Platz bleibt dann leer, obwohl ihr eigenes Journal schlüssig klingt.
-6. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
-7. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
+8. Quittung als Journalzeile verlangen und in der nächsten Runde am gestarteten Lauf belegen.
+9. Dem Nutzer den Engpass und den einen Handgriff nennen, der ihn löst (z. B. den ausgefallenen Build-Rechner
    einschalten), statt nur „wartet“ zu melden.
 
 ## 6. Bedingter Prüfschritt: löst er auch beim Gegenstück aus?
