@@ -44,6 +44,7 @@ Durchlauf ohne eine einzige Änderung ist eine verpasste Chance, „Nothing to s
 - Anker einzeilig halten: `view` zeigt harte Zeilenumbrüche nicht unterscheidbar von Faltungen, mehrzeilige
   `old_text`-Spans brechen an umgebrochenen Zeilen.
 - Mehrere Patches an dieselbe Skill nacheinander senden, nie parallel im selben Aufrufblock.
+- „Resulting SKILL.md too large (>100000 chars)“: Die SKILL.md der Umbrella sitzt an ihrer harten Obergrenze — denselben Patch nicht wiederholen, sondern die Regel als Unterstützungsdatei darunter ablegen (`write_file` nach `references/<thema>.md`, thematisch passend) und nur, wenn dort noch kein Zeiger steht, eine einzelne Zeile in der SKILL.md verankern; Ballast aus der SKILL.md vorher in eine Referenz auslagern. Vor dem Patchen die Größe prüfen (`wc -c <skill>/SKILL.md`), um die Fehlerrunde zu sparen.
 - Neue Skill: Name klassenbezogen (keine Fehlernummer, kein Projekt-Schlachtwort, kein Sitzungs-Artefakt),
   `description` ein Satz, Auslöser zuerst, höchstens 1024 Zeichen; Procedure zuerst, Fallstricke am jeweiligen
   Schritt.
