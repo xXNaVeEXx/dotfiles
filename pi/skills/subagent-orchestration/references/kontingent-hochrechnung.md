@@ -6,7 +6,8 @@ hätte Stunden vorher entscheiden können. Darum bei jedem Leitstand-Wecken hoch
 ## Ablauf Hochrechnung
 1. Bei jedem Wecken einen Messpunkt in die Stand-Datei schreiben: Uhrzeit, Wochenwert in Prozent, Summe der fertigen Pakete aller Spuren
    (Live-Zählung aus der Queue). Den Messpunkt als eigene, wiedererkennbare Angabe schreiben („Messpunkt: N Pakete fertig, X %“),
-   damit die nächste Runde ihn ohne Nachrechnen findet.
+   damit die nächste Runde ihn ohne Nachrechnen findet. Arbeiten die Spuren mit mehreren Anbietern, jeden Anbieter messen und
+   in denselben Messpunkt schreiben, auch den, der gerade viel Abstand hat.
 2. Die Raten immer über die längste verfügbare Strecke bilden: vom ersten Messpunkt der Woche (oder seit dem letzten Wochenwechsel
    bzw. Ende einer Pause) bis jetzt, nicht aus dem letzten Abstand allein. Zwei Raten: Prozentpunkte je Stunde und Prozentpunkte je
    fertigem Paket. Grund: Der Verbrauch je Stunde schwankt stark mit der Tageszeit und der Phase (nachts oft weniger als die Hälfte,
@@ -123,6 +124,27 @@ benutzen, weil er auch den freien Anbieter anhält.
 7. Beim nächsten Wecken gegenprüfen: Das Queue-Werkzeug bietet bei gesperrtem Anbieter oft dessen nächstes Paket „mit dem
    freien Modell“ an und übersieht Pakete des freien Anbieters dahinter. Die Spur darf das Angebot nicht annehmen; bleibt ihr
    dadurch ein Platz leer, ist das ein Werkzeug-Punkt für den Leitstand (Schalter „nur Modell-Spalte“), kein Fehler der Spur.
+8. Ab der Umstellung den freien Anbieter genauso hochrechnen wie den gesperrten und für ihn eine eigene Wache auf seine Grenze
+   starten. Grund: Er trägt jetzt Bau, Nacharbeit und die Spur-Sitzungen allein, sein Wert steigt deutlich schneller als zuvor,
+   und ohne Wache bemerkt den Anstieg erst die nächste volle Runde (siehe nächster Abschnitt).
+
+## Der freie Anbieter wird selbst knapp: Rollen tauschen
+Tritt meist ein bis zwei Tage nach einer Umstellung ein, oft kurz nachdem der Nutzer den anderen Anbieter zurückgesetzt hat.
+1. Erkennen: Der Wert des bisher freien Anbieters erreicht seine Grenze laut Hochrechnung in wenigen Stunden, der andere hat
+   wieder Abstand. Beide Zahlen mit Zeitpunkt in den Messpunkt schreiben.
+2. Die Spur-Sitzungen umstellen, BEVOR das Tor des knapp werdenden Anbieters schließt (Schritte 1 und 2 des vorigen Abschnitts:
+   Fenster prüfen, `/model`, Gegenprobe, Umgebungsdateien von Sitzung und Watchdog). Für die Sitzungen das günstigere Modell des
+   Anbieters mit Abstand nehmen. Grund: Eine Sitzung auf einem gesperrten Anbieter kann die Anweisung zum Wechsel nicht mehr
+   verarbeiten, und jeder Anstoß ihres Watchdogs scheitert an der Drosselung.
+3. Jede Spur schriftlich anweisen und eine Quittung verlangen: laufende Läufe des knapp werdenden Anbieters laufen zu Ende;
+   schließt sein Tor, startet kein neuer Lauf mit ihm; die Zweitprüfung übernimmt dann das ANDERE Modell des verbleibenden
+   Anbieters (nie dasselbe Modell, das gebaut hat); die Worker-Obergrenze für den verbleibenden Anbieter gilt unverändert und
+   über alle Spuren zusammen. Grund für die letzte Zeile: Alle Arbeit landet jetzt bei ihm, und die Spuren füllen sonst jeden
+   Platz mit seinen Läufen.
+4. Die Hochrechnung des verbleibenden Anbieters sofort neu beginnen (neuer Messpunkt), weil er ab jetzt Sitzungen, Bau und
+   Prüfung trägt und die alte Rate je Paket nicht mehr gilt.
+5. Entscheidung protokollieren, den ganzen Kontingent-Absatz der Übersicht neu schreiben (wer baut, wer prüft, welche Grenze
+   wann erwartet wird), Übergabe-Notiz um das Modell der Spur-Sitzungen ergänzen.
 
 ## Nutzer hebt die Grenze an, während die Pause läuft
 Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Teile, und jeder vergessene hält eine Spur an.
@@ -188,10 +210,13 @@ Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Te
    späteren Runde abgeschrieben.
 5. Jede Spur wecken, in einem Text: Sperre und alle Einschränkungen wegen der Grenze aufgehoben; Reihenfolge erst die wartenden
    Prüfungen (schwerste zuerst), dann Einbau, dann neue Pakete nach Modell-Spalte; Worker-Obergrenze unverändert; Quittung.
-   Die Spur-Sitzungen bleiben auf dem freien Anbieter, wenn die Woche noch lange läuft und der Verbrauch vorher hoch war; das mit
-   Zahl in die Entscheidung schreiben.
+   Auf welchem Anbieter die Spur-Sitzungen danach laufen, nach dem Abstand beider Anbieter zu ihrer Grenze entscheiden: Sie gehören
+   auf den, dessen Hochrechnung bis zum Wochenwechsel trägt. Bleiben sie auf dem bisher freien, dessen Wert und den erwarteten
+   Zeitpunkt seiner Grenze in die Entscheidung schreiben und bei jedem Wecken nachziehen. Grund: Der bisher freie Anbieter hat
+   während der Sperre alles getragen und ist oft selbst nur noch wenige Stunden von seiner Grenze entfernt
+   (siehe „Der freie Anbieter wird selbst knapp“).
 6. Leitstand-Weckabstand zurückstellen, Tor-frei-Wache und lange Aufsichten beenden, Aufsichten im Normaltakt und eine
-   Kontingent-Wache auf die Grenze neu starten, bevor wieder Worker starten.
+   Kontingent-Wache auf die Grenze neu starten, bevor wieder Worker starten. Je Anbieter mit eigener Grenze eine Wache.
 7. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
    nächste Welle).
 
