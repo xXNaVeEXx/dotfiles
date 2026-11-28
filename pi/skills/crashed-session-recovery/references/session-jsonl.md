@@ -1,4 +1,4 @@
-# Pi-Session-JSONL auswerten (Ursprungssitzung, Aufträge, letzte Meldungen)
+# Pi-Session-JSONL auswerten (Ursprungssitzung, Aufträge, letzte Meldungen, Bericht eines Prüfers)
 
 ## Session-Datei finden
 - Ablage: `~/.pi/agent/sessions/--<cwd-slug>--/<UTC-Start>_<session-id>.jsonl` (Slug = cwd mit `-` statt `/`). Eigene Sitzung: `$PI_SESSION_FILE`.
@@ -35,6 +35,15 @@ jq -r 'select(.type=="message" and .message.role=="toolResult") | select(.messag
 - Ende lesen wie bei der Leitung (`stopReason`-Zählung, letzte `errorMessage`): `"retryable":false` mit „stops amplifying after 5 consecutive rate limits — resend manually“ heißt endgültig, der Worker läuft nicht von selbst weiter.
 - Teilstand: `git log --date=format-local:'%d.%m %H:%M' --format='%h %ad %s' <basis>..HEAD`, `ls -lt .tmp` und `git status --short` im Worker-cwd (Commits mit Zeit, Logs der letzten Läufe). In der ersten Nutzernachricht der Worker-Datei steht der Auftrag (Brief-Pfad, Arbeitsordner, Bericht-Pfad).
 - `bg_status` der Nachfolge-Sitzung sagt über diese Worker nichts (meldet nur „No background tasks“).
+
+## Prüfbericht eines Prüfers holen, wenn die Rückgabe nicht der Bericht ist
+- Ein `subagent`-Prüfer soll seinen Bericht als LETZTE Nachricht schreiben. Hängt die Erweiterung ihm danach noch eine Lern-Aufforderung an („Was soll gespeichert werden?“), sind die Rückgabe des Laufs und die Datei `subagent-artifacts/<runId>_reviewer_output.md` nur diese Abschluss-Antwort — nicht der Bericht.
+- Der Bericht steht in der Sitzungsdatei des Kindes (Pfad wie im Abschnitt oben; runId = „Child run“ aus der Meldung, auch im `<async-run-ordner>/workflow-receipt.json`). Herausziehen:
+  ```bash
+  jq -r 'select(.type=="message" and .message.role=="assistant") | (.message.content|if type=="string" then . else (map(select(.type=="text")|.text)|join("")) end) as $t | select($t|length>0) | "<<<" + .timestamp[11:19] + ">>>\n" + $t' session.jsonl > /tmp/gutachten.txt
+  grep -n '^<<<\|^# Prüfung' /tmp/gutachten.txt     # Bericht beginnt bei der Zeile mit „# Prüfung N…“
+  ```
+- Ein Prüfer ohne Shell sieht ignorierte Ordner (`.tmp` steht in `.gitignore`) mit seinen Suchwerkzeugen nicht und meldet Belege als „fehlen“. Vor dem Start die Belege außerhalb ignorierter Ordner ablegen (Liste mit Name, Größe, Uhrzeit und die Zusammenfassungszeilen) und im Auftrag nennen; einen solchen Fund im Bericht mit dem Listing widerlegen statt Läufe zu wiederholen.
 
 ## Struktur
 - Zeile 1: `{"type":"session","version":…,"id":…,"timestamp":…,"cwd":…}`.
