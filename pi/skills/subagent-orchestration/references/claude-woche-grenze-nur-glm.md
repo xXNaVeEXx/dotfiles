@@ -3,13 +3,19 @@
 - Journal-Quittung mit dem nächsten glm-Paket: nicht aus der Queue-Spalte „Modell“ raten. Viele glm-Pakete hängen an
   Claude-Paketen (gesperrter Vorgänger), und Abhängigkeiten anderer Wellen/Spuren sieht eine Queue-Auswertung nicht.
   Verbindlich ist nur `wpq.py next`; bei vollen Plätzen („voll: 2/2“) „voraussichtlich … (Abhängigkeiten prüft next)“ schreiben.
+- Queue-Zelle eines gestarteten Laufs SOFORT im Format `läuft <runId> <modell>` bzw. `nacharbeit läuft <runId> <modell>`
+  schreiben, Freitext erst dahinter: Die Platz-Zählung (Register, `wpq.py next`) liest die Kennung aus der Zelle; fehlt sie
+  (z. B. „nacharbeit läuft (sonnet-Worker, …)“), sieht die Zählung den Lauf nicht, vergibt den Platz an die andere Spur und
+  die Höchstzahl Claude-Läufe wird überschritten. Vor jedem Start `wpq.py next` und `claude-laeufe.py` fragen; ist die
+  Grenze überschritten, keinen weiteren Claude-Lauf starten, bis sie wieder eingehalten ist (laufende nie abbrechen).
 - „Nur glm“ heißt: glm baut nur Pakete mit Modell-Spalte glm. Pakete mit Spalte opus/sonnet nie ersatzweise mit glm
   starten (auch wenn `next` „glm (statt opus: schon 2 anthropic-Kinder)“ anbietet, wenn der Leitstand das ausschließt) –
   sie warten auf Claude; ist kein glm-Paket startbar, bleibt der Platz leer. Wurde ein Sicherheits-Baustein trotzdem mit glm
   gebaut, verlangt der Leitstand vor dem Einbau eine opus-Prüfung (Sicherheit/echte Fehler, Vorrang vor anderen Claude-Läufen)
   und startet keine abhängigen Pakete vor dem Einbau.
 - Jedes fertige glm-Paket braucht sofort einen Claude-Prüfer (zählt gegen die Claude-Grenze und die Höchstzahl Claude-Läufe) –
-  einplanen. Prüfer mit dem billigeren Claude-Modell, wo der Brief nichts anderes verlangt. Ist das Claude-Tor zu: abnehmen,
+  einplanen. Prüfer mit dem billigeren Claude-Modell (sonnet), wo der Brief nichts anderes verlangt; steigt das Claude-Kontingent
+  schnell (Leitstand-Meldung), auch kleine Nacharbeit mit sonnet. Ist das Claude-Tor zu: abnehmen,
   Endlauf fahren, Queue-Zelle „wartet auf Claude-Prüfung“, nicht einbauen.
 - Ist das glm-Tor zu (`quota.sh zai` meldet NEIN) und ein Paket braucht eine weitere Prüfrunde (Zweit-/Drittprüfung nach
   Nacharbeit): das ANDERE Claude-Modell als der Bauer/Vorprüfer nehmen (opus-Bau → sonnet, sonnet-Bau → opus); Prüfauftrag als
@@ -21,7 +27,8 @@
   Entscheidungsfreiheit (Fehler vs. ignorieren) bewusst dem Worker mit Begründung im Bericht überlassen; Abschluss = Endlauf
   grün auf End-HEAD, `abnahme` OK, Bericht ehrlich (Testzahlen, Restlücken). Typischer P1-Fund bei UI-Paketen: Tests setzen
   Props von Hand, der echte Feed/Aufrufer reicht sie nie durch → Test über den echten Eltern-Baustein verlangen. Kleine,
-  belegte Fixes brauchen keine neue Prüfrunde, große Nacharbeiten (Sicherheit) schon.
+  belegte Fixes (Rot-Beleg je Fix im Bericht, Endlauf grün) brauchen keine neue Prüfrunde → Queue „integrieren“ + Einbau
+  einreihen; große Nacharbeiten (Sicherheit) schon.
 - Ist das Claude-Tor ganz zu (`quota.sh anthropic` meldet NEIN), bietet `wpq.py next` Claude-Pakete als „glm (statt
   sonnet: anthropic-Kontingent)“ an – das ist die Ausweichregel des Werkzeugs, keine Freigabe. Bei der Weisung „nur Pakete
   mit Modell-Spalte glm“ das Angebot NICHT starten, Journalzeile. Schon gelaufene
@@ -41,14 +48,17 @@
   Hänger: `ps -eo pid,etimes,args | grep -E 'wpq.py check|rb.sh'` – solange `rb.sh --_inner`-Prozesse laufen, nichts tun.
   Ein Herzschlag mit `WARTE-ENDE herzschlag` ist nur der Zeitablauf: Stand lesen, neu starten, keine Meldung an den Nutzer nötig.
   Die Abschlussmeldung eines schon ersetzten Herzschlags kommt oft erst nach dem Neustart: nicht noch einmal starten, sondern
-  `pgrep -af 'warte.sh <Spur>'` gegenlesen (genau einer läuft).
+  `pgrep -af 'warte.sh <Spur>'` gegenlesen (genau einer läuft). Die Dauermeldung „worker hat bash 240 s offen“ eines
+  Workers im Endlauf ist dasselbe Warten, kein Hänger: nicht steuern, nur mit einer Zeile quittieren.
 - `wpq.py integ <WP>` startet den Endlauf im Hintergrund, der Aufruf selbst blockiert aber (Merge + Vorprüfung): einen
   Einbau immer abgekoppelt starten – kleines Skript `$C/.start-<wp>-integ.sh` (`cd $C`, optional `while kill -0 <pid>; do sleep 20; done`
   als Warteschlange hinter einem laufenden Einbau, dann `CLAW_MEM=… LUMI_REMOTE_JOBS=… exec python3 wpq.py integ <WP>`) per
   `setsid nohup … </dev/null &` – und nach einigen Minuten `ps -p <pid>` + Log gegenlesen; ein vom Guardrail abgebrochener
   Vordergrundaufruf kann den Einbau mitnehmen (Prozess weg, Log endet nach „Runde 1“). Alternativ bash-`timeout` ≥ 100 s und
   `wpq.py wait integ <WP>` (≤ 85 s je Aufruf, Exit 3 = läuft noch). Vor jedem Neustart `pgrep -af 'wpq.py integ'`/Log
-  gegenlesen, sonst entsteht ein zweiter Merge. Einbauten derselben Integrationsbranch seriell einreihen (zweiter wartet auf den ersten).
+  gegenlesen, sonst entsteht ein zweiter Merge. Einbauten derselben Integrationsbranch seriell einreihen (zweiter wartet auf den
+  ersten, dritter auf das Warteskript des zweiten). Zieht `feat/…` während des Endlaufs weiter („nächste Runde“, Runde 2/3),
+  ist das normal: der Einbau merged neu und fährt den Endlauf erneut, nichts eingreifen.
 - Meldet der Wächter „seit N min kein Fortschritt“, zuerst die Ursache trennen, bevor etwas neu gestartet wird: im
   `events.jsonl` des Laufs (`/tmp/pi-subagents-uid-<uid>/async-subagent-runs/<runId>/`) die Zeitstempel (`observedAt`/`ts`;
   `content` kann Zeichenkette statt Liste sein) auf Lücken prüfen, dazu `git log`/Dateizeiten im Worktree, Fortschritt im
