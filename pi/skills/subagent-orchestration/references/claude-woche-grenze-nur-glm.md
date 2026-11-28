@@ -16,6 +16,12 @@
   Datei (`review-auftrag/<WP>-N.md`) mit Stand (Commits, Diff-Bereich), Behauptungen des Workers, nummerierten Prüffragen und
   Ausgabeformat `[P1]/[P2]`-Zeilen + letzte Zeile `REVIEW: ok|Mängel`; P2-Funde bei `ok` als Merkposten eintragen
   (`MERKPOSTEN-W2.md`) für das nächste Paket an derselben Stelle. Danach sofort `integ`.
+- Nacharbeit-Brief nach `REVIEW: Mängel` (`nacharbeit/<WP>.md`): Kopf mit Prüf-Volltext, End-HEAD, Worktree und „vorhandene
+  Commits nicht umschreiben“; je Mangel ein Abschnitt `P1-n/P2-n` mit Datei:Zeile, Ist, Soll und geforderter Rot/Grün-Test;
+  Entscheidungsfreiheit (Fehler vs. ignorieren) bewusst dem Worker mit Begründung im Bericht überlassen; Abschluss = Endlauf
+  grün auf End-HEAD, `abnahme` OK, Bericht ehrlich (Testzahlen, Restlücken). Typischer P1-Fund bei UI-Paketen: Tests setzen
+  Props von Hand, der echte Feed/Aufrufer reicht sie nie durch → Test über den echten Eltern-Baustein verlangen. Kleine,
+  belegte Fixes brauchen keine neue Prüfrunde, große Nacharbeiten (Sicherheit) schon.
 - Ist das Claude-Tor ganz zu (`quota.sh anthropic` meldet NEIN), bietet `wpq.py next` Claude-Pakete als „glm (statt
   sonnet: anthropic-Kontingent)“ an – das ist die Ausweichregel des Werkzeugs, keine Freigabe. Bei der Weisung „nur Pakete
   mit Modell-Spalte glm“ das Angebot NICHT starten, Journalzeile. Schon gelaufene
@@ -36,10 +42,13 @@
   Ein Herzschlag mit `WARTE-ENDE herzschlag` ist nur der Zeitablauf: Stand lesen, neu starten, keine Meldung an den Nutzer nötig.
   Die Abschlussmeldung eines schon ersetzten Herzschlags kommt oft erst nach dem Neustart: nicht noch einmal starten, sondern
   `pgrep -af 'warte.sh <Spur>'` gegenlesen (genau einer läuft).
-- `wpq.py integ <WP>` startet den Endlauf im Hintergrund, der Aufruf selbst blockiert aber (Merge + Vorprüfung): mit
-  ausreichendem bash-`timeout` (≥ 100 s) oder per `&` starten und mit `wpq.py wait integ <WP>` (≤ 85 s je Aufruf, Exit 3 =
-  läuft noch) nachsehen; ein vom Guardrail abgebrochener Vordergrundaufruf lässt den Lauf weiterlaufen – vor dem
-  Neustart `pgrep -af 'wpq.py integ'`/Log gegenlesen, sonst entsteht ein zweiter Merge.
+- `wpq.py integ <WP>` startet den Endlauf im Hintergrund, der Aufruf selbst blockiert aber (Merge + Vorprüfung): einen
+  Einbau immer abgekoppelt starten – kleines Skript `$C/.start-<wp>-integ.sh` (`cd $C`, optional `while kill -0 <pid>; do sleep 20; done`
+  als Warteschlange hinter einem laufenden Einbau, dann `CLAW_MEM=… LUMI_REMOTE_JOBS=… exec python3 wpq.py integ <WP>`) per
+  `setsid nohup … </dev/null &` – und nach einigen Minuten `ps -p <pid>` + Log gegenlesen; ein vom Guardrail abgebrochener
+  Vordergrundaufruf kann den Einbau mitnehmen (Prozess weg, Log endet nach „Runde 1“). Alternativ bash-`timeout` ≥ 100 s und
+  `wpq.py wait integ <WP>` (≤ 85 s je Aufruf, Exit 3 = läuft noch). Vor jedem Neustart `pgrep -af 'wpq.py integ'`/Log
+  gegenlesen, sonst entsteht ein zweiter Merge. Einbauten derselben Integrationsbranch seriell einreihen (zweiter wartet auf den ersten).
 - Meldet der Wächter „seit N min kein Fortschritt“, zuerst die Ursache trennen, bevor etwas neu gestartet wird: im
   `events.jsonl` des Laufs (`/tmp/pi-subagents-uid-<uid>/async-subagent-runs/<runId>/`) die Zeitstempel (`observedAt`/`ts`;
   `content` kann Zeichenkette statt Liste sein) auf Lücken prüfen, dazu `git log`/Dateizeiten im Worktree, Fortschritt im
@@ -55,12 +64,15 @@
   (`$C/vorgaben/<WP>.pfade` anlegen, eine Zeile je Pfad), Journalzeile, dann
   `subagent_supervisor({action:"reply", replyTo:<id aus der Meldung>, message})`. Vorher den Diff der fremden Datei gegen die
   Basis lesen (nur additive Zeilen? Abhängigkeit mit fester Version?) und den Worker die Abweichung im Bericht nennen lassen.
+  Dasselbe Paket fragt oft zweimal (erst i18n-Datei, dann generiertes `handbuch.html` im Endlauf): beide Pfade gleich beim
+  ersten Mal freigeben, wenn das Paket Handbuch-Fragmente und neue Schlüssel hat.
 - Endlauf-Schritt `nextest EXIT=255` ohne Fehlertext (Log endet mitten im Kompilieren) = abgebrochen (RAM/Remote), kein
   Codefehler: Schritt neu fahren, nicht blind ändern. Mit weniger Jobs wiederholen (`CLAW_MEM=9G LUMI_REMOTE_JOBS=2`, bei
   großem Crate ggf. `CLAW_MEM=7G`), weil der Speicherwächter des Build-Hosts sonst rustc beendet und der Wrapper es nicht
   erkennt; besonders nach einem `RB_SCAN …: Bau-Ordner im Spiegel entfernt` (Vollneubau) und wenn andere Endläufe parallel
-  laufen. Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen < 200 ms“) getrennt von eigenen roten Tests
-  (i18n-Platzhalter, Design-Wächter) benennen; bei reinem Infra-/Flake-Rot im `integ` einfach `integ` erneut fahren, dem
+  laufen. Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen < 200 ms“ bzw. Timeout 5000 ms) getrennt von eigenen
+  roten Tests (i18n-Platzhalter, Design-Wächter) benennen; bei reinem Infra-/Flake-Rot (Log: genau 1 Test rot, ein
+  Zeit-Test, alle anderen Schritte grün) im `integ` einfach `integ` erneut fahren und die Flake als Merkposten notieren; dem
   Worker per `steer` nur eigene rote Tests mitgeben.
 - `wpq.py integ` bricht am Tor „MANGEL Bericht: ERGEBNIS: teilweise …“ ab (strikte Prüfung; `abnahme` warnt nur): Die
   Schlusszeile des Berichts muss `ERGEBNIS: fertig – …` lauten, „bewusst offen“ gehört in den Text der Zeile. Als reiner

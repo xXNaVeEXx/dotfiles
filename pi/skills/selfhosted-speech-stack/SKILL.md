@@ -23,8 +23,9 @@ und wenig RAM hat (Kunden-VPS, geteilt zwischen Mandanten) und die Nutzung komme
 - Sprachabdeckung je Modell ausdrücklich prüfen; viele kleine TTS-Modelle fehlen gerade Deutsch oder Russisch.
 - Eine Laufzeit für alles bevorzugen (z. B. sherpa-onnx für STT, TTS und VAD): ein Prozess, ein Speicherbudget.
 - Soll ein Cloud-Dienst (z. B. ElevenLabs) der erste Weg sein und das lokale Modell nur der Rückfall: Modellwahl gegen
-  Doku und Preisseite prüfen, Rechte des Schlüssels proben, kurz UND lang messen, Rückfall am Fehler der Anfrage mit
-  Sperrfrist bauen. Ablauf und gemessene Eigenheiten: `references/cloud-api-erstweg.md`.
+  Doku und Preisseite prüfen, Rechte des Schlüssels einzeln proben (nach jeder Änderung erneut), Stimme aus den für die
+  Zielsprache geprüften wählen und als Auswahl mit Hörprobe anbieten, kurz UND lang messen, Rückfall am Fehler der
+  Anfrage mit Sperrfrist bauen (Tarif-Fehler einer Stimme sperrt nicht). Ablauf und gemessene Eigenheiten: `references/cloud-api-erstweg.md`.
 
 ## 3. Messen, bevor festgelegt wird
 - Auf x86 im Container mit harter Grenze messen (`docker run --memory <n>g --cpus <k>`), nicht nur auf dem
