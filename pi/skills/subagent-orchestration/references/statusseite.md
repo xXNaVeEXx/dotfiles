@@ -76,6 +76,11 @@ still leer.
 - Kommt nach einer Prüfung ein Nacharbeits-Paket dazu, es im selben Zug an drei Stellen eintragen: neue Queue-Zeile
   (Status „offen“), neuer Schritt in der Steps-Checkliste und der Engpass-Satz der Übersicht. Grund: Sonst springt
   „n von m“ beim Start der Nacharbeit rückwärts oder die Seite zeigt „Bau fertig“, während noch ein Paket aussteht.
+- Nach dem Merge einer Paket-Kette (Bau, Korrektur-Runden, Gutachten, Nacharbeit) jede Zeile der Kette auf ihren
+  Endstand setzen: `gemergt <PR>` für Zeilen mit eigenem PR, `fertig – in <PR> aufgegangen` für den Rest. Ein
+  abgebrochener Prüflauf ist kein Status-Wort und zählt weiter als offen; auch diese Zeile schließen. Danach die
+  Summenzeile gegen die wirklich offenen Pakete halten. Grund: Der Renderer wertet je Zeile, „Nacharbeit …“-Zeilen
+  bleiben sonst als in Arbeit stehen, und die Seite meldet für längst gemergte Arbeit noch „n in Arbeit“.
 - Zahlen und Paketlisten im Übersichtstext nie von Hand schreiben, sondern als Live-Platzhalter, die der Renderer bei
   jedem Lauf füllt. In der Vorlage eingebaut:
   - `{{queue:<Sektion>}}` bzw. `{{queue:<Sektion>:<ID-Regex>}}` (Regex ohne `}`) → „n von m fertig, k in Arbeit, …

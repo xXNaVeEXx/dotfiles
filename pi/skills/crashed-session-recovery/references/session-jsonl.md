@@ -6,12 +6,16 @@
   `cd ~/.pi/agent/sessions && find . -name '*.jsonl' -newermt '<YYYY-MM-DD HH:MM>' -printf '%TY-%Tm-%Td %TH:%TM %s %p\n' | sort`
   (mtime = letzte Schreibung, Größe verrät Riesensitzungen → nie ganz lesen).
 - Schneller über die Session-ID aus `session_search {}`: `grep -rl "<session-id>" ~/.pi/agent/sessions --include=*.jsonl`.
+- Den Pfad nie aus einer abgetippten ID bauen (eine vertippte Ziffer ergibt „No such file or directory“, und derselbe Tippfehler wiederholt sich beim Korrigieren leicht): die Datei aus dem Sitzungsordner per Kurzkennung auflösen und das Ergebnis mit `ls -l` prüfen —
+  `cd ~/.pi/agent/sessions && F=$(find . -name '*<erste 8 Zeichen der ID>*' | head -1); ls -l "$F"`.
+- Im `ls -lt -- <sitzungsordner>` ist ein Verzeichnis mit dem Datei-Stamm einer Sitzung (ohne `.jsonl`) und winzigem Eintrag der Ordner für die Sitzungsdateien ihrer `subagent`-Worker (siehe unten).
 - Der Dateiname trägt die Startzeit in UTC → vor jedem Vergleich mit Commits/Logs in Ortszeit umrechnen; der Versatz ändert sich beim Sommer-/Winterzeitwechsel.
 
 ## Prozess ↔ Sitzung zuordnen
 - `ps -o pid,lstart,etime,args -C pi`: Startzeit eines pi-Prozesses = Zeitstempel seiner ERSTEN Session-Datei.
 - `/new` legt im selben Prozess eine neue Datei an — die PID bleibt, ihre Startzeit zeigt weiter auf die Ursprungssitzung. Aktuell ist die jüngste Datei mit passendem cwd, deren mtime noch wächst.
 - Schnellster Nachweis für `/new` im selben Pane: `ls -dt ~/.pi/tasks/*` — die Ordner heißen `<session-id>-<pi-PID>`. Tragen die eigene und die tote Sitzung dieselbe PID-Endung, bin ich der Nachfolger.
+- Ohne Task-Ordner: `ps -o pid,ppid,lstart,args -p $PPID` aus einem bash-Aufruf (die bash hängt direkt unter dem pi-Prozess). Stimmt dessen Startzeit (Ortszeit) mit dem UTC-Zeitstempel im Dateinamen der alten Sitzung überein, war es `/new` im selben Fenster.
 - Worker/Delegates: `ps -eo pid,lstart,args | grep -E 'acp-delegate|pi --mode|del_'` (runId steht im Argument).
 
 ## Delegate-Worker der toten Sitzung finden
@@ -22,6 +26,15 @@ jq -r 'select(.type=="message" and .message.role=="toolResult") | select(.messag
   | (.message.content|map(.text? // "")|join(" "))' F | grep -o 'runId `[^`]*`' | sort -u
 ```
 - Der zuletzt genannte runId gilt, denn ein `resumeFrom` vergibt eine neue ID. Danach `tail -c 1500 /tmp/acp-delegate/<runId>.activity` lesen und `git status --short` im Worker-cwd prüfen, um den Teilstand zu sehen.
+
+## `subagent`-Worker der toten Sitzung finden
+- Ihre Sitzungsdatei liegt verschachtelt im Ordner der Leit-Sitzung:
+  `~/.pi/agent/sessions/<cwd-slug>/<Datei-Stamm der Leit-Sitzung ohne .jsonl>/<runId>/run-0/session.jsonl`
+  (Kopfzeile trägt den `cwd` = Arbeitsordner des Workers); daneben `<cwd-slug>/subagent-artifacts/<runId>_worker_transcript.jsonl`.
+- Finden über die Zeit: das `find … -newermt` von oben listet beide; `head -n 1 <datei> | jq -c '{id,cwd,timestamp}'` nennt den Arbeitsordner.
+- Ende lesen wie bei der Leitung (`stopReason`-Zählung, letzte `errorMessage`): `"retryable":false` mit „stops amplifying after 5 consecutive rate limits — resend manually“ heißt endgültig, der Worker läuft nicht von selbst weiter.
+- Teilstand: `git log --date=format-local:'%d.%m %H:%M' --format='%h %ad %s' <basis>..HEAD`, `ls -lt .tmp` und `git status --short` im Worker-cwd (Commits mit Zeit, Logs der letzten Läufe). In der ersten Nutzernachricht der Worker-Datei steht der Auftrag (Brief-Pfad, Arbeitsordner, Bericht-Pfad).
+- `bg_status` der Nachfolge-Sitzung sagt über diese Worker nichts (meldet nur „No background tasks“).
 
 ## Struktur
 - Zeile 1: `{"type":"session","version":…,"id":…,"timestamp":…,"cwd":…}`.
@@ -42,6 +55,7 @@ jq -r 'select(.type=="message" and .message.role=="assistant" and .message.stopR
 - `429` / `overloaded` / Proxy-Meldung `bili_throttle_terminal`: Kontingent oder Last. Die genaue Ursache und das Reset-Datum stehen oft nicht in der Sitzung, sondern nur im Retry-Log eines Workers (`grep -a 429 /tmp/acp-delegate/*.activity | tail -2`). z.ai/bigmodel meldet ein Wochen- oder Monatslimit als Code `1310` mit Reset-Zeitpunkt.
   - Kurze Last-Sperre: Die Sitzung darf nach dem Reset fortgesetzt werden.
   - Reset erst in Tagen: nicht warten, sondern auf einem anderen Anbieter weiterarbeiten. Worker desselben Anbieters hängen dann in Retry-Schleifen: abbrechen und mit `resumeFrom` plus `model`-Override auf einen verfügbaren Anbieter fortsetzen. Dem Nutzer das Reset-Datum nennen.
+  - Trifft das Limit den Anbieter insgesamt, sterben Leitung und alle Worker desselben Anbieters binnen weniger Minuten (die Worker meist zuerst): nach dem Tod der Leitung jede Worker-Datei auf dasselbe Ende prüfen, bevor etwas als „läuft noch“ gemeldet wird.
 - `aborted`: Der Nutzer hat abgebrochen, kein Absturz.
 - Die Zeitspanne zwischen letzter echter Antwort und letztem Fehler ist die Ausfallzeit; in den Bericht an den Nutzer aufnehmen.
 
@@ -54,6 +68,8 @@ jq -r 'select(.type=="message" and .message.role=="user")
       |gsub("\n";" ⏎ ")|.[0:260])] | @tsv' F \
 | grep -v -E 'hermes-review|AUTONOMOUS REVIEW|background-task-notification|acp_delegate (completed|FAILED|cancelled)|\[ACP\]'
 ```
+- Störzeilen je Lauf ergänzen (z. B. `|task-notification|bg_|subagent`), sonst verdrängt eine Benachrichtigung den letzten echten Auftrag aus dem `tail`.
+- Ortszeit statt UTC nachsetzen: `… | tail -25 | while IFS=$'\t' read ts txt; do echo "$(date -d "$ts" +%d.%m_%H:%M) | $txt"; done`.
 Lange Aufträge danach einzeln voll lesen: `select(.timestamp|startswith("<ts>"))`.
 
 ## Letzte Meldungen
@@ -68,4 +84,5 @@ jq -r 'select(.type=="message" and .message.role=="assistant" and .timestamp>"<v
   | .timestamp[11:19] + " " + ([.message.content[]? | if .type=="text" then "TXT: "+.text
       elif .type=="toolCall" then "CALL: "+(.arguments|tostring) else empty end] | join(" | "))' F | cut -c1-600 | tail -12
 ```
+- Faltungs-Marker des Proxys (`📦 [ACP] Compressed …`) stehen ebenfalls als Assistant-Text in der Datei und verdrängen in `tail -c`-Ausschnitten die echte Antwort: mit `grep -v '^\[ACP\]'` herausfiltern; echte Antworten an `stopReason=="stop"` erkennen.
 Offene Punkte der toten Sitzung quer über ihre Antworten sammeln: Texte ab einem Zeitpunkt nach `offen|später|follow|noch nicht|nächst` greppen (`… | grep -iE '…' | tail -15`). Grund: Angekündigte Folgearbeiten stehen oft nur in Zwischenmeldungen und in keinem Tracker.

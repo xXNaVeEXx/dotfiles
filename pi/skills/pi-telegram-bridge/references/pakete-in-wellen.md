@@ -8,18 +8,26 @@ mergt, rollt aus und meldet sich per Telegram.
 1. Stand prüfen: `git -C ~/projects/pi-telegram log --oneline -3 main`, `wt list`, Dienst aktiv, Bot ruhig.
 2. Rechner prüfen (`nproc`, `uptime`, `free -g`): bei Last nahe der Kernzahl oder belegtem Swap höchstens
    3–4 Arbeiter gleichzeitig, den Rest als zweite Welle auf dem gemergten Stand.
-3. Hängt eine Funktion an der Telegram-Schnittstelle, zuerst das Änderungsprotokoll lesen
+3. Kontingent beim Modell-Anbieter mitrechnen: Die Grenze gilt für das ganze Konto, über alle Sitzungen des
+   Rechners hinweg (andere Leitstände zählen mit). Vier Arbeiter auf einem Anbieter liefen zwei Stunden
+   durch; acht (zweite Welle dazu) endeten am 28.11. nach rund 25 Minuten alle gleichzeitig mit
+   `HTTP 424 … "code":"bili_throttle_terminal" …`, davor `This request would exceed your account's rate
+   limit`. Deshalb höchstens drei Arbeiter auf demselben Anbieter, den Rest auf den zweiten Anbieter legen
+   (je Aufgabe `model`, z. B. `anthropic/claude-fable-5-2:high` und `zai-coding-cn/glm-5.4:high`); weitere
+   starten, sobald einer fertig ist. Grund: ein gemeinsamer Anbieter macht alle Arbeiter zu einem einzigen
+   Ausfallpunkt, und die Leitstands-Sitzung stirbt meist mit.
+4. Hängt eine Funktion an der Telegram-Schnittstelle, zuerst das Änderungsprotokoll lesen
    (`fetch_content https://core.telegram.org/bots/api-changelog`, mit `findText` gezielt suchen) und den Bot
    selbst fragen (`getMe`, Token nie ausgeben). Grund: Die Schnittstelle wächst schnell; eine aus dem Gedächtnis
    geplante Umgehung (z. B. eigene Gruppe für Themen) ist oft schon überholt, und Schalter am Bot stehen
    ab Werk auf „aus“.
-4. Bestand des Nutzers erkunden, ohne Geheimnisse zu lesen (z. B. Postfächer und Server aus der
+5. Bestand des Nutzers erkunden, ohne Geheimnisse zu lesen (z. B. Postfächer und Server aus der
    Einstellungsdatei des Mail-Programms, nicht dessen Passwortspeicher). Zugangsdaten gibt der Nutzer einmal
    selbst ein (Terminal mit getpass oder ein Dialog, dessen Nachricht sofort gelöscht wird und nie an pi geht).
-5. Wellen so schneiden, dass Pakete mit Kern-Umbau (Senden, Warteschlange, Zustand je Chat) in der ersten
+6. Wellen so schneiden, dass Pakete mit Kern-Umbau (Senden, Warteschlange, Zustand je Chat) in der ersten
    Welle liegen und alle anderen Pakete nur über `ctx.send`/`bridge.send` und `bridge.enqueue` gehen – dann
    greift der Umbau später ohne Nacharbeit in jedem Paket.
-6. Für spätere Wellen vorab die Anker in der echten Umgebung ansehen, auf die ein Paket baut (Aufbau fremder
+7. Für spätere Wellen vorab die Anker in der echten Umgebung ansehen, auf die ein Paket baut (Aufbau fremder
    Zustandsordner an einem echten Beispiel, vorhandene Hilfsprogramme, Stellen im Kern) und im Auftrag als
    Fakten nennen – der Arbeiter rät sonst das Format.
 
@@ -60,12 +68,22 @@ mergt, rollt aus und meldet sich per Telegram.
 nach 30 min mit „Subagent timed out“ mitten in der Arbeit). Danach dem Nutzer eine kurze Tabelle schicken
 (Paket → was er am Handy bekommt) und die Festlegungen nennen, die er anders wollen könnte.
 
+Gestoppte Läufe sind nicht fortsetzbar (Rate-Limit beim Anbieter, „Subagent stopped.“): `status` meldet
+„Resume: unavailable; stopped runs are not resumable“. Dann frisch starten und je Worktree eine Datei
+`.pi/FORTSETZUNG.md` schreiben. Inhalt: Ursache des Abbruchs; Teilstand beim Abbruch (`git status --short`,
+`git diff --stat`, Zeilenzahl der neuen Dateien, letzter Satz des Vorgängers aus seiner Sitzungsdatei);
+Reihenfolge (Auftrag lesen → Teilstand lesen → `python3 -m tests` und ruff → Teilstand committen → fehlende
+Schritte bauen); ein jq-Einzeiler für die letzten Werkzeugaufrufe der alten Sitzungsdatei (`select(…
+"toolCall" …) | cut -c1-400 | tail -25`). Aufgabentext: zuerst FORTSETZUNG, dann AUFTRAG. Grund: Der neue
+Arbeiter hat keinen Verlauf und fängt ohne die Datei von Null an oder verwirft fremde Teilarbeit.
+
 Nachsteuern eines laufenden Arbeiters (auch: der Nutzer wünscht sich mitten im Bau etwas dazu): Nachtrag
 als Datei `.pi/NACHTRAG.md` in seinen Worktree legen (erste Zeile: erst den laufenden Baustein committen,
 dann den Nachtrag) und per `subagent({action:"steer", id:<Kind-Id>, options:{mode:"follow_up"}})` darauf
 hinweisen. „Steering queued“ heißt nur eingereiht: `subagent({action:"status", id})` zeigt in der Zeile
 `Steering: … pending … delivered`, ob der Hinweis angekommen ist – solange er auf „pending“ steht, dem
-Nutzer sagen, dass der Wunsch vorgemerkt, aber noch nicht in Arbeit ist. Kommt „child completed before
+Nutzer sagen, dass der Wunsch vorgemerkt, aber noch nicht in Arbeit ist. „delivered“ heißt nur angekommen:
+ob der Nachtrag gebaut wurde, zeigt `git log` im Worktree. Kommt „child completed before
 consuming follow-up“ oder endet der Lauf mit offenem Hinweis, hat ihn der Nachtrag nicht erreicht → per
 `subagent({action:"resume", id, message, options:{timeoutMs}})` nachreichen. Welche Kind-Id in welchem
 Worktree arbeitet, zeigt `pgrep -f "pi.*<Kind-Id>"` plus `readlink /proc/<pid>/cwd`.
@@ -130,7 +148,7 @@ Nachzügler warten. Sein Worktree steht dann hinter main; beim Zusammenführen m
   (Sperrfrist `elevenlabs_sperre_minuten` bei leerem Guthaben oder abgelehntem Schlüssel); `/stimme`,
   `/stimme stimmen`, `/stimme lokal|elevenlabs|auto|neu`; lokale Erkennung als Dauerprozess mit Entladen nach
   `stt_warm_minuten`. Grundsätze der Anbindung: Skill selfhosted-speech-stack.
-- Themen: ein Telegram-Thema je Sitzung im privaten Chat mit dem Bot (eigener pi-Prozess je Thema; `/neu`,
+- Themen: ein Telegram-Thema je Sitzung im Privatchat mit dem Bot (eigener pi-Prozess je Thema; `/neu`,
   `/thema`, `/themen`; Einstellung `themen`, Schalter am Bot `pi-telegram themen an|aus|status`). Neue
   Pakete müssen Zustand je Chat UND Thema führen.
 - Zeitpläne und Kürzel: `/spaeter`, `/taeglich`, `/werktags`, `/woechentlich`, `/plaene`, `/morgen`,
