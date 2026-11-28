@@ -21,6 +21,20 @@ Lesen: lokal `ps -eo pid,etimes,args --forest | grep -A6 'rb.sh'` (wer hält, we
 `grep -E 'RB_WAIT|RB_START|RB_EXIT' $C/logs/wpq-lc-wp-<paket>-nextest.log | tail -3`,
 Log des haltenden Laufs `$C/logs/<name>.log` (neue `Compiling`-Zeilen?).
 
+## Sonderfall Schritt `windows` rot ohne Codefehler
+`STEP windows EXIT=101`, Log `$C/logs/wpq-lc-wp-<paket>-windows.log` (das aktuelle ist `.log`, NICHT
+`.log.prev` – `ls | tail -1` liefert das alte): `error: couldn't read ".../crates/lumi-channels/src/zugang/<modul>/mod.rs"`
+mit Pfeil auf `target-win/…/debug/build/lumi-channels-<hash>/out/zugang_mods.rs`. Ursache: der
+Modul-Scan (`tools/claw-modscan.rs`, per `build.rs` → `include!` in `src/zugang/mod.rs`) schreibt die
+Modulliste in `OUT_DIR`; das Windows-Zielverzeichnis `~/lumi-claw-<slot>/target-win` bleibt zwischen
+Läufen erhalten, `rsync -a` bewahrt die Quell-mtime des Verzeichnisses – cargo hält das Skript für
+aktuell, obwohl im neuen Stand ein Modul fehlt (Rest eines anderen Pakets, z. B. KANAL). Kein Fehler des
+Pakets. Beheben: `ssh <bauhost> 'rm -rf ~/lumi-claw-<slot>/target-win/x86_64-pc-windows-gnu/debug/build/lumi-channels-*'`
+(nur wenn dort kein Windows-Lauf läuft: `pgrep -af check-windows`), Worker per `steer` sagen, dass er
+nicht am Code probiert, sondern den Endlauf komplett neu startet und den Fehllauf im Bericht nennt.
+Vorbeugen (offen für den Werkzeughalter): `tools/check-windows.sh` vor `cargo check` die
+`*_mods.rs`-Ausgaben in `target-win/**/build/*/out/` löschen.
+
 ## Handeln
 - Läuft es wieder (neue `Compiling`-Zeilen, MemAvailable gestiegen, CPU-Sparte wächst): nichts beenden,
   nur Journal + ggf. Hinweis „offen für L0“.
@@ -39,3 +53,8 @@ des alten Herzschlags kam Stunden später als normale Benachrichtigung nach. Dar
 `pgrep -af warte.sh` gegen die Queue halten und beim Kontrollgang die `RB_WAIT`-Zeilen lesen – ein
 laufender Herzschlag beweist keinen Fortschritt. Eine Benachrichtigung über einen alten, bereits
 ersetzten Herzschlag oder einen selbst beendeten Task braucht keine Aktion.
+
+## Register-Status lesen, ohne den Kontext zu fluten
+`/tmp/pi-subagents-uid-1001/async-subagent-runs/<runId>/status.json` enthält `recentTools`/`recentOutput`
+(zusammen ~45 KB). Nie mit `cat` ausgeben; Felder wählen:
+`python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(d["status"],d["turnCount"],d["lastActivityAt"])' <datei>`.
