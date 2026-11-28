@@ -8,6 +8,10 @@
   (z. B. „nacharbeit läuft (sonnet-Worker, …)“), sieht die Zählung den Lauf nicht, vergibt den Platz an die andere Spur und
   die Höchstzahl Claude-Läufe wird überschritten. Vor jedem Start `wpq.py next` und `claude-laeufe.py` fragen; ist die
   Grenze überschritten, keinen weiteren Claude-Lauf starten, bis sie wieder eingehalten ist (laufende nie abbrechen).
+  Das Register zählt auch Läufe der anderen Spur (deren Prüfer/Nacharbeit): „frei“ gilt nur für den Augenblick der
+  Abfrage – Start (Worker + Zelle) unmittelbar nach der Abfrage und nie zwei Claude-Starts hintereinander ohne neue
+  Abfrage dazwischen, sonst landen beide Spuren in derselben Minute bei 3 statt 2 Läufen. Hat der Leitstand einen Platz
+  der anderen Spur zugesagt (z. B. für Prüfungen), diesen nicht mit eigenen Neustarts belegen, auch wenn `next` ihn anbietet.
 - „Nur glm“ heißt: glm baut nur Pakete mit Modell-Spalte glm. Pakete mit Spalte opus/sonnet nie ersatzweise mit glm
   starten (auch wenn `next` „glm (statt opus: schon 2 anthropic-Kinder)“ anbietet, wenn der Leitstand das ausschließt) –
   sie warten auf Claude; ist kein glm-Paket startbar, bleibt der Platz leer. Wurde ein Sicherheits-Baustein trotzdem mit glm
@@ -77,9 +81,11 @@
   Verlangt der Leitstand Wechsel beim Einbau zwischen Spuren („je ein Paket abwechselnd“): nur das Paket direkt hinter dem
   laufenden Einbau eingereiht lassen; weitere eigene Warteskripte beenden und Queue-Zelle mit Grund versehen
   (`integrieren (… Einbau nach …)`). Gilt die Wechselregel nur bei gleichzeitig bereiten Paketen und die andere Spur hat nichts
-  einbaufertig, sofort einbauen. Warteskripte NIE mit `pkill -f <skriptname>` beenden: das Muster steht in der eigenen
-  Befehlszeile der bash und beendet den Aufruf selbst (Exit 143, der Rest des Befehls läuft nicht) – PID per
-  `pgrep -af` holen und `kill <pid>`.
+  einbaufertig, sofort einbauen. Eine Warteschlange aus mehreren eigenen Warteskripten läuft nach dem ersten Einbau von
+  selbst weiter und kann so die Wechselregel unterlaufen: Soll danach die andere Spur drankommen, das Folgeskript vorab
+  beenden, sonst im Journal nennen, dass es automatisch anlief. Warteskripte NIE mit `pkill -f <skriptname>` beenden: das
+  Muster steht in der eigenen Befehlszeile der bash und beendet den Aufruf selbst (Exit 143, der Rest des Befehls läuft
+  nicht) – PID per `pgrep -af` holen und `kill <pid>`.
 - Integrationsfix ohne Paket („feat ist rot wegen eines schon eingebauten Pakets“, Leitstand-Vorrang): `wpq.py integ <WP> --wt <pfad>`
   akzeptiert einen frischen Worktree vom aktuellen `feat/…` (`git worktree add`), wenn dessen Branch genau `claw/<wp-klein>`
   heißt – den alten, schon gemergten Branch vorher mit `git branch -m …-alt` umbenennen (Löschen blockiert der Guardrail),
@@ -103,7 +109,9 @@
   `subagent_supervisor({action:"reply", replyTo:<id aus der Meldung>, message})`. Vorher den Diff der fremden Datei gegen die
   Basis lesen (nur additive Zeilen? Abhängigkeit mit fester Version?) und den Worker die Abweichung im Bericht nennen lassen.
   Dasselbe Paket fragt oft zweimal (erst i18n-Datei, dann generiertes `handbuch.html` im Endlauf): beide Pfade gleich beim
-  ersten Mal freigeben, wenn das Paket Handbuch-Fragmente und neue Schlüssel hat.
+  ersten Mal freigeben, wenn das Paket Handbuch-Fragmente und neue Schlüssel hat. Besser noch: `.pfade` schon beim Start
+  anlegen, sobald der Brief Handbuch-Fragmente oder neue i18n-Schlüssel nennt (`ls $C/vorgaben | grep <Vorgängerpaket>`
+  zeigt das Muster) – dann fragt der Worker gar nicht erst.
 - Endlauf-Schritt `nextest EXIT=255` ohne Fehlertext (Log endet mitten im Kompilieren) = abgebrochen (RAM/Remote, meist OOM im
   Scope, kein Codefehler): Schritt neu fahren, nicht blind ändern. Mit weniger Jobs wiederholen – den aktuellen Wert nennt der
   Leitstand (zuletzt `CLAW_MEM=7G LUMI_REMOTE_JOBS=2`; zu hohe Werte passen bei zwei parallelen Endläufen nicht in den
