@@ -119,6 +119,19 @@ Nachzügler warten. Sein Worktree steht dann hinter main; beim Zusammenführen m
    `tempfile.TemporaryDirectory(ignore_cleanup_errors=True)`).
 6. Ergebnis einer Prüfkette an der Ausgabe ablesen, nicht am Exit-Code: ein `grep` ohne Treffer am Ende
    der Kette meldet Fehler, obwohl die Tests grün sind.
+7. Ein Paket, das erst nach der Welle fertig wird, steht hinter main: im Abnahme-Zweig wie in Punkt 4
+   zusammenführen. Ein Konflikt in einer Importzeile (`from . import …`) ist keine Vereinigung (sie ergäbe
+   zwei Zeilen mit denselben Namen), sondern eine zusammengezogene Zeile. Hängt es am selben Hook wie ein
+   Paket der Welle (z. B. beide an `settled`), im Kern nachlesen, ob der spätere Teil noch den Antwortweg
+   sieht, und einen Test für das Zusammenspiel schreiben (z. B. Taste bleibt auf dem Text, wenn die Antwort
+   als neue Nachricht kommt). Grund: die volle Testreihe ist grün, obwohl kein Paket den Fall kennt.
+8. Node-Prüfskripte brauchen `TSC` in der Umgebung
+   (`TSC=$(ls /nix/store/*-typescript-5.9.3/bin/tsc | head -1)`); ohne melden sie „tsc nicht gefunden“ als
+   Fehler. Die echten Kurzläufe (`python3 -u -m tests.<paket>_check`) hinterlassen
+   `/tmp/pi-telegram-<paket>-*` und Sitzungsordner `~/.pi/agent/sessions/--tmp-pi-telegram-<paket>-*--`:
+   nach der Abnahme löschen, vorher prüfen, dass kein Prozess dort sein Arbeitsverzeichnis hat.
+9. Kommt nach der Prüfreihe noch ein Test dazu: die volle Testreihe auf dem Endstand wiederholen und erst
+   dann die README-Testzahl setzen, sonst steht im README eine Zahl, die niemand gemessen hat.
 
 ## 5. Ausrollen
 
@@ -138,7 +151,12 @@ Nachzügler warten. Sein Worktree steht dann hinter main; beim Zusammenführen m
    dem zugehörigen `status` belegen.
 4. Neustart nur bei ruhigem Bot, danach `pi-telegram say` mit den Befehlen zum Ausprobieren (Text wird als
    Markdown gelesen, `--plain` schaltet das ab) – der Nutzer testet sofort am Handy und will den Bescheid
-   dort, nicht im Terminal. Sagen, was live ist und was noch im Bau ist.
+   dort, nicht im Terminal. Sagen, was live ist und was noch im Bau ist. Ruhe des Bots an den
+   Sitzungsdateien ablesen (`find ~/.pi/agent/sessions -maxdepth 2 -name '*.jsonl' -mmin -5` ohne die
+   eigene; seit `default_cwd` liegen die Bot-Sitzungen im Ordner des neuen Arbeitsverzeichnisses), weil das
+   Nutzer-Journal leer bleiben kann. Einen neuen Ansicht-Weg mit unbekanntem Schlüssel anfragen, lokal
+   (`http://127.0.0.1:8797/<weg>/x`) und über `ansicht_basis`: 404 zeigt, dass der Weg den neuen Code
+   erreicht.
 5. Erste Meldungen eines neuen Hintergrund-Bausteins nach dem Neustart ansehen (dessen Zustandsdatei): was
    er als Erstes meldet, zeigt Fehlalarme sofort (z. B. kurzlebige Einheiten mit erzeugtem Namen – einmal
    melden, nie erinnern).
@@ -163,3 +181,8 @@ Nachzügler warten. Sein Worktree steht dann hinter main; beim Zusammenführen m
 - Wächter: Hintergrundprüfungen mit Tasten (`/waechter`, Einstellungen `waechter_*`, Zustand
   `state.waechter.json`); meldet einen Wechsel einmal, Anhaltendes frühestens nach 12 h, erst nach zwei
   gleichen Messungen. Muster für jede weitere Hintergrundprüfung.
+- Änderungen: Erweiterung `extensions/telegram-aenderungen.ts`, die die Brücke pi per `-e` mitgibt (nur
+  lokal, nur mit Ablage im Ordner `state.aenderungen`), Taste „📝 N Änderungen“, `/aenderungen`, Ansichtseite
+  `/ae/<Schlüssel>` als erster „Zusatzweg“ am Ansicht-Server (`AnsichtenServer.zusatz`; ein Zusatzweg muss
+  seine Nutzer selbst prüfen), Zurücknehmen nur durch den Besitzer. Weitere Zusatzwege und alles, was
+  Dateien zurücksetzt, nach diesem Muster bauen.
