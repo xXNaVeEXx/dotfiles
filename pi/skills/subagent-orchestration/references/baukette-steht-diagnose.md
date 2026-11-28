@@ -29,11 +29,10 @@ Modul-Scan (`tools/claw-modscan.rs`, per `build.rs` → `include!` in `src/zugan
 Modulliste in `OUT_DIR`; das Windows-Zielverzeichnis `~/lumi-claw-<slot>/target-win` bleibt zwischen
 Läufen erhalten, `rsync -a` bewahrt die Quell-mtime des Verzeichnisses – cargo hält das Skript für
 aktuell, obwohl im neuen Stand ein Modul fehlt (Rest eines anderen Pakets, z. B. KANAL). Kein Fehler des
-Pakets. Beheben: `ssh <bauhost> 'rm -rf ~/lumi-claw-<slot>/target-win/x86_64-pc-windows-gnu/debug/build/lumi-channels-*'`
+Pakets. Dauerhafte Abhilfe im Build-Wrapper: siehe `remote-check-veralteter-scan.md`. Von Hand nur noch,
+wenn der Wrapper den Fall nicht abdeckt: `ssh <bauhost> 'rm -rf ~/lumi-claw-<slot>/target-win/x86_64-pc-windows-gnu/debug/build/lumi-channels-*'`
 (nur wenn dort kein Windows-Lauf läuft: `pgrep -af check-windows`), Worker per `steer` sagen, dass er
 nicht am Code probiert, sondern den Endlauf komplett neu startet und den Fehllauf im Bericht nennt.
-Vorbeugen (offen für den Werkzeughalter): `tools/check-windows.sh` vor `cargo check` die
-`*_mods.rs`-Ausgaben in `target-win/**/build/*/out/` löschen.
 
 ## Handeln
 - Läuft es wieder (neue `Compiling`-Zeilen, MemAvailable gestiegen, CPU-Sparte wächst): nichts beenden,
@@ -45,6 +44,42 @@ Vorbeugen (offen für den Werkzeughalter): `tools/check-windows.sh` vor `cargo c
 - Vorbeugen: Worker-Einzelschritte mit `-p lumi-cli`/`-p lumi-desktop` sind Volldbauten; im Brief
   Einzeltests nur über den Endlauf oder nur für kleine Crates verlangen; nicht drei Endläufe
   gleichzeitig in die Slot-Schlange stellen (dritter erst nach dem ersten grünen).
+
+## Einbau oder Endlauf ist still gestorben
+Zelle „integrieren“ oder Journal „Einbau läuft“, aber die pid aus der pid-Datei ist weg und das Log endet
+kurz nach dem Start, ohne `RB_EXIT`. Häufigste Ursache: Der Lauf wurde aus einem Vordergrund-Aufruf der
+Sitzung gestartet; wird dieser Aufruf abgebrochen (Zeitlimit, Schutzregel), stirbt die ganze Prozessgruppe
+mit. Vorher ausschließen, dass die Speicher-Wache eingegriffen hat (ihr Log). Dann abgekoppelt neu starten
+(`setsid nohup … &`), die pid festhalten und nach etwa zehn Minuten mit `ps -p <pid>` prüfen. Als
+Leitstand bei jeder Runde die pid jedes „laufenden“ Einbaus prüfen, weil die Spur den Tod nicht bemerkt:
+Ihr Warte-Wecker wartet auf ein Log, das nie fertig wird.
+
+## Build-Rechner ist wieder erreichbar: Last zwischen den Rechnern aufteilen
+1. Belegen, wo die Bauten gerade laufen, bevor etwas umgestellt wird: Besitzer-Dateien der Slots lesen und
+   auf beiden Rechnern `uptime; free -m; pgrep -af 'cargo|rustc' | head`. Ein Wrapper mit
+   Erreichbarkeitsprobe schaltet für jeden NEUEN Aufruf von selbst zurück; schon laufende Läufe enden
+   auf dem alten Rechner und werden nicht abgebrochen.
+2. Beide Rechner vorher und nachher messen (Last, verfügbarer Speicher, Swap) und die Restlast auf dem
+   Sitzungs-Rechner nach Programmnamen summieren
+   (`ps -eo rss,comm --no-headers | awk '{a[$2]+=$1} END{for(k in a) printf "%.1fG %s\n",a[k]/1048576,k}' | sort -rn | head`).
+   Grund: Der Nutzer will sehen, dass der Rechner leerer ist und woher der Rest kommt (Sitzungen, Browser,
+   Datei-Index), nicht nur „umgestellt“ lesen.
+3. Die Speicherdeckel an den KLEINEREN Rechner anpassen: Anzahl paralleler Läufe mal Deckel muss in seinen
+   Arbeitsspeicher passen. Lieber kleinerer Deckel mit mehr Jobs und dem Neuversuch des Wrappers nach
+   einem Speicher-Abbruch als wieder eine serielle Kette. Den Spuren die neuen Werte nennen, die serielle
+   Kette für neue Starts aufheben, laufende Läufe zu Ende laufen lassen; Quittung als Journalzeile.
+4. Den Schutz des Sitzungs-Rechners im Wrapper erzwingen, nicht über Disziplin der Spuren: Ist der gewählte
+   Rechner der Ausweich-Rechner, hält der Lauf eine gemeinsame Sperre (`exec <fd>>"<locks>/lokal-seriell.lock";
+   flock <fd>`), dann läuft dort nur ein Bau zugleich. Die Sperre mit zwei Unter-Shells einzeln testen,
+   den Wrapper atomar ersetzen und den Rechner in die Startzeile des Logs schreiben. Grund: Die Spuren
+   haben gerade die Regel „parallel erlaubt“ bekommen und bemerken einen erneuten Ausfall nicht; ohne
+   Sperre liefen dann zwei Bauten neben Sitzungen und Workern.
+5. Bau-Zwischenstände des Ausweich-Rechners und gemeinsam genutzte Ordner im Zwischenspeicher nicht
+   löschen. Größe und Preis des Löschens nennen (einmal von vorn bauen) und den Nutzer entscheiden lassen.
+6. Nutzer-Liste (Hinweis „Rechner einschalten“ als erledigt), Übersicht, Stand und Entscheidung nachziehen.
+   Im Bericht trennen, was getestet ist (die Sperre allein) und was erst der echte Ausweichfall zeigt.
+7. In der nächsten Runde belegen, dass zwei parallele Läufe auf dem Build-Rechner ohne Speicher-Abbruch
+   durchlaufen; sonst Deckel oder Job-Zahl nachstellen.
 
 ## Herzschlag-Falle
 Der Herzschlag (`warte.sh <spur> --max 1500`) lief mit `WARTE-ENDE herzschlag 1500s` aus, ohne die

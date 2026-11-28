@@ -9,6 +9,16 @@ Der acp-Wächter beendet einen Worker nach 5 min ohne Ausgabe (Standard; einstel
 - In jeden Brief für Prüfskripte: Schritt-Zeitlimit ≤ 90 s und eine Protokollzeile je erwartetem Ereignis, damit ein Fehlschlag schnell sichtbar wird.
 - Signal „repeated mutating tool failures“: meist eigene Korrekturschleifen des Arbeiters (fehlgeschlagener edit-Treffer, Traceback eines Hilfsskripts). Einmal Status prüfen (`subagent({action:"status", id})`: „no activity for 10s“ = er arbeitet weiter); nur ohne Fortschritt eingreifen.
 
+## Rückfrage eines Arbeiters zu roten Klick-/E2E-Tests beantworten
+Die Rückfrage kommt als Supervisor-Anfrage; Antwort per `subagent_supervisor({action:"reply", replyTo:<Anfrage-Id>, message})`. Je roten Fall einzeln entscheiden und der Antwort eine Abbruchregel mitgeben:
+1. Der Test hängt an dem, was ein anderer Test hinterlässt (gemeinsame Daten, Reihenfolge): Er legt seine Voraussetzung selbst an (`beforeAll`) und räumt sie ab (`afterAll`); Beleg ist ein Einzellauf nur dieser Datei; eigener Commit.
+2. Der Test liest einen Zustand zu früh: im Test auf den Zustand warten (`expect.poll`), den Produktcode dafür nicht umbauen. Das Zeitfenster im Bericht als Vorbestand beschreiben lassen: Was bleibt stehen, wenn der Prozess genau dazwischen endet?
+3. „Liegt am Fremddienst“ gilt nur mit Beleg: Trace oder Netzwerk-Protokoll (welche Anfrage an welchen Host scheitert) und `git diff --stat` der betroffenen Dateien gegen die Ausgangsstände. Grund: Ohne Beleg wandert jeder unerklärte rote Fall in diese Schublade.
+4. Danach EINEN vollen Lauf des ganzen Test-Projekts verlangen, keinen Teil-Lauf der reparierten Dateien. Grund: Nach dem Zusammenführen zweier Zweige entstehen rote Fälle oft aus Wechselwirkungen zwischen Testdateien, die ein Teil-Lauf nicht zeigt.
+5. Abbruchregel in die Antwort schreiben: derselbe Fall wieder rot → anhalten und Ursache melden, kein dritter Lauf. Grund: Sonst wiederholt der Arbeiter, bis es zufällig grün ist, und jeder Lauf kostet eine halbe Stunde der einzigen schweren Sperre.
+6. Erzeugt der Klicktest Dateien im Arbeitsbaum (Kundenbau, erzeugte Routen): nach der Lieferung `git status` prüfen und die Reste vor der Abnahme entfernen lassen, weil ein späterer Sammel-Commit sie sonst mitnimmt.
+Vor dem Merge eines Zweigs, der Voraussetzungen verschärft (z. B. „nur noch mit Vorlage“), in den Brief schreiben: Tests des Ziel-Zweigs suchen, die diese Voraussetzung nicht anlegen, und im selben Paket nachziehen.
+
 ## Profile der pi-subagents-Agenten beim Briefen
 - `researcher` hat kein Shell-Werkzeug (keine lokale Inventur, kein ssh): lokale Fakten selbst erheben oder dem Späher übergeben und in den Brief schreiben; sonst liefert er „nicht verifiziert“ für alles, was auf der Maschine liegt.
 - `scout` eignet sich für Maschinen-Erkundung per ssh: absolute Pi-Pfade im Brief (weil `ssh host pi` am PATH scheitert), Zeitlimits ≥ 90 s (Kaltstart von Pi über ssh bis 60 s), Hinweis, dass ein Teststart auf dem Zielrechner Nebenwirkungen hat (z. B. leere `auth.json` wird angelegt).
