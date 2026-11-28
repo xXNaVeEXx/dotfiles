@@ -193,7 +193,10 @@ Erwartete Konflikte beim Merge paralleler Pakete: `FEATURES`-Liste, `EVENTS`-Tup
 Config-Zeilen, Zeile `# N Tests`), PLAN-Zeilen → Vereinigung; Auflöse-Skript und `git add && git commit` in
 EINER `&&`-Kette und Konfliktmarker vor dem Commit zählen (ein abgebrochenes Skript + separate Commit-Zeile hat
 einmal Marker committet). Wächter nie durch Rohre führen (`ruff check | tail` maskiert den Exit-Code). Arbeiter starten mit `subagent`: `label` ist ein eigenes Feld neben `options`, nicht darin (sonst Abbruch vor dem Start). Der Telegram-Pi arbeitet selbst im Repo (eigener Worktree, mergest nach main): vor eigenem Merge und Neustart `wt list` und `git log --oneline -3 main` prüfen; Neustart erst, wenn sein Auftrag beendet ist.
-Zeitüberschreitung eines Arbeiters: uncommittete Arbeit sichern, `main` hinein mergen, selbst fertigstellen –
+Mehrere Pakete auf einmal (Wellen, gemeinsame Regeldatei, `timeoutMs` beim Start, Nachsteuern, Abnahme,
+Ausrollen samt Abgleich der Live-Einstellungen und Bescheid per `pi-telegram say`): `references/pakete-in-wellen.md`.
+Zeitüberschreitung eines Arbeiters: uncommittete Arbeit als wip-Commit sichern und mit `resume` plus neuem
+`timeoutMs` fortsetzen; liegt nur noch Doku oder ein Prüfskript offen, `main` hinein mergen und selbst fertigstellen –
 und Arbeiter früh steuern, wenn sie einem Zeitfehler der Suite nachjagen (Ursachen unter „Ändern und prüfen“).
 Was der Arbeiter zuletzt tat, zeigt seine Sitzungsdatei (JSONL unter
 `~/.pi/agent/sessions/--home-gamzat--/<eigene Sitzung>/<Lauf-Id>/run-0/session.jsonl`; je Zeile `message.role` und
