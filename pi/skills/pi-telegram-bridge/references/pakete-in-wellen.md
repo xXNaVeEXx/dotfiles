@@ -10,7 +10,7 @@ mergt, rollt aus und meldet sich per Telegram.
    3–4 Arbeiter gleichzeitig, den Rest als zweite Welle auf dem gemergten Stand.
 3. Kontingent beim Modell-Anbieter mitrechnen: Die Grenze gilt für das ganze Konto, über alle Sitzungen des
    Rechners hinweg (andere Leitstände zählen mit). Vier Arbeiter auf einem Anbieter liefen zwei Stunden
-   durch; acht (zweite Welle dazu) endeten am 28.11. nach rund 25 Minuten alle gleichzeitig mit
+   durch; acht (zweite Welle dazu) endeten nach rund 25 Minuten alle gleichzeitig mit
    `HTTP 424 … "code":"bili_throttle_terminal" …`, davor `This request would exceed your account's rate
    limit`. Deshalb höchstens drei Arbeiter auf demselben Anbieter, den Rest auf den zweiten Anbieter legen
    (je Aufgabe `model`, z. B. `anthropic/claude-fable-5-2:high` und `zai-coding-cn/glm-5.4:high`); weitere
@@ -125,13 +125,20 @@ Nachzügler warten. Sein Worktree steht dann hinter main; beim Zusammenführen m
 1. Live-Einstellungen gegen neue Standardwerte halten (`~/.config/pi-telegram/config.json`): ein dort
    gesetzter alter Wert überschreibt den neuen Standard still (Beispiel: Wartepause des Pi-Prozesses) →
    Sicherung anlegen, Schlüssel entfernen oder anheben. Einstellungen, die ein Paket leer ausliefert und die
-   nur die Hauptsitzung füllen kann (z. B. überwachte Repos), jetzt setzen.
+   nur die Hauptsitzung füllen kann (z. B. überwachte Repos), jetzt setzen. Zuerst aber Änderungszeit der
+   Datei und `systemctl --user show -p ActiveEnterTimestamp pi-telegram.service` gegen die eigene Sitzung
+   halten: Der Nutzer stellt währenddessen über den Bot um und startet selbst neu (z. B. `default_cwd` auf
+   einen eigenen Arbeitsordner) – seine Live-Werte stehen über den Annahmen aus den Aufträgen. Pfad-Standardwerte
+   neuer Pakete an seinem gewählten Arbeitsordner ausrichten (eine Ablage unter `~/…` läge sonst wieder
+   direkt unter Home, obwohl er das gerade abgestellt hat) und die Änderung im Bescheid mit Einstellungsnamen
+   nennen. Die Datei ist mit zwei Leerzeichen eingerückt und unsortiert; Schlüssel anhängen, Format und
+   Rechte (0600) erhalten.
 2. Ändert das Paket die Dienstdatei: `pi-telegram install` (erneuert die Datei, lädt systemd neu).
 3. Schalter am Bot setzen, die der Arbeiter nicht setzen durfte (z. B. `pi-telegram themen an`), und mit
    dem zugehörigen `status` belegen.
-4. Neustart nur bei ruhigem Bot, danach `pi-telegram say` mit den Befehlen zum Ausprobieren – der Nutzer
-   testet sofort am Handy und will den Bescheid dort, nicht im Terminal. Sagen, was live ist und was noch
-   im Bau ist.
+4. Neustart nur bei ruhigem Bot, danach `pi-telegram say` mit den Befehlen zum Ausprobieren (Text wird als
+   Markdown gelesen, `--plain` schaltet das ab) – der Nutzer testet sofort am Handy und will den Bescheid
+   dort, nicht im Terminal. Sagen, was live ist und was noch im Bau ist.
 5. Erste Meldungen eines neuen Hintergrund-Bausteins nach dem Neustart ansehen (dessen Zustandsdatei): was
    er als Erstes meldet, zeigt Fehlalarme sofort (z. B. kurzlebige Einheiten mit erzeugtem Namen – einmal
    melden, nie erinnern).

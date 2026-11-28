@@ -53,7 +53,11 @@ Dialoge (`extension_ui_request` select/confirm/input/editor) → Nachricht mit T
    `self.bridge, self.tg = self.new_bridge()` aufrufen (Modul-Caches je Test zurücksetzen); (d) `close()` wartet
    auf den tick-Thread. Beweis führen mit 3 Prozessen parallel (je 8 Läufe) und einer Spur je Test (Hooks und
    `Config.load/save` umhüllen, Zeit/Thread/Aufrufer in eine Datei), nicht mit Einzelläufen.
-3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe;
+3. `python3 -m tests.live_check [Ordner]` = echtes pi + nachgebautes Telegram, fünf Schritte mit Zeitangabe.
+   Eigene Probe-Skripte nach seinem Vorbild (im Worktree `PYTHONPATH=. python3 -u .tmp/<name>.py`) importieren
+   als ERSTES `tests` (legt den Test-Ordner an und lädt `pi_telegram.config` damit) und erst danach
+   `pi_telegram` – selbst `PI_TELEGRAM_HOME` setzen oder `pi_telegram` zuerst laden scheitert am Schutz in
+   `tests/__init__.py` (RuntimeError), im zweiten Fall hätte die Brücke sonst den echten Ordner;
    `python3 -u -m tests.live_check_image <bild>` für den Bildweg (Modell mit und ohne Bild-Input).
 4. Commit im Repo; Dienst neu starten (`pi-telegram restart`) – der Starter zeigt per Symlink aufs Repo.
    Neustart nur bei ruhigem Bot (Journal ohne laufenden Auftrag, keine offene Statuszeile): mitten im Auftrag
