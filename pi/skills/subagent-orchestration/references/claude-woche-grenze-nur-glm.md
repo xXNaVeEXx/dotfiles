@@ -20,12 +20,23 @@
   kommen die glm-Pakete dahinter nie zum Zuge. Dann selbst wählen: aus der Queue der Spur die `offen`-Pakete mit Modell-Spalte
   glm nehmen, deren Abhängigkeiten alle `fertig` sind und die von keinem wartenden Paket abhängen, das kleinste starten,
   Journalzeile mit Begründung. Das Werkzeug nicht ändern (gehört dem Leitstand); die Lücke als „offen für L0“ ins Journal.
+- Wartende Pakete in der Queue als `offen (<Grund>)` eintragen: `next` bietet nur Zellen zum Start an, deren Text mit
+  `offen` beginnt – ein Hinweis vorne („hängt an …“, „bleibt zurück …“) nimmt das Paket aus der Auswahl, ohne dass es als
+  „wartet“ auftaucht. Nach dem Berichtigen `next` neu lesen.
 - Dem Reviewer nie einen Schreibauftrag („schreibe nach <Datei>“) geben: er hat kein Schreibwerkzeug und meldet das als Text.
   Den Volltext selbst aus `session.jsonl` des Reviewer-Laufs ziehen (letzter Assistant-Text, der `REVIEW:` enthält) und in die
   Review-Datei schreiben; die Benachrichtigung enthält oft nur Lernpass-Rauschen.
 - „check läuft (N min)“ über 60 min bei gleichzeitigen Bauten mehrerer Spuren auf dem Remote-Rechner ist Warteschlange, kein
   Hänger: `ps -eo pid,etimes,args | grep -E 'wpq.py check|rb.sh'` – solange `rb.sh --_inner`-Prozesse laufen, nichts tun.
   Ein Herzschlag mit `WARTE-ENDE herzschlag` ist nur der Zeitablauf: Stand lesen, neu starten, keine Meldung an den Nutzer nötig.
+  Die Abschlussmeldung eines schon ersetzten Herzschlags kommt oft erst nach dem Neustart: nicht noch einmal starten, sondern
+  `pgrep -af 'warte.sh <Spur>'` gegenlesen (genau einer läuft).
+- Meldet der Wächter „seit N min kein Fortschritt“, zuerst die Ursache trennen, bevor etwas neu gestartet wird: im
+  `events.jsonl` des Laufs (`/tmp/pi-subagents-uid-<uid>/async-subagent-runs/<runId>/`) die Zeitstempel (`observedAt`/`ts`;
+  `content` kann Zeichenkette statt Liste sein) auf Lücken prüfen, dazu `git log`/Dateizeiten im Worktree, Fortschritt im
+  Schritt-Log (`RB_START`, letzte `Compiling`-Zeile) und Auslastung des Build-Hosts per ssh. Eine Lücke zwischen `turn_start`
+  und der nächsten `message_start` bei laufendem Prozess = Modellanfrage hing; endet sie von selbst, weiterlaufen lassen
+  (kein Resume – es verwirft den Verlauf), Ergebnis als Journalzeile „kein Blocker“ festhalten.
 - glm-Worker mit Commit-Hook: Betreff muss Conventional Commits folgen und ≤ 72 Zeichen sein (sonst „BLOCKED“, auch beim
   Orchestrator-Sicherungscommit) – steht die Regel nicht im Brief, scheitert der Worker mehrfach und löst „repeated mutating
   tool failures“ aus; meist korrigiert er selbst, erst `git log` ansehen. Läuft ein glm-Worker ins Zeitlimit, war die Arbeit

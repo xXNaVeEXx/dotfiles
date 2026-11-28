@@ -68,6 +68,9 @@ in einem halben Tag aufgebraucht.
 5. In der Übersicht den ganzen Kontingent-Absatz neu schreiben, nicht nur die Kopfzeile: Verlaufswerte von heute, geltende Grenze je
    Anbieter, was bei Erreichen passiert. Grund: Die Kopfzeile wird jede Runde erneuert, die Absätze darunter veralten unbemerkt um
    Tage (alte Grenze, alte Vorhersage, altes Modell), und der Nutzer liest auf einer Seite widersprüchliche Zahlen.
+   „Was bei Erreichen passiert“ jetzt festlegen und protokollieren: Vollpause, oder Umstellung ohne Vollpause (übernächster Abschnitt),
+   wenn der freie Anbieter noch Pakete und Abstand zu seiner eigenen Grenze hat. Grund: Steht der Ablauf vorher in Übersicht und
+   Nutzer-Liste, darf der Leitstand ihn beim Erreichen ohne Rückfrage fahren, und der Nutzer konnte widersprechen.
 6. Im Bericht die Bitte wiederholen, beim Zurücksetzen Bescheid zu sagen, und sagen, was ohne Zurücksetzen geschieht.
 
 ## Grenze erreicht: Pause fahren
@@ -83,8 +86,8 @@ in einem halben Tag aufgebraucht.
    wenige Rest kostet kaum Kontingent.
 4. Arbeiten die Spuren mit zwei Anbietern und ist nur einer an der Grenze, prüfen, ob der andere allein weiterarbeiten kann: Laufen die
    Spur-Sitzungen selbst auf dem gesperrten Anbieter, oder braucht jedes Paket des freien Anbieters eine Prüfung durch den gesperrten,
-   ruht der freie mit. Das dem Nutzer mit Grund sagen und die Umstellung („freier Anbieter baut und trägt die Spur-Sitzungen, der
-   gesperrte prüft später in Schüben“) als Möglichkeit anbieten, aber nicht selbst einschalten.
+   ruht der freie bei einer Vollpause mit. War die Umstellung ohne Vollpause dem Nutzer vorher angekündigt, sie statt der Pause fahren
+   (nächster Abschnitt). War sie es nicht, die Vollpause setzen, dem Nutzer den Grund sagen und die Umstellung anbieten.
 5. Die alten Aufsichten enden durch die Pause von selbst oder werden beendet; mit dem langen Pausen-Takt neu starten. Diese
    Endmeldungen (auch „killed“ für selbst beendete Aufgaben) sind erwartet: dem Nutzer je Meldung höchstens zwei Sätze schreiben,
    keine neue Runde fahren.
@@ -94,6 +97,32 @@ in einem halben Tag aufgebraucht.
    Pausen-Mechanik nicht einschalten: Sie hielte auch die Spur-Sitzungen an, die den Abschluss tragen. Stattdessen keine neuen
    Worker und Prüfer des betroffenen Anbieters starten, Nacharbeit von den bestehenden Spur-Sitzungen selbst erledigen lassen, die
    Entscheidung festhalten und dem Nutzer anbieten, alles bis zum Wochenwechsel ruhen zu lassen.
+
+## Nur ein Anbieter an der Grenze: Umstellung ohne Vollpause
+Der freie Anbieter baut weiter und trägt die Spur-Sitzungen; der gesperrte prüft später in einem Schub. Den Pausen-Befehl nicht
+benutzen, weil er auch den freien Anbieter anhält.
+1. Vor dem Wechsel die Kontextgröße jeder Spur-Sitzung gegen das Fenster des Zielmodells halten (`pi --list-models`).
+   Grund: Ist das Fenster kleiner als der Verlauf, hängt die Sitzung nach dem Wechsel in der Verdichtung und antwortet nicht.
+2. Jede Spur-Sitzung umstellen: `herdr agent prompt <pane> "/model <anbieter>/<modell>"`. Gegenprobe im letzten
+   `model_change`-Eintrag ihrer Sitzungsdatei. Danach die Umgebungsdatei der Sitzung und die ihres Watchdogs auf das neue Modell
+   stellen (mit Sicherung). Grund: Sonst startet der Watchdog die Sitzung beim nächsten Neustart wieder mit dem gesperrten Modell,
+   und sie scheitert an der Drosselung.
+3. Läuft der Leitstand selbst auf dem gesperrten Anbieter, seinen Watchdog-Weckabstand auf einen Tag stellen (jede Weckung
+   kostet Punkte oder scheitert).
+4. Jede Spur schriftlich anweisen und eine Quittung verlangen:
+   - kein Lauf des gesperrten Anbieters (Worker, Prüfer, Nacharbeit), bis der Leitstand ihn freigibt;
+   - der freie Anbieter baut nur Pakete seiner Modell-Spalte;
+   - fertige Pakete: Abnahme und Endlauf, Zelle „wartet auf Prüfung“, kein Einbau; eine Prüfung durch den freien Anbieter
+     ersetzt die Pflichtprüfung nicht;
+   - eingebaut wird nur, was der gesperrte Anbieter schon geprüft oder selbst gebaut hat.
+5. Eine Wache starten, die auf „Tor wieder frei“ wartet (Schleife über das Tor-Skript, endet mit einer Zeile, sobald es frei
+   meldet), und die Aufsichten auf einen langen Takt stellen. Grund: Der Nutzer setzt das Kontingent oft vor dem Wochenwechsel
+   zurück; ein Wecker auf die Uhrzeit verschenkt dann Tage.
+6. Entscheidung, Stand-Datei, Übersicht, Nutzer-Liste und Übergabe-Notiz nachziehen. Die Statusseite erst erzeugen, nachdem die
+   neue Übersicht an ihrem Platz liegt (eigener Befehl nach dem `mv`), sonst zeigt die Seite den alten Stand.
+7. Beim nächsten Wecken gegenprüfen: Das Queue-Werkzeug bietet bei gesperrtem Anbieter oft dessen nächstes Paket „mit dem
+   freien Modell“ an und übersieht Pakete des freien Anbieters dahinter. Die Spur darf das Angebot nicht annehmen; bleibt ihr
+   dadurch ein Platz leer, ist das ein Werkzeug-Punkt für den Leitstand (Schalter „nur Modell-Spalte“), kein Fehler der Spur.
 
 ## Nutzer hebt die Grenze an, während die Pause läuft
 Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Teile, und jeder vergessene hält eine Spur an.
@@ -148,11 +177,23 @@ Alles in einem Zug umstellen und erst danach berichten; die Pause hat mehrere Te
    den alten Wert zitiert, widerspricht dem Nutzer mit einer veralteten Zahl und muss ein zweites Mal gefragt werden.
 2. Mit jedem vorhandenen Zugang messen (Agenten-Token und Login des Anbieter-Werkzeugs); stimmen beide überein, gilt der Wert.
    Danach den Zwischenspeicher über den regulären Aktualisierungs-Befehl nachziehen und das Tor-Skript erneut fragen.
+   Die Rücksetzzeit der Woche neu lesen: Ein Zurücksetzen durch den Nutzer verschiebt sie meist nicht, die Wache behält dann ihr Ende.
 3. Prüfen, warum die eigene Messung alt war. Häufig steigt die eigene Probe früh aus, sobald der Login des Anbieter-Werkzeugs wieder
    gültig ist, und überlässt die Messung einem anderen Dienst mit längerem Takt.
-4. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
-   nächste Welle). Eine Kontingent-Wache auf die Grenze neu aufsetzen, bevor wieder Worker starten. Galt vorher eine Einschränkung
-   wegen der nahenden Grenze („nur der freie Anbieter baut“), sie bei den Spuren ausdrücklich aufheben.
+4. Prüfen, ob in der Zwischenzeit überhaupt gearbeitet wurde: Lücke in den Watchdog-Protokollen suchen und mit
+   `journalctl -t systemd-sleep` gegen Schlafphasen des Rechners halten. Stand der Rechner, die Spuren im Wecktext anweisen, jede
+   Zelle „läuft <Kennung>“ gegen das Lauf-Register zu prüfen, bevor sie etwas Neues starten. Im Bericht nur sagen, was belegt ist
+   (von wann bis wann, wer den Schlaf angefordert hat); das Warum als Vermutung kennzeichnen, in Bericht UND Dateien gleich.
+   Grund: Der Nutzer richtet seine Handgriffe nach der genannten Ursache, und eine als Tatsache notierte Vermutung wird von jeder
+   späteren Runde abgeschrieben.
+5. Jede Spur wecken, in einem Text: Sperre und alle Einschränkungen wegen der Grenze aufgehoben; Reihenfolge erst die wartenden
+   Prüfungen (schwerste zuerst), dann Einbau, dann neue Pakete nach Modell-Spalte; Worker-Obergrenze unverändert; Quittung.
+   Die Spur-Sitzungen bleiben auf dem freien Anbieter, wenn die Woche noch lange läuft und der Verbrauch vorher hoch war; das mit
+   Zahl in die Entscheidung schreiben.
+6. Leitstand-Weckabstand zurückstellen, Tor-frei-Wache und lange Aufsichten beenden, Aufsichten im Normaltakt und eine
+   Kontingent-Wache auf die Grenze neu starten, bevor wieder Worker starten.
+7. Im Bericht sagen: neuer Wert, Abstand zur unveränderten Grenze, Rücksetzzeit, und was damit wieder erlaubt ist (neue Worker,
+   nächste Welle).
 
 ## Voller Zwischenspeicher (/tmp) hält eine Spur an
 Spuren dürfen dort nichts Fremdes löschen und melden den Zustand; der Leitstand räumt, aber nur Belegbares.
