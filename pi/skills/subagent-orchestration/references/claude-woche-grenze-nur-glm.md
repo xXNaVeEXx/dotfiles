@@ -19,8 +19,8 @@
   Verweis auf die Leitstand-Weisung. Die Zweitprüfung nimmt das ANDERE Claude-Modell.
 - Jedes fertige glm-Paket braucht sofort einen Claude-Prüfer (zählt gegen die Claude-Grenze und die Höchstzahl Claude-Läufe) –
   einplanen. Prüfer mit dem billigeren Claude-Modell (sonnet), wo der Brief nichts anderes verlangt; steigt das Claude-Kontingent
-  schnell (Leitstand-Meldung), auch kleine Nacharbeit mit sonnet. Ist das Claude-Tor zu: abnehmen,
-  Endlauf fahren, Queue-Zelle „wartet auf Claude-Prüfung“, nicht einbauen.
+  schnell (Leitstand-Meldung), auch kleine Nacharbeit mit sonnet. Ist das Claude-Tor zu oder kein Claude-Platz frei: abnehmen,
+  Endlauf fahren, Queue-Zelle „wartet auf Claude-Prüfung (<Modell>; Endlauf grün HEAD …)“, nicht einbauen.
 - Ist das glm-Tor zu (`quota.sh zai` meldet NEIN) und ein Paket braucht eine weitere Prüfrunde (Zweit-/Drittprüfung nach
   Nacharbeit): das ANDERE Claude-Modell als der Bauer/Vorprüfer nehmen (opus-Bau → sonnet, sonnet-Bau → opus); Prüfauftrag als
   Datei (`review-auftrag/<WP>-N.md`) mit Stand (Commits, Diff-Bereich), Behauptungen des Workers, nummerierten Prüffragen und
@@ -51,9 +51,14 @@
 - „check läuft (N min)“ über 60 min bei gleichzeitigen Bauten mehrerer Spuren auf dem Remote-Rechner ist Warteschlange, kein
   Hänger: `ps -eo pid,etimes,args | grep -E 'wpq.py check|rb.sh'` – solange `rb.sh --_inner`-Prozesse laufen, nichts tun.
   Ein Herzschlag mit `WARTE-ENDE herzschlag` ist nur der Zeitablauf: Stand lesen, neu starten, keine Meldung an den Nutzer nötig.
-  Die Abschlussmeldung eines schon ersetzten Herzschlags kommt oft erst nach dem Neustart: nicht noch einmal starten, sondern
-  `pgrep -af 'warte.sh <Spur>'` gegenlesen (genau einer läuft). Die Dauermeldung „worker hat bash 240 s offen“ eines
+  Vor jedem Neustart `pgrep -af 'warte.sh <Spur>'` gegenlesen (0 = neu starten, 1 = läuft schon): Die Abschlussmeldung eines
+  schon ersetzten Herzschlags kommt oft erst nach dem Neustart. Die Dauermeldung „worker hat bash 240 s offen“ eines
   Workers im Endlauf ist dasselbe Warten, kein Hänger: nicht steuern, nur mit einer Zeile quittieren.
+- Endet ein Worker durch einen Anbieterfehler (Ratenlimit „HTTP 424 … throttle_terminal“, Absturz) und die Meldung klingt nach
+  „fertig“: Zustand belegen statt neu starten – `git log` im Worktree, `git status`, `wpq.py abnahme`, und
+  `pgrep -af 'wpq.py check <WP>'`: ein vom Worker gestarteter Endlauf läuft abgekoppelt weiter und liefert sein Ergebnis ins
+  Schritt-Log. Fehlt nur die `ERGEBNIS:`-Schlusszeile im Bericht, nach grünem Endlauf selbst als Docs-Commit nachtragen,
+  dann `abnahme` und Prüfer. Queue-Zelle `läuft <runId> <modell>` mit Erklärung dahinter beibehalten (Platz-Zählung).
 - `wpq.py integ <WP>` startet den Endlauf im Hintergrund, der Aufruf selbst blockiert aber (Merge + Vorprüfung): einen
   Einbau immer abgekoppelt starten – kleines Skript `$C/.start-<wp>-integ.sh` (`cd $C`, optional `while kill -0 <pid>; do sleep 20; done`
   als Warteschlange hinter einem laufenden Einbau, dann `CLAW_MEM=… LUMI_REMOTE_JOBS=… exec python3 wpq.py integ <WP>`) per
@@ -64,8 +69,11 @@
   ersten, dritter auf das Warteskript des zweiten). Zieht `feat/…` während des Endlaufs weiter („nächste Runde“, Runde 2/3),
   ist das normal: der Einbau merged neu und fährt den Endlauf erneut, nichts eingreifen.
   Verlangt der Leitstand Wechsel beim Einbau zwischen Spuren („je ein Paket abwechselnd“): nur das Paket direkt hinter dem
-  laufenden Einbau eingereiht lassen; weitere eigene Warteskripte beenden (`kill <pid>`), Queue-Zelle mit Grund versehen
-  (`integrieren (… Einbau nach …)`) und erst nach dem Einbau der anderen Spur neu einreihen.
+  laufenden Einbau eingereiht lassen; weitere eigene Warteskripte beenden und Queue-Zelle mit Grund versehen
+  (`integrieren (… Einbau nach …)`). Gilt die Wechselregel nur bei gleichzeitig bereiten Paketen und die andere Spur hat nichts
+  einbaufertig, sofort einbauen. Warteskripte NIE mit `pkill -f <skriptname>` beenden: das Muster steht in der eigenen
+  Befehlszeile der bash und beendet den Aufruf selbst (Exit 143, der Rest des Befehls läuft nicht) – PID per
+  `pgrep -af` holen und `kill <pid>`.
 - Meldet der Wächter „seit N min kein Fortschritt“, zuerst die Ursache trennen, bevor etwas neu gestartet wird: im
   `events.jsonl` des Laufs (`/tmp/pi-subagents-uid-<uid>/async-subagent-runs/<runId>/`) die Zeitstempel (`observedAt`/`ts`;
   `content` kann Zeichenkette statt Liste sein) auf Lücken prüfen, dazu `git log`/Dateizeiten im Worktree, Fortschritt im
@@ -83,14 +91,14 @@
   Basis lesen (nur additive Zeilen? Abhängigkeit mit fester Version?) und den Worker die Abweichung im Bericht nennen lassen.
   Dasselbe Paket fragt oft zweimal (erst i18n-Datei, dann generiertes `handbuch.html` im Endlauf): beide Pfade gleich beim
   ersten Mal freigeben, wenn das Paket Handbuch-Fragmente und neue Schlüssel hat.
-- Endlauf-Schritt `nextest EXIT=255` ohne Fehlertext (Log endet mitten im Kompilieren) = abgebrochen (RAM/Remote), kein
-  Codefehler: Schritt neu fahren, nicht blind ändern. Mit weniger Jobs wiederholen (`CLAW_MEM=9G LUMI_REMOTE_JOBS=2`, bei
-  großem Crate ggf. `CLAW_MEM=7G`), weil der Speicherwächter des Build-Hosts sonst rustc beendet und der Wrapper es nicht
-  erkennt; besonders nach einem `RB_SCAN …: Bau-Ordner im Spiegel entfernt` (Vollneubau) und wenn andere Endläufe parallel
-  laufen. Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen < 200 ms“ bzw. Timeout 5000 ms) getrennt von eigenen
-  roten Tests (i18n-Platzhalter, Design-Wächter) benennen; bei reinem Infra-/Flake-Rot (Log: genau 1 Test rot, ein
-  Zeit-Test, alle anderen Schritte grün) im `integ` einfach `integ` erneut fahren und die Flake als Merkposten notieren; dem
-  Worker per `steer` nur eigene rote Tests mitgeben.
+- Endlauf-Schritt `nextest EXIT=255` ohne Fehlertext (Log endet mitten im Kompilieren) = abgebrochen (RAM/Remote, meist OOM im
+  Scope, kein Codefehler): Schritt neu fahren, nicht blind ändern. Mit weniger Jobs wiederholen – den aktuellen Wert nennt der
+  Leitstand (zuletzt `CLAW_MEM=7G LUMI_REMOTE_JOBS=2`; zu hohe Werte passen bei zwei parallelen Endläufen nicht in den
+  RAM des Build-Hosts), weil der Speicherwächter sonst rustc beendet; besonders nach einem `RB_SCAN …: Bau-Ordner im Spiegel
+  entfernt` (Vollneubau) und wenn andere Endläufe parallel laufen. Rote UI-Last-Flakes (Zeit-Schwellen-Tests wie „2000 Zeilen
+  < 200 ms“ bzw. Timeout 5000 ms) getrennt von eigenen roten Tests (i18n-Platzhalter, Design-Wächter) benennen; bei reinem
+  Infra-/Flake-Rot (Log: genau 1 Test rot, ein Zeit-Test, alle anderen Schritte grün) im `integ` einfach `integ` erneut
+  fahren und die Flake als Merkposten notieren; dem Worker per `steer` nur eigene rote Tests mitgeben.
 - `wpq.py integ` bricht am Tor „MANGEL Bericht: ERGEBNIS: teilweise …“ ab (strikte Prüfung; `abnahme` warnt nur): Die
   Schlusszeile des Berichts muss `ERGEBNIS: fertig – …` lauten, „bewusst offen“ gehört in den Text der Zeile. Als reiner
   Docs-Commit im Worker-Worktree korrigieren (Betreff ≤ 72 Zeichen), `abnahme`, `integ` neu.
