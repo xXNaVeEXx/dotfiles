@@ -13,6 +13,10 @@
   sie warten auf Claude; ist kein glm-Paket startbar, bleibt der Platz leer. Wurde ein Sicherheits-Baustein trotzdem mit glm
   gebaut, verlangt der Leitstand vor dem Einbau eine opus-Prüfung (Sicherheit/echte Fehler, Vorrang vor anderen Claude-Läufen)
   und startet keine abhängigen Pakete vor dem Einbau.
+- Weist der Leitstand ein Paket mit Modell-Spalte glm ausdrücklich einem Claude-Modell zu (glm-Tor knapp, Claude-Platz frei):
+  das gilt nur für dieses Paket. Brief-Zeile „Dein Modell: …“ per `sed` auf das neue Modell ändern (sonst arbeitet der Worker
+  nach dem alten Brieftext), Worker mit dem neuen `model` starten, Zelle sofort `läuft <runId> <neuesmodell>`, Journalzeile mit
+  Verweis auf die Leitstand-Weisung. Die Zweitprüfung nimmt das ANDERE Claude-Modell.
 - Jedes fertige glm-Paket braucht sofort einen Claude-Prüfer (zählt gegen die Claude-Grenze und die Höchstzahl Claude-Läufe) –
   einplanen. Prüfer mit dem billigeren Claude-Modell (sonnet), wo der Brief nichts anderes verlangt; steigt das Claude-Kontingent
   schnell (Leitstand-Meldung), auch kleine Nacharbeit mit sonnet. Ist das Claude-Tor zu: abnehmen,
@@ -59,6 +63,9 @@
   gegenlesen, sonst entsteht ein zweiter Merge. Einbauten derselben Integrationsbranch seriell einreihen (zweiter wartet auf den
   ersten, dritter auf das Warteskript des zweiten). Zieht `feat/…` während des Endlaufs weiter („nächste Runde“, Runde 2/3),
   ist das normal: der Einbau merged neu und fährt den Endlauf erneut, nichts eingreifen.
+  Verlangt der Leitstand Wechsel beim Einbau zwischen Spuren („je ein Paket abwechselnd“): nur das Paket direkt hinter dem
+  laufenden Einbau eingereiht lassen; weitere eigene Warteskripte beenden (`kill <pid>`), Queue-Zelle mit Grund versehen
+  (`integrieren (… Einbau nach …)`) und erst nach dem Einbau der anderen Spur neu einreihen.
 - Meldet der Wächter „seit N min kein Fortschritt“, zuerst die Ursache trennen, bevor etwas neu gestartet wird: im
   `events.jsonl` des Laufs (`/tmp/pi-subagents-uid-<uid>/async-subagent-runs/<runId>/`) die Zeitstempel (`observedAt`/`ts`;
   `content` kann Zeichenkette statt Liste sein) auf Lücken prüfen, dazu `git log`/Dateizeiten im Worktree, Fortschritt im
